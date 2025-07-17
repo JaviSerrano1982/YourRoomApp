@@ -1,10 +1,12 @@
 package com.example.yourroom.ui.theme.screens
 
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -132,37 +134,55 @@ fun LoginScreenContent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            OutlinedButton(
-                onClick = onLoginClick,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White,              // fondo del botón
-                    contentColor = Color(0xFF0A1D37)           // color del texto
-                )
+            // 🔸 NUEVA fila con dos botones: Entrar y Registrarse
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)  // Ajusta si quieres otro alto
             ) {
-                Text("Entrar")
+                // Botón Entrar activo
+                Button(
+                    onClick = onLoginClick,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White,
+                        contentColor = Color(0xFF0A1D37)
+                    ),
+                    shape = RoundedCornerShape(
+                        topStart = 24.dp,
+                        bottomStart = 24.dp,
+                        topEnd = 0.dp,
+                        bottomEnd = 0.dp
+                    ),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Text("Entrar")
+                }
+
+
+
+                // Botón Registrarse inactivo (solo navegación)
+                OutlinedButton(
+                    onClick = onRegisterClick,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Color.White
+                    ),
+                    border = BorderStroke(1.dp, Color.White),
+                    shape = RoundedCornerShape(
+                        topStart = 0.dp,
+                        bottomStart = 0.dp,
+                        topEnd = 24.dp,
+                        bottomEnd = 24.dp
+                    ),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Text("Registrarse")
+                }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
 
-            errorText?.let {
-                Text(
-                    text = it,
-                    color = Color.Red,
-                    fontSize = 14.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "¿No tienes cuenta? Regístrate",
-                color = Color.White,
-                fontSize = 14.sp,
-                modifier = Modifier.clickable(onClick = onRegisterClick)
-            )
         }
     }
 }
