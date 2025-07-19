@@ -69,6 +69,15 @@ dependencies {
     //Lottie
     implementation(libs.lottie.compose)
 
+    implementation(libs.androidx.core.splashscreen)
+
+    implementation(libs.material)
+
+
+
+
+
+
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

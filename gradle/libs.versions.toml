@@ -1,6 +1,7 @@
 [versions]
 agp = "8.11.1"
 coilCompose = "2.7.0"
+coreSplashscreen = "1.0.1"
 datastorePreferences = "1.1.7"
 guava = "33.4.8-jre"
 kotlin = "2.0.21"
@@ -13,12 +14,14 @@ activityCompose = "1.8.0"
 composeBom = "2024.09.00"
 lottieCompose = "6.6.7"
 material = "1.8.3"
+materialVersion = "1.12.0"
 navigationCompose = "2.9.1"
 ui = "1.8.3"
 compiler = "3.2.0-alpha11"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
 androidx-material = { module = "androidx.compose.material:material", version.ref = "material" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
@@ -38,6 +41,7 @@ androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-man
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "lottieCompose" }
+material = { module = "com.google.android.material:material", version.ref = "materialVersion" }
 ui = { module = "androidx.compose.ui:ui", version.ref = "ui" }
 androidx-compiler = { group = "androidx.databinding", name = "compiler", version.ref = "compiler" }
 

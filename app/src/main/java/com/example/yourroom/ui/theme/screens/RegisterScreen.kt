@@ -1,10 +1,8 @@
 package com.example.yourroom.ui.theme.screens
 
-
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -12,77 +10,68 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.yourroom.R
-import com.example.yourroom.datastore.UserPreferences
-
-import kotlinx.coroutines.launch
 import com.example.yourroom.ui.theme.YourRoomGradient
 
-
-
-
 @Composable
-fun LoginScreen(navController: NavHostController) {
-
-    Modifier.background(YourRoomGradient)
-
-
+fun RegisterScreen(navController: NavHostController) {
+    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
     var errorText by remember { mutableStateOf<String?>(null) }
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
 
-    LoginScreenContent(
+    RegisterScreenContent(
+        name = name,
+        onNameChange = { name = it },
         email = email,
         onEmailChange = { email = it },
         password = password,
         onPasswordChange = { password = it },
-        onLoginClick = {
-            if (email.isNotBlank() && password.isNotBlank()) {
-                scope.launch {
-                    UserPreferences(context).setUserLoggedIn(true)
-                    navController.navigate("home") {
-                        popUpTo("login") { inclusive = true }
-                    }
-                }
+        confirmPassword = confirmPassword,
+        onConfirmPasswordChange = { confirmPassword = it },
+        onRegisterClick = {
+            if (name.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
+                errorText = "Por favor, completa todos los campos."
+            } else if (password != confirmPassword) {
+                errorText = "Las contraseñas no coinciden."
             } else {
-                errorText = "Por favor, completa los campos."
+                errorText = null
+                // TODO: enviar datos al backend y navegar si es válido
+                navController.navigate("login") {
+                    popUpTo("register") { inclusive = true }
+                }
             }
         },
-        onRegisterClick = {
-            navController.navigate("register")
+        onBackToLoginClick = {
+            navController.popBackStack()
         },
         errorText = errorText
     )
-
 }
 
 @Composable
-fun LoginScreenContent(
+fun RegisterScreenContent(
+    name: String,
+    onNameChange: (String) -> Unit,
     email: String,
     onEmailChange: (String) -> Unit,
     password: String,
     onPasswordChange: (String) -> Unit,
-    onLoginClick: () -> Unit,
+    confirmPassword: String,
+    onConfirmPasswordChange: (String) -> Unit,
     onRegisterClick: () -> Unit,
+    onBackToLoginClick: () -> Unit,
     errorText: String?
 ) {
-    Modifier.background(YourRoomGradient)
-
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -94,28 +83,36 @@ fun LoginScreenContent(
                 .fillMaxWidth()
                 .padding(horizontal = 32.dp)
                 .offset(y = (-60).dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
                 painter = painterResource(id = R.drawable.your_room_logo),
                 contentDescription = "Logo",
-                modifier = Modifier.size(260.dp)
-
+                modifier = Modifier.size(200.dp)
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+
+            OutlinedTextField(
+                value = name,
+                onValueChange = onNameChange,
+                label = { Text("Nombre") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             OutlinedTextField(
                 value = email,
                 onValueChange = onEmailChange,
                 label = { Text("Email") },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             OutlinedTextField(
                 value = password,
@@ -126,17 +123,27 @@ fun LoginScreenContent(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = confirmPassword,
+                onValueChange = onConfirmPasswordChange,
+                label = { Text("Confirmar Contraseña") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth()
+            )
+
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Fila con dos botones: Entrar y Registrarse
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp)  // Ajusta si quieres otro alto
+                    .height(48.dp)
             ) {
-                // Botón Entrar activo
+                // Botón Registrarse (activo)
                 Button(
-                    onClick = onLoginClick,
+                    onClick = onRegisterClick,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.White,
@@ -150,14 +157,12 @@ fun LoginScreenContent(
                     ),
                     contentPadding = PaddingValues(0.dp)
                 ) {
-                    Text("Entrar")
+                    Text("Registrarse")
                 }
 
-
-
-                // Botón Registrarse inactivo (solo navegación)
+                // Botón Iniciar sesión (solo navegación)
                 OutlinedButton(
-                    onClick = onRegisterClick,
+                    onClick = onBackToLoginClick,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = Color.White
@@ -171,26 +176,40 @@ fun LoginScreenContent(
                     ),
                     contentPadding = PaddingValues(0.dp)
                 ) {
-                    Text("Registrarse")
+                    Text("Iniciar sesión")
                 }
             }
 
 
-
+            errorText?.let {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = it,
+                    color = Color.Red,
+                    fontSize = 14.sp
+                )
+            }
         }
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun LoginScreenPreview() {
-    LoginScreenContent(
-        email = "demo@yourroom.com",
+fun RegisterScreenPreview() {
+    RegisterScreenContent(
+        name = "Javier",
+        onNameChange = {},
+        email = "javier@email.com",
         onEmailChange = {},
         password = "123456",
         onPasswordChange = {},
-        onLoginClick = {},
+        confirmPassword = "123456",
+        onConfirmPasswordChange = {},
         onRegisterClick = {},
+        onBackToLoginClick = {},
         errorText = null
     )
 }
+
+
+

@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <style name="Theme.YourRoom" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
 
-    <style name="Theme.YourRoom" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.YourRoom.Splash" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowSplashScreenBackground">@color/white</item>
+        <item name="postSplashScreenTheme">@style/Theme.YourRoom</item>
+    </style>
+
 </resources>
