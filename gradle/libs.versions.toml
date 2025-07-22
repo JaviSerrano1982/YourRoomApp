@@ -18,6 +18,8 @@ materialVersion = "1.12.0"
 navigationCompose = "2.9.1"
 ui = "1.8.3"
 compiler = "3.2.0-alpha11"
+retrofit = "2.9.0"
+okhttp = "4.9.3"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -44,6 +46,7 @@ lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "
 material = { module = "com.google.android.material:material", version.ref = "materialVersion" }
 ui = { module = "androidx.compose.ui:ui", version.ref = "ui" }
 androidx-compiler = { group = "androidx.databinding", name = "compiler", version.ref = "compiler" }
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

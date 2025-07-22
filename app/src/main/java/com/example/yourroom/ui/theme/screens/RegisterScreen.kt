@@ -19,7 +19,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.yourroom.R
+import com.example.yourroom.model.User
+import com.example.yourroom.network.RetrofitClient
 import com.example.yourroom.ui.theme.YourRoomGradient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun RegisterScreen(navController: NavHostController) {
@@ -45,12 +51,37 @@ fun RegisterScreen(navController: NavHostController) {
                 errorText = "Las contraseñas no coinciden."
             } else {
                 errorText = null
-                // TODO: enviar datos al backend y navegar si es válido
-                navController.navigate("login") {
-                    popUpTo("register") { inclusive = true }
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        val newUser = User(
+                            name = name,
+                            email = email,
+                            password = password,
+                            role = "TRAINER" // o "USUARIO" por defecto
+                        )
+
+                        val response = RetrofitClient.api.register(newUser)
+
+                        withContext(Dispatchers.Main) {
+                            if (response.isSuccessful) {
+                                // Registro correcto: ir al login
+                                navController.navigate("login") {
+                                    popUpTo("register") { inclusive = true }
+                                }
+                            } else {
+                                errorText = "El correo ya está registrado"
+                            }
+                        }
+                    } catch (e: Exception) {
+                        withContext(Dispatchers.Main) {
+                            errorText = "Error de red: ${e.message}"
+                        }
+                    }
                 }
             }
-        },
+        }
+        ,
         onBackToLoginClick = {
             navController.popBackStack()
         },
