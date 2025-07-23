@@ -35,8 +35,6 @@ import com.example.yourroom.ui.theme.YourRoomGradient
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-
-
 import androidx.compose.ui.text.input.VisualTransformation
 
 
@@ -192,7 +190,7 @@ fun LoginScreenContent(
 
 
 
-                // Botón Registrarse inactivo (solo navegación)
+                //Botón registrarse
                 OutlinedButton(
                     onClick = onRegisterClick,
                     modifier = Modifier.weight(1f),

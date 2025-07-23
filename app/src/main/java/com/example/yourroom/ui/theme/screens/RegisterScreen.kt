@@ -27,6 +27,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.ui.text.input.VisualTransformation
+
 @Composable
 fun RegisterScreen(navController: NavHostController) {
     var name by remember { mutableStateOf("") }
@@ -58,7 +63,7 @@ fun RegisterScreen(navController: NavHostController) {
                             name = name,
                             email = email,
                             password = password,
-                            role = "TRAINER" // o "USUARIO" por defecto
+                            role = "USUARIO"
                         )
 
                         val response = RetrofitClient.api.register(newUser)
@@ -103,6 +108,7 @@ fun RegisterScreenContent(
     onBackToLoginClick: () -> Unit,
     errorText: String?
 ) {
+    var passwordVisible by remember { mutableStateOf(false) }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -150,8 +156,20 @@ fun RegisterScreenContent(
                 onValueChange = onPasswordChange,
                 label = { Text("Contraseña") },
                 singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    val image = if (passwordVisible)
+                        Icons.Filled.Visibility
+                    else
+                        Icons.Filled.VisibilityOff
+
+                    val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
+
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(imageVector = image, contentDescription = description)
+                    }
+                }
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -159,10 +177,22 @@ fun RegisterScreenContent(
             OutlinedTextField(
                 value = confirmPassword,
                 onValueChange = onConfirmPasswordChange,
-                label = { Text("Confirmar Contraseña") },
+                label = { Text("Confirmar contraseña") },
                 singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    val image = if (passwordVisible)
+                        Icons.Filled.Visibility
+                    else
+                        Icons.Filled.VisibilityOff
+
+                    val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
+
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(imageVector = image, contentDescription = description)
+                    }
+                }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
