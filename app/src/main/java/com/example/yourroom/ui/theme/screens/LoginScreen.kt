@@ -26,9 +26,18 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.yourroom.R
 import com.example.yourroom.datastore.UserPreferences
+import com.example.yourroom.model.AuthRequest
+import com.example.yourroom.network.RetrofitClient
 
 import kotlinx.coroutines.launch
 import com.example.yourroom.ui.theme.YourRoomGradient
+
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+
+
+import androidx.compose.ui.text.input.VisualTransformation
 
 
 
@@ -41,6 +50,8 @@ fun LoginScreen(navController: NavHostController) {
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+
     var errorText by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -53,9 +64,22 @@ fun LoginScreen(navController: NavHostController) {
         onLoginClick = {
             if (email.isNotBlank() && password.isNotBlank()) {
                 scope.launch {
-                    UserPreferences(context).setUserLoggedIn(true)
-                    navController.navigate("home") {
-                        popUpTo("login") { inclusive = true }
+                    try {
+                        val response = RetrofitClient.api.login(AuthRequest(email, password))
+                        if (response.isSuccessful && response.body() != null) {
+                            val token = response.body()!!.token
+                            val userPrefs = UserPreferences(context)
+                            userPrefs.setUserLoggedIn(true)
+                            userPrefs.saveAuthToken(token)
+
+                            navController.navigate("home") {
+                                popUpTo("login") { inclusive = true }
+                            }
+                        } else {
+                            errorText = "Email o contraseña incorrectos."
+                        }
+                    } catch (e: Exception) {
+                        errorText = "Error al conectar con el servidor."
                     }
                 }
             } else {
@@ -80,6 +104,7 @@ fun LoginScreenContent(
     onRegisterClick: () -> Unit,
     errorText: String?
 ) {
+    var passwordVisible by remember { mutableStateOf(false) }
     Modifier.background(YourRoomGradient)
 
 
@@ -122,8 +147,20 @@ fun LoginScreenContent(
                 onValueChange = onPasswordChange,
                 label = { Text("Contraseña") },
                 singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    val image = if (passwordVisible)
+                        Icons.Filled.Visibility
+                    else
+                        Icons.Filled.VisibilityOff
+
+                    val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
+
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(imageVector = image, contentDescription = description)
+                    }
+                }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -174,6 +211,18 @@ fun LoginScreenContent(
                     Text("Registrarse")
                 }
             }
+            if (errorText != null) {
+                Text(
+                    text = errorText,
+                    color = Color.Red,
+                    fontSize = 14.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    textAlign = TextAlign.Center
+                )
+            }
+
 
 
 

@@ -12,6 +12,7 @@ class UserPreferences(private val context: Context) {
 
     companion object {
         val LOGGED_IN = booleanPreferencesKey("logged_in")
+        val AUTH_TOKEN = stringPreferencesKey("auth_token")
     }
 
     suspend fun isUserLoggedIn(): Boolean {
@@ -24,4 +25,20 @@ class UserPreferences(private val context: Context) {
             prefs[LOGGED_IN] = loggedIn
         }
     }
+    suspend fun clearSession() {
+        context.dataStore.edit { prefs ->
+            prefs.clear()
+        }
+    }
+    suspend fun saveAuthToken(token: String) {
+        context.dataStore.edit { prefs ->
+            prefs[AUTH_TOKEN] = token
+        }
+    }
+
+    suspend fun getAuthToken(): String? {
+        val prefs = context.dataStore.data.first()
+        return prefs[AUTH_TOKEN]
+    }
+
 }
