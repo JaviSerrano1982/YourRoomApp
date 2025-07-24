@@ -1,5 +1,7 @@
 package com.example.yourroom.ui.theme.screens
 
+import android.R.color.white
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -13,17 +15,24 @@ import com.airbnb.lottie.compose.*
 import com.example.yourroom.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import com.example.yourroom.ui.theme.SuccesGradient
+import com.example.yourroom.ui.theme.YourRoomGradient
 
 @Composable
 fun SuccessScreen(onNavigateToLogin: () -> Unit) {
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.success))
     val progress by animateLottieCompositionAsState(composition)
 
+
+
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(SuccesGradient)
             .padding(32.dp),
-        contentAlignment = Alignment.Center
+
+        contentAlignment = Alignment.Center,
+
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             LottieAnimation(
@@ -38,7 +47,7 @@ fun SuccessScreen(onNavigateToLogin: () -> Unit) {
                 text = "¡Registro exitoso!",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF4CAF50),
+                color = Color(0xFF0A1D37),
                 textAlign = TextAlign.Center
             )
 
@@ -46,10 +55,10 @@ fun SuccessScreen(onNavigateToLogin: () -> Unit) {
 
             Button(
                 onClick = onNavigateToLogin,
-                shape = MaterialTheme.shapes.medium,
+                shape = MaterialTheme.shapes.extraLarge,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White,
-                    contentColor = Color(0xFF0A1D37)
+                    containerColor = Color(0xFF0A1D37),
+                    contentColor = Color.White
                 )
             ) {
                 Text("Iniciar sesión")
