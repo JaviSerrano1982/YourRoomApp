@@ -9,6 +9,7 @@ import com.example.yourroom.ui.theme.screens.HomeScreen
 import com.example.yourroom.ui.theme.screens.LoginScreen
 import com.example.yourroom.ui.theme.screens.RegisterScreen
 import com.example.yourroom.ui.theme.screens.SplashScreen
+import com.example.yourroom.ui.theme.screens.SuccessScreen
 
 
 @Composable
@@ -18,6 +19,16 @@ fun NavGraph(navController: NavHostController) {
         composable("login") { LoginScreen(navController) }
         composable("register") { RegisterScreen(navController) }
         composable("home") { HomeScreen(navController = navController) }
+        composable("success") {
+            SuccessScreen(
+                onNavigateToLogin = {
+                    navController.navigate("login") {
+                        popUpTo("success") { inclusive = true }
+                    }
+                }
+            )
+        }
+
 
     }
 }

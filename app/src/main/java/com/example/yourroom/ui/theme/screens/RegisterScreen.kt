@@ -70,8 +70,8 @@ fun RegisterScreen(navController: NavHostController) {
 
                         withContext(Dispatchers.Main) {
                             if (response.isSuccessful) {
-                                // Registro correcto: ir al login
-                                navController.navigate("login") {
+                                // Registro correcto: ir al succes screen
+                                navController.navigate("success") {
                                     popUpTo("register") { inclusive = true }
                                 }
                             } else {
