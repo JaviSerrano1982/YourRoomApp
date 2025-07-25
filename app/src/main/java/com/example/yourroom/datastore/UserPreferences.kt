@@ -4,11 +4,16 @@ package com.example.yourroom.datastore
 import android.content.Context
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 
 private val Context.dataStore by preferencesDataStore("user_prefs")
 
 class UserPreferences(private val context: Context) {
+    val isLoggedInFlow: Flow<Boolean> = context.dataStore.data
+        .map { prefs -> prefs[LOGGED_IN] ?: false }
+
 
     companion object {
         val LOGGED_IN = booleanPreferencesKey("logged_in")
