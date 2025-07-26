@@ -33,7 +33,8 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val context = LocalContext.current
                 val userPreferences = UserPreferences(context)
-                val isLoggedIn by userPreferences.isLoggedInFlow.collectAsState(initial = false)
+               // val isLoggedIn by userPreferences.isLoggedInFlow.collectAsState(initial = false)
+                val isLoggedIn = true
 
                 if (isLoggedIn) {
                     MainNavGraph(navController = navController)

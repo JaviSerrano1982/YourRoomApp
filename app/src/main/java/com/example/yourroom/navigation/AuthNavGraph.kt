@@ -14,11 +14,11 @@ import com.example.yourroom.ui.theme.screens.SuccessScreen
 
 @Composable
 fun AuthNavGraph(navController: NavHostController) {
-    NavHost(navController = navController, startDestination = "splash") {
+    NavHost(navController = navController, startDestination = "home") {
         composable("splash") { SplashScreen(navController) }
         composable("login") { LoginScreen(navController) }
         composable("register") { RegisterScreen(navController) }
-        composable("home") { HomeScreen(navController = navController) }
+        //composable("home") { HomeScreen(navController = navController) }
         composable("success") {
             SuccessScreen(
                 onNavigateToLogin = {

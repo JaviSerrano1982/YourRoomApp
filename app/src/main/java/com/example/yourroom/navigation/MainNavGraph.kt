@@ -4,6 +4,7 @@ import android.net.http.SslCertificate.restoreState
 import android.net.http.SslCertificate.saveState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -27,6 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -36,6 +38,9 @@ import com.example.yourroom.ui.theme.screens.HomeScreen
 import com.example.yourroom.ui.theme.screens.ProfileScreen
 import com.example.yourroom.ui.theme.screens.PublishScreen
 import com.example.yourroom.ui.theme.screens.SearchScreen
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.ui.graphics.Brush
+
 
 sealed class BottomNavItem(
     val route: String,
@@ -44,7 +49,7 @@ sealed class BottomNavItem(
 ) {
     object Home : BottomNavItem("home", Icons.Default.Home, "Inicio")
     object Search : BottomNavItem("search", Icons.Default.Search, "Buscar")
-    object Publish : BottomNavItem("publish", Icons.Default.Add, "")
+    object Publish : BottomNavItem("publish", Icons.Default.Add, "Publicar")
     object Favorites : BottomNavItem("favorites", Icons.Default.Star, "Favoritos")
     object Profile : BottomNavItem("profile", Icons.Default.Person, "Cuenta")
 }
@@ -62,7 +67,13 @@ fun MainNavGraph(navController: NavHostController) {
 
     Scaffold(
         bottomBar = {
-            NavigationBar(containerColor = Color(0xFFE8DAFF)) {
+            NavigationBar(
+                containerColor = Color(0xFF0A1D37),
+                modifier = Modifier
+                    .height(75.dp)
+                    .navigationBarsPadding()
+
+            ) {
                 val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
                 items.forEach { item ->
@@ -82,9 +93,16 @@ fun MainNavGraph(navController: NavHostController) {
                             icon = {
                                 Box(
                                     modifier = Modifier
-                                        .size(60.dp)
-                                        .clip(RoundedCornerShape(16.dp))
-                                        .background(Color(0xFFD0BCFF)),
+                                        .size(50.dp)
+                                        .clip(RoundedCornerShape(50.dp))
+                                        .background(
+                                            Brush.linearGradient(
+                                                colors = listOf(
+                                                    Color.White,
+                                                    Color(0xFF6750A4)  // un violeta más claro o azulado
+                                                )
+                                            )
+                                        ),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
@@ -94,7 +112,10 @@ fun MainNavGraph(navController: NavHostController) {
                                     )
                                 }
                             },
-                            label = { Spacer(modifier = Modifier.height(0.dp)) }
+                            colors = NavigationBarItemDefaults.colors(
+                                indicatorColor = Color.Transparent
+                            )
+
                         )
                     } else {
                         NavigationBarItem(
@@ -107,17 +128,29 @@ fun MainNavGraph(navController: NavHostController) {
                                 }
                             },
                             icon = {
-                                Icon(
-                                    imageVector = item.icon,
-                                    contentDescription = item.label
-                                )
+                                Column(horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+
+                                ) {
+                                    Icon(
+                                        imageVector = item.icon,
+                                        contentDescription = item.label,
+                                        modifier = Modifier.size(28.dp),
+                                        tint = if (isSelected) Color(0xFF2FE2EC) else Color.White
+                                    )
+
+                                    Text(
+                                        text = item.label,
+                                        fontSize = 10.sp,
+                                        color = if (isSelected) Color(0xFF2FE2EC) else Color.White
+                                    )
+                                }
                             },
-                            label = {
-                                Text(item.label)
-                            },
+
+
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = Color(0xFF381E72),
-                                unselectedIconColor = Color(0xFF625B71),
+                                unselectedIconColor = Color.White,
                                 indicatorColor = Color.Transparent
                             )
                         )
