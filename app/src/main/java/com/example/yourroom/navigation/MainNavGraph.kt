@@ -70,8 +70,9 @@ fun MainNavGraph(navController: NavHostController) {
             NavigationBar(
                 containerColor = Color(0xFF0A1D37),
                 modifier = Modifier
-                    .height(75.dp)
+                    .height(65.dp)
                     .navigationBarsPadding()
+                    .padding(top = 6.dp)
 
             ) {
                 val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
@@ -93,8 +94,9 @@ fun MainNavGraph(navController: NavHostController) {
                             icon = {
                                 Box(
                                     modifier = Modifier
-                                        .size(50.dp)
+                                        .size(40.dp)
                                         .clip(RoundedCornerShape(50.dp))
+
                                         .background(
                                             Brush.linearGradient(
                                                 colors = listOf(

@@ -10,6 +10,14 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.SideEffect
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.runtime.getValue
+import androidx.core.view.WindowCompat
+
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -36,20 +44,17 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun YourRoomTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val systemUiController = rememberSystemUiController()
 
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+    //Color de bottom bar
+    val navBarColor = Color(0xFF0A1D37)
+
+    SideEffect {
+        systemUiController.setSystemBarsColor(color = navBarColor)
     }
-
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,

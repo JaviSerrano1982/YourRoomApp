@@ -79,6 +79,8 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.9.3")
     implementation("androidx.compose.material:material-icons-extended")
 
+    implementation("com.google.accompanist:accompanist-systemuicontroller:0.36.0")
+
 
 
 
