@@ -33,7 +33,11 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val context = LocalContext.current
                 val userPreferences = UserPreferences(context)
-               // val isLoggedIn by userPreferences.isLoggedInFlow.collectAsState(initial = false)
+
+                //Comentar este codigo para pasar directamente al login.(Solo pruebas)
+                //val isLoggedIn by userPreferences.isLoggedInFlow.collectAsState(initial = false)
+
+                //Descomentar este código para pasar directamente al login. (Solo pruebas)
                 val isLoggedIn = true
 
                 if (isLoggedIn) {
