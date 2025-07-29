@@ -1,7 +1,12 @@
+
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.kotlin.kapt)
+
 }
 
 android {
@@ -80,6 +85,10 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
 
     implementation(libs.accompanist.systemuicontroller)
+
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler) // Asegúrate de tener 'kapt' aplicado
+    implementation(libs.androidx.hilt.navigation.compose)
 
 
 
