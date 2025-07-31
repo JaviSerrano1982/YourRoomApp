@@ -1,6 +1,7 @@
 package com.example.yourroom.ui.theme.screens
 
 
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -36,8 +37,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.ui.text.input.VisualTransformation
-
-
+import com.example.yourroom.navigation.BottomNavItem
+import kotlinx.coroutines.flow.first
 
 
 @Composable
@@ -67,12 +68,22 @@ fun LoginScreen(navController: NavHostController) {
                         if (response.isSuccessful && response.body() != null) {
                             val token = response.body()!!.token
                             val userPrefs = UserPreferences(context)
+                            val userId = response.body()!!.userId
                             userPrefs.setUserLoggedIn(true)
                             userPrefs.saveAuthToken(token)
+                            userPrefs.saveUserId(userId)
+
+                            println("🆔 userId tras login: $userId")  // ✅ Este log
+                            val checkId = userPrefs.userIdFlow.first()
+                            println("📦 userId leído de datastore tras guardar: $checkId")
+
+
 
                             navController.navigate("home") {
                                 popUpTo("login") { inclusive = true }
                             }
+
+
                         } else {
                             errorText = "Email o contraseña incorrectos."
                         }
