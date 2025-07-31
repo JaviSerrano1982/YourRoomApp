@@ -26,6 +26,7 @@ class UserProfileViewModel @Inject constructor(
 
     fun updateProfile(userId: Long) {
         viewModelScope.launch {
+            println("🚀 Lanzando updateProfile con userId = $userId")
             repository.updateProfile(userId, _profile.value)
         }
     }

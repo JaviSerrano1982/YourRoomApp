@@ -53,13 +53,10 @@ fun UserProfileScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
         Spacer(modifier = Modifier.height(16.dp))
 
         Image(
-            painter = rememberAsyncImagePainter(
-                model = localImageUri ?: profile.photoUrl
-            ),
+            painter = rememberAsyncImagePainter(localImageUri ?: profile.photoUrl),
             contentDescription = "Foto de perfil",
             modifier = Modifier
                 .size(120.dp)
@@ -100,10 +97,32 @@ fun UserProfileScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
+        OutlinedTextField(
+            value = profile.location,
+            onValueChange = { viewModel.updateField { copy(location = it) } },
+            label = { Text("Ubicación") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = profile.gender,
+            onValueChange = { viewModel.updateField { copy(gender = it) } },
+            label = { Text("Género") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = profile.birthDate,
+            onValueChange = { viewModel.updateField { copy(birthDate = it) } },
+            label = { Text("Fecha de nacimiento (YYYY-MM-DD)") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(onClick = { viewModel.updateProfile(userId) }) {
             Text("Guardar cambios")
         }
     }
+
 }
