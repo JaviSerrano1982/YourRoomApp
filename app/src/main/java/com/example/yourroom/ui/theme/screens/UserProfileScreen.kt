@@ -15,17 +15,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
+import com.example.yourroom.datastore.UserPreferences
 import com.example.yourroom.viewmodel.UserProfileViewModel
-import java.util.*
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 @Composable
 fun UserProfileScreen(
-    userId: Long,
     viewModel: UserProfileViewModel = hiltViewModel()
 ) {
     val profile by viewModel.profile.collectAsState()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
+    var userId by remember { mutableStateOf(0L) }
     var localImageUri by remember { mutableStateOf<Uri?>(null) }
 
     val imageLauncher = rememberLauncherForActivityResult(
@@ -37,15 +40,19 @@ fun UserProfileScreen(
         }
     }
 
-    LaunchedEffect(userId) {
-        if (userId > 0) {
-            println("🔍Cargando perfil con userId = $userId")
-            viewModel.loadProfile(userId)
+
+    LaunchedEffect(Unit) {
+        val prefs = UserPreferences(context)
+        val storedId = prefs.userIdFlow.first()
+        println("✅ userId cargado al entrar: $storedId")
+        userId = storedId
+
+        if (storedId > 0) {
+            viewModel.loadProfile(storedId)
         } else {
-            println(" ID de usuario inválido: $userId")
+            println("⚠️ userId inválido al cargar perfil")
         }
     }
-
 
     Column(
         modifier = Modifier
@@ -120,9 +127,17 @@ fun UserProfileScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        Button(onClick = { viewModel.updateProfile(userId) }) {
+        Button(onClick = {
+            scope.launch {
+                println("🧠 userId recuperado en botón: $userId")
+                if (userId > 0) {
+                    viewModel.updateProfile(userId)
+                } else {
+                    println("⚠️ No se puede guardar, userId inválido")
+                }
+            }
+        }) {
             Text("Guardar cambios")
         }
     }
-
 }

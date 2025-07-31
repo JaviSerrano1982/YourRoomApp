@@ -66,7 +66,7 @@ fun AppNavGraph(
             }
             composable("profile") {
                 showBottomBar.value = true
-                UserProfileScreen(userId = userId)
+                UserProfileScreen()
             }
 
         }

@@ -90,6 +90,9 @@ dependencies {
     kapt(libs.hilt.compiler) // Asegúrate de tener 'kapt' aplicado
     implementation(libs.androidx.hilt.navigation.compose)
 
+    implementation(libs.logging.interceptor.v4120)
+
+
 
 
 

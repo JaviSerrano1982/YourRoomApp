@@ -54,12 +54,14 @@ fun LoginScreen(navController: NavHostController) {
     var errorText by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    var loginSuccess by remember { mutableStateOf(false) }
 
     LoginScreenContent(
         email = email,
         onEmailChange = { email = it },
         password = password,
         onPasswordChange = { password = it },
+
         onLoginClick = {
             if (email.isNotBlank() && password.isNotBlank()) {
                 scope.launch {
@@ -77,27 +79,38 @@ fun LoginScreen(navController: NavHostController) {
                             val checkId = userPrefs.userIdFlow.first()
                             println("📦 userId leído de datastore tras guardar: $checkId")
 
-
+                            loginSuccess = true
+                            errorText = null
 
                             navController.navigate("home") {
                                 popUpTo("login") { inclusive = true }
                             }
+                            val rawJson = response.raw().peekBody(Long.MAX_VALUE).string()
+                            println("🧾 JSON crudo recibido: $rawJson")
+                            println("➡️ token: ${response.body()?.token}")
+                            println("➡️ userId: ${response.body()?.userId}")
+
+
 
 
                         } else {
+                            loginSuccess = false
                             errorText = "Email o contraseña incorrectos."
                         }
                     } catch (e: Exception) {
+                        loginSuccess = false
                         errorText = "Error al conectar con el servidor."
                     }
                 }
             } else {
+                loginSuccess = false
                 errorText = "Por favor, completa los campos."
             }
         },
         onRegisterClick = {
             navController.navigate("register")
         },
+        loginSuccess = loginSuccess,
         errorText = errorText
     )
 
@@ -111,7 +124,8 @@ fun LoginScreenContent(
     onPasswordChange: (String) -> Unit,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
-    errorText: String?
+    errorText: String?,
+    loginSuccess: Boolean
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
     Modifier.background(YourRoomGradient)
@@ -220,7 +234,7 @@ fun LoginScreenContent(
                     Text("Registrarse")
                 }
             }
-            if (errorText != null) {
+            if (errorText != null && !loginSuccess) {
                 Text(
                     text = errorText,
                     color = Color.Red,
@@ -249,6 +263,7 @@ fun LoginScreenPreview() {
         onPasswordChange = {},
         onLoginClick = {},
         onRegisterClick = {},
-        errorText = null
+        errorText = null,
+        loginSuccess = false
     )
 }
