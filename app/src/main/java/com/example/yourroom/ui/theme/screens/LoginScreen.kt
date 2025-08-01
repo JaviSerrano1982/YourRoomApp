@@ -54,7 +54,7 @@ fun LoginScreen(navController: NavHostController) {
     var errorText by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var loginSuccess by remember { mutableStateOf(false) }
+
 
     LoginScreenContent(
         email = email,
@@ -79,43 +79,34 @@ fun LoginScreen(navController: NavHostController) {
                                 userPrefs.saveAuthToken(token)
                                 userPrefs.saveUserId(userId)
 
-                                println("🆔 userId tras login: $userId")
-                                println("➡️ token: $token")
-
-                                loginSuccess = true
                                 errorText = null
 
                                 navController.navigate("home") {
                                     popUpTo("login") { inclusive = true }
                                 }
                             } else {
-                                loginSuccess = false
+
                                 errorText = "Respuesta vacía del servidor."
-                                println("⚠️ Respuesta body null")
+
                             }
                         } else {
-                            loginSuccess = false
-                            errorText = "Email o contraseña incorrectos. (code ${response.code()})"
-                            println("⚠️ Login fallido - Código: ${response.code()}")
+                            errorText = "Email o contraseña incorrectos. )"
                         }
                     } catch (e: Exception) {
-                        println(" Error de red: ${e.localizedMessage}")
-                        e.printStackTrace()
-                        loginSuccess = false
+                       e.printStackTrace()
                         errorText = "Error al conectar con el servidor."
                     }
                 }
 
 
             } else {
-                loginSuccess = false
                 errorText = "Por favor, completa los campos."
             }
         },
         onRegisterClick = {
             navController.navigate("register")
         },
-        loginSuccess = loginSuccess,
+
         errorText = errorText
     )
 
@@ -130,7 +121,7 @@ fun LoginScreenContent(
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
     errorText: String?,
-    loginSuccess: Boolean
+
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
 
@@ -239,7 +230,7 @@ fun LoginScreenContent(
                     Text("Registrarse")
                 }
             }
-            if (errorText != null && !loginSuccess) {
+            if (errorText != null ) {
                 Text(
                     text = errorText,
                     color = Color.Red,
@@ -269,6 +260,6 @@ fun LoginScreenPreview() {
         onLoginClick = {},
         onRegisterClick = {},
         errorText = null,
-        loginSuccess = false
+
     )
 }
