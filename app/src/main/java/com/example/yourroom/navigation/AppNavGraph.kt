@@ -35,7 +35,8 @@ fun AppNavGraph(
         ) {
             // Pantallas públicas
             composable("splash") { SplashScreen(navController) }
-            composable("login") { LoginScreen(navController) }
+            composable("login") { showBottomBar.value = false
+                                            LoginScreen(navController) }
             composable("register") { RegisterScreen(navController) }
             composable("success") {
                 SuccessScreen(

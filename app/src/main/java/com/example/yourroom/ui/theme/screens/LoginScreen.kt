@@ -67,41 +67,46 @@ fun LoginScreen(navController: NavHostController) {
                 scope.launch {
                     try {
                         val response = RetrofitClient.api.login(AuthRequest(email, password))
-                        if (response.isSuccessful && response.body() != null) {
-                            val token = response.body()!!.token
-                            val userPrefs = UserPreferences(context)
-                            val userId = response.body()!!.userId
-                            userPrefs.setUserLoggedIn(true)
-                            userPrefs.saveAuthToken(token)
-                            userPrefs.saveUserId(userId)
 
-                            println("🆔 userId tras login: $userId")  // ✅ Este log
-                            val checkId = userPrefs.userIdFlow.first()
-                            println("📦 userId leído de datastore tras guardar: $checkId")
+                        if (response.isSuccessful) {
+                            val body = response.body()
+                            if (body != null) {
+                                val token = body.token
+                                val userId = body.userId
 
-                            loginSuccess = true
-                            errorText = null
+                                val userPrefs = UserPreferences(context)
+                                userPrefs.setUserLoggedIn(true)
+                                userPrefs.saveAuthToken(token)
+                                userPrefs.saveUserId(userId)
 
-                            navController.navigate("home") {
-                                popUpTo("login") { inclusive = true }
+                                println("🆔 userId tras login: $userId")
+                                println("➡️ token: $token")
+
+                                loginSuccess = true
+                                errorText = null
+
+                                navController.navigate("home") {
+                                    popUpTo("login") { inclusive = true }
+                                }
+                            } else {
+                                loginSuccess = false
+                                errorText = "Respuesta vacía del servidor."
+                                println("⚠️ Respuesta body null")
                             }
-                            val rawJson = response.raw().peekBody(Long.MAX_VALUE).string()
-                            println("🧾 JSON crudo recibido: $rawJson")
-                            println("➡️ token: ${response.body()?.token}")
-                            println("➡️ userId: ${response.body()?.userId}")
-
-
-
-
                         } else {
                             loginSuccess = false
-                            errorText = "Email o contraseña incorrectos."
+                            errorText = "Email o contraseña incorrectos. (code ${response.code()})"
+                            println("⚠️ Login fallido - Código: ${response.code()}")
                         }
                     } catch (e: Exception) {
+                        println(" Error de red: ${e.localizedMessage}")
+                        e.printStackTrace()
                         loginSuccess = false
                         errorText = "Error al conectar con el servidor."
                     }
                 }
+
+
             } else {
                 loginSuccess = false
                 errorText = "Por favor, completa los campos."
@@ -128,7 +133,7 @@ fun LoginScreenContent(
     loginSuccess: Boolean
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
-    Modifier.background(YourRoomGradient)
+
 
 
     Box(
