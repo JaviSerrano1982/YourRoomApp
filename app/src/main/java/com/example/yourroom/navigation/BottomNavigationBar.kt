@@ -28,7 +28,7 @@ sealed class BottomNavItem(
     object Search : BottomNavItem("search", Icons.Default.Search, "Buscar")
     object Publish : BottomNavItem("publish", Icons.Default.Add, "Publicar")
     object Favorites : BottomNavItem("favorites", Icons.Default.Star, "Favoritos")
-    object Profile : BottomNavItem("profile", Icons.Default.Person, "Mi Cuenta")
+    object Profile : BottomNavItem("profile", Icons.Default.Person, "Mi Perfil")
 }
 
 @Composable

@@ -66,8 +66,8 @@ fun AppNavGraph(
                 FavoritesScreen()
             }
             composable("profile") {
-                showBottomBar.value = true
-                UserProfileScreen()
+                showBottomBar.value = false
+                UserProfileScreen(navController)
             }
 
         }

@@ -10,8 +10,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Button
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,13 +35,18 @@ import kotlinx.coroutines.launch
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role.Companion.Button
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.example.yourroom.R
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 @Composable
 fun UserProfileScreen(
+    navController: NavHostController,
     viewModel: UserProfileViewModel = hiltViewModel()
 ) {
     val profile by viewModel.profile.collectAsState()
@@ -69,10 +79,12 @@ fun UserProfileScreen(
     }
 
     UserProfileContent(
+        navController = navController,
         profile = profile,
         localImageUri = localImageUri,
         onImageClick = { imageLauncher.launch("image/*") },
         onUpdateField = { viewModel.updateField(it) },
+
         onSaveClick = {
             scope.launch {
                 println("\uD83E\uDDE0 userId recuperado en bot\u00f3n: $userId")
@@ -92,7 +104,8 @@ fun UserProfileContent(
     localImageUri: Uri?,
     onImageClick: () -> Unit,
     onUpdateField: (com.example.yourroom.model.UserProfileDto.() -> com.example.yourroom.model.UserProfileDto) -> Unit,
-    onSaveClick: () -> Unit
+    onSaveClick: () -> Unit,
+    navController: NavController
 ) {
     val photoUrl = profile.photoUrl.takeIf { it.isNotBlank() }
     val hasProfilePhoto = localImageUri != null || photoUrl != null
@@ -107,6 +120,38 @@ fun UserProfileContent(
         painterResource(R.drawable.avatar_default)
     }
 
+    val isEditingFirstName = remember { mutableStateOf(false) }
+    val isEditingLastName = remember { mutableStateOf(false) }
+    val isEditingBirthDate = remember { mutableStateOf(false) }
+    val isEditingGender = remember { mutableStateOf(false) }
+    val isEditingEmail = remember { mutableStateOf(false) }
+    val isEditingPhone = remember { mutableStateOf(false) }
+    val isEditingLocation = remember { mutableStateOf(false) }
+
+    val isAnyFieldEditing = remember {
+        derivedStateOf {
+                    isEditingFirstName.value ||
+                    isEditingLastName.value ||
+                    isEditingBirthDate.value ||
+                    isEditingGender.value ||
+                    isEditingEmail.value ||
+                    isEditingPhone.value ||
+                    isEditingLocation.value
+        }
+    }
+
+
+    fun resetEditingStates() {
+        isEditingFirstName.value = false
+        isEditingLastName.value = false
+        isEditingBirthDate.value = false
+        isEditingGender.value = false
+        isEditingEmail.value = false
+        isEditingPhone.value = false
+        isEditingLocation.value = false
+    }
+
+
 
 
     Box(modifier = Modifier
@@ -120,12 +165,44 @@ fun UserProfileContent(
                 ,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            listOf(Color(0xFF7F00FF), Color(0xFF00BFFF))
+                        )
+                    )
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+            ) {
+                IconButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier.align(Alignment.CenterStart)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Volver",
+                        tint = Color.White
+                    )
+                }
+
+                Text(
+                    text = "Mi perfil",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+
 
             // Cabecera con degradado que ocupa todo el alto disponible
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
+                    .heightIn(min = 250.dp)
+
                     .background(
                         brush = Brush.horizontalGradient(
                             listOf(Color(0xFF7F00FF), Color(0xFF00BFFF))
@@ -182,69 +259,163 @@ fun UserProfileContent(
             }
 
 
-            Spacer(modifier = Modifier.height(16.dp))
+
 
             TextField(
                 value = profile.firstName,
                 onValueChange = { onUpdateField { copy(firstName = it) } },
                 label = { Text("Nombre") },
-                modifier = Modifier.fillMaxWidth(),
-                colors = TextFieldDefaults.colors(
-                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                    unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                    disabledIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-                    cursorColor = MaterialTheme.colorScheme.primary
-                ),
-                singleLine = true
+                enabled = isEditingFirstName.value,
+                trailingIcon = {
+                    IconButton(onClick = { isEditingFirstName.value = true }) {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Editar",
+                            modifier = Modifier.size(18.dp)
+                            )
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                colors = textFieldColors()
             )
 
-            OutlinedTextField(
+            TextField(
                 value = profile.lastName,
                 onValueChange = { onUpdateField { copy(lastName = it) } },
                 label = { Text("Apellidos") },
-                modifier = Modifier.fillMaxWidth()
+                enabled = isEditingLastName.value,
+                trailingIcon = {
+                    IconButton(onClick = { isEditingLastName.value = true }) {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Editar",
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                colors = textFieldColors()
             )
 
-            OutlinedTextField(
+            TextField(
                 value = profile.birthDate,
                 onValueChange = { onUpdateField { copy(birthDate = it) } },
                 label = { Text("Fecha de nacimiento (YYYY-MM-DD)") },
-                modifier = Modifier.fillMaxWidth()
+                enabled = isEditingBirthDate.value,
+                trailingIcon = {
+                    IconButton(onClick = { isEditingBirthDate.value = true }) {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Editar",
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                colors = textFieldColors()
             )
 
-            OutlinedTextField(
+            TextField(
                 value = profile.gender,
                 onValueChange = { onUpdateField { copy(gender = it) } },
                 label = { Text("Género") },
-                modifier = Modifier.fillMaxWidth()
+                enabled = isEditingGender.value,
+                trailingIcon = {
+                    IconButton(onClick = { isEditingGender.value = true }) {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Editar",
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                colors = textFieldColors()
             )
 
-            OutlinedTextField(
+            TextField(
                 value = profile.email,
                 onValueChange = { onUpdateField { copy(email = it) } },
                 label = { Text("Email") },
-                modifier = Modifier.fillMaxWidth()
+                enabled = isEditingEmail.value,
+                trailingIcon = {
+                    IconButton(onClick = { isEditingEmail.value = true }) {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Editar",
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                colors = textFieldColors()
             )
 
-            OutlinedTextField(
+            TextField(
                 value = profile.phone,
                 onValueChange = { onUpdateField { copy(phone = it) } },
                 label = { Text("Teléfono") },
-                modifier = Modifier.fillMaxWidth()
+                enabled = isEditingPhone.value,
+                trailingIcon = {
+                    IconButton(onClick = { isEditingPhone.value = true }) {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Editar",
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                colors = textFieldColors()
             )
 
-            OutlinedTextField(
+            TextField(
                 value = profile.location,
                 onValueChange = { onUpdateField { copy(location = it) } },
                 label = { Text("Ubicación") },
-                modifier = Modifier.fillMaxWidth()
+                enabled = isEditingLocation.value,
+                trailingIcon = {
+                    IconButton(onClick = { isEditingLocation.value = true }) {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Editar",
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                colors = textFieldColors()
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Button(onClick = onSaveClick) {
+            Button(
+                onClick = {
+                    onSaveClick()
+                    resetEditingStates()
+                },
+                enabled = isAnyFieldEditing.value,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isAnyFieldEditing.value) Color(0xFF4CAF50) else Color.LightGray,
+                    contentColor = Color.White
+                ),
+                modifier = Modifier.padding(vertical = 16.dp)
+            ) {
                 Text("Guardar cambios")
             }
+
         }
     }
 }
@@ -263,12 +434,27 @@ fun UserProfileContentPreview() {
         birthDate = "1995-05-10",
         photoUrl = ""
     )
+    val fakeNavController = rememberNavController()
 
     UserProfileContent(
         profile = fakeProfile,
         localImageUri = null,
         onImageClick = {},
         onUpdateField = {},
-        onSaveClick = {}
+        onSaveClick = {},
+        navController = fakeNavController
     )
 }
+
+
+// Utilidad para evitar repetir los mismos colores
+@Composable
+fun textFieldColors() = TextFieldDefaults.colors(
+    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+    unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+    disabledIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+    cursorColor = MaterialTheme.colorScheme.primary,
+    focusedContainerColor = Color.White,
+    unfocusedContainerColor = Color.White,
+    disabledContainerColor = Color.White
+)
