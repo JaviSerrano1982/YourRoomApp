@@ -39,23 +39,13 @@ class UserProfileViewModel @Inject constructor(
     fun updateProfile(userId: Long) {
         viewModelScope.launch {
             try {
-                println("🚀 Lanzando updateProfile con userId = $userId")
-
-                val safeProfile = _profile.value.copy(
-                    photoUrl = _profile.value.photoUrl.ifBlank {
-                        "https://via.placeholder.com/150"
-                    }
-                )
-
-                // 🔍 Imprimir el JSON como cadena para copiar y probar
-                println("📤 JSON enviado: $safeProfile")
+                val safeProfile = _profile.value
 
                 val result = repository.updateProfile(userId, safeProfile)
-                println("✅ Perfil actualizado: $result")
 
                 _profile.value = result
             } catch (e: Exception) {
-                println("❌ Error al actualizar perfil: ${e.message}")
+
                 e.printStackTrace()
             }
         }
