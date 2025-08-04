@@ -14,6 +14,7 @@ import androidx.compose.material.Button
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Settings
@@ -34,6 +35,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role.Companion.Button
 import androidx.compose.ui.text.font.FontWeight
@@ -64,6 +66,7 @@ fun UserProfileScreen(
             viewModel.updateField { copy(photoUrl = it.toString()) }
         }
     }
+    val isImageChanged = remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         val prefs = UserPreferences(context)
@@ -82,7 +85,10 @@ fun UserProfileScreen(
         navController = navController,
         profile = profile,
         localImageUri = localImageUri,
-        onImageClick = { imageLauncher.launch("image/*") },
+        onImageClick = {
+            imageLauncher.launch("image/*")
+            isImageChanged.value = true
+        },
         onUpdateField = { viewModel.updateField(it) },
 
         onSaveClick = {
@@ -94,7 +100,9 @@ fun UserProfileScreen(
                     println("\u26A0\uFE0F No se puede guardar, userId inv\u00e1lido")
                 }
             }
-        }
+        },
+        isImageChanged = isImageChanged
+
     )
 }
 
@@ -105,9 +113,25 @@ fun UserProfileContent(
     onImageClick: () -> Unit,
     onUpdateField: (com.example.yourroom.model.UserProfileDto.() -> com.example.yourroom.model.UserProfileDto) -> Unit,
     onSaveClick: () -> Unit,
-    navController: NavController
+    navController: NavController,
+    isImageChanged: MutableState<Boolean>
+
 ) {
     val photoUrl = profile.photoUrl.takeIf { it.isNotBlank() }
+    var initialProfile by remember { mutableStateOf(profile) }
+    val isInitialProfileSet = remember { mutableStateOf(false) }
+
+
+
+    LaunchedEffect(Unit) {
+        if (!isInitialProfileSet.value && profile.firstName.isNotBlank()) {
+            initialProfile = profile
+            isInitialProfileSet.value = true
+        }
+    }
+
+
+
     val hasProfilePhoto = localImageUri != null || photoUrl != null
 
     val imagePainter = if (hasProfilePhoto) {
@@ -137,6 +161,8 @@ fun UserProfileContent(
                     isEditingEmail.value ||
                     isEditingPhone.value ||
                     isEditingLocation.value
+                            || isImageChanged.value
+
         }
     }
 
@@ -226,24 +252,26 @@ fun UserProfileContent(
                             modifier = Modifier
                                 .size(150.dp)
                                 .clip(CircleShape)
-                                .border(2.dp, Color.White, CircleShape)
+                                .border(2.dp, Color.White, CircleShape),
+                            contentScale = ContentScale.Crop
                         )
 
                         IconButton(
                             onClick = onImageClick,
                             modifier = Modifier
-                                .offset(x = 4.dp, y = 4.dp)
-                                .size(36.dp)
-                                .background(Color(0xFFFF9800), shape = CircleShape)
+                                .offset(x = -12.dp, y = -12.dp)
+                                .size(24.dp)
+                                .background(Color(0xFF2196F3), shape = CircleShape) // Azul cámara
                                 .border(2.dp, Color.White, CircleShape)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = "Cambiar foto",
+                                imageVector = Icons.Default.CameraAlt,
+                                contentDescription = "Cambiar o añadir foto",
                                 tint = Color.White,
                                 modifier = Modifier.size(18.dp)
                             )
                         }
+
                     }
                     Spacer(modifier = Modifier.height(20.dp))
 
@@ -405,6 +433,9 @@ fun UserProfileContent(
                 onClick = {
                     onSaveClick()
                     resetEditingStates()
+                    initialProfile = profile
+                    isImageChanged.value = false
+
                 },
                 enabled = isAnyFieldEditing.value,
                 colors = ButtonDefaults.buttonColors(
@@ -435,6 +466,7 @@ fun UserProfileContentPreview() {
         photoUrl = ""
     )
     val fakeNavController = rememberNavController()
+    val fakeImageChanged = remember { mutableStateOf(false) }
 
     UserProfileContent(
         profile = fakeProfile,
@@ -442,7 +474,9 @@ fun UserProfileContentPreview() {
         onImageClick = {},
         onUpdateField = {},
         onSaveClick = {},
-        navController = fakeNavController
+        navController = fakeNavController,
+        isImageChanged = fakeImageChanged
+
     )
 }
 
