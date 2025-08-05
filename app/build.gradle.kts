@@ -92,6 +92,8 @@ dependencies {
 
     implementation(libs.logging.interceptor.v4120)
 
+    implementation(libs.material.icons.extended)
+
 
 
 

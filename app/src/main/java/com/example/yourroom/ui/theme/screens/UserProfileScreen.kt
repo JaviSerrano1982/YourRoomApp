@@ -6,12 +6,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
-import androidx.compose.material.icons.Icons
+
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
@@ -44,7 +45,10 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.yourroom.R
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import androidx.compose.material.icons.outlined.Male
+import androidx.compose.material.icons.outlined.Female
+import androidx.compose.material.icons.Icons
+
 
 @Composable
 fun UserProfileScreen(
@@ -120,6 +124,10 @@ fun UserProfileContent(
     val photoUrl = profile.photoUrl.takeIf { it.isNotBlank() }
     var initialProfile by remember { mutableStateOf(profile) }
     val isInitialProfileSet = remember { mutableStateOf(false) }
+    val hasChanges = remember { mutableStateOf(false) }
+
+
+
 
 
 
@@ -151,20 +159,7 @@ fun UserProfileContent(
     val isEditingEmail = remember { mutableStateOf(false) }
     val isEditingPhone = remember { mutableStateOf(false) }
     val isEditingLocation = remember { mutableStateOf(false) }
-
-    val isAnyFieldEditing = remember {
-        derivedStateOf {
-                    isEditingFirstName.value ||
-                    isEditingLastName.value ||
-                    isEditingBirthDate.value ||
-                    isEditingGender.value ||
-                    isEditingEmail.value ||
-                    isEditingPhone.value ||
-                    isEditingLocation.value
-                            || isImageChanged.value
-
-        }
-    }
+    val isGenderChanged = remember { mutableStateOf(false) }
 
 
     fun resetEditingStates() {
@@ -291,11 +286,18 @@ fun UserProfileContent(
 
             TextField(
                 value = profile.firstName,
-                onValueChange = { onUpdateField { copy(firstName = it) } },
+                onValueChange = {
+                    onUpdateField { copy(email = it) }
+                    hasChanges.value = true
+                }
+                ,
                 label = { Text("Nombre") },
                 enabled = isEditingFirstName.value,
                 trailingIcon = {
-                    IconButton(onClick = { isEditingFirstName.value = true }) {
+                    IconButton(onClick = {
+                        isEditingFirstName.value = true
+                        hasChanges.value = true},
+                        ) {
                         Icon(
                             Icons.Default.Edit,
                             contentDescription = "Editar",
@@ -305,7 +307,7 @@ fun UserProfileContent(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp,vertical = 4.dp),
+                    .padding(horizontal = 24.dp, vertical = 4.dp),
                 colors = textFieldColors()
             )
 
@@ -325,7 +327,7 @@ fun UserProfileContent(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp,vertical = 4.dp),
+                    .padding(horizontal = 24.dp, vertical = 4.dp),
                 colors = textFieldColors()
             )
 
@@ -345,29 +347,31 @@ fun UserProfileContent(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp,vertical = 4.dp),
+                    .padding(horizontal = 24.dp, vertical = 4.dp),
                 colors = textFieldColors()
             )
 
-            TextField(
-                value = profile.gender,
-                onValueChange = { onUpdateField { copy(gender = it) } },
-                label = { Text("Género") },
-                enabled = isEditingGender.value,
-                trailingIcon = {
-                    IconButton(onClick = { isEditingGender.value = true }) {
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = "Editar",
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                },
+            Text(
+                text = "Género",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp,vertical = 4.dp),
-                colors = textFieldColors()
+                    .padding(horizontal = 24.dp, vertical = 4.dp)
             )
+
+
+            GenderSelector(
+                selectedGender = profile.gender,
+                onGenderSelected = { gender ->
+                    onUpdateField { copy(gender = gender) }
+                    hasChanges.value = true
+                }
+
+            )
+
+
+
 
             TextField(
                 value = profile.email,
@@ -385,7 +389,7 @@ fun UserProfileContent(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp,vertical = 4.dp),
+                    .padding(horizontal = 24.dp, vertical = 4.dp),
                 colors = textFieldColors()
             )
 
@@ -405,7 +409,7 @@ fun UserProfileContent(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp,vertical = 4.dp),
+                    .padding(horizontal = 24.dp, vertical = 4.dp),
                 colors = textFieldColors()
             )
 
@@ -425,27 +429,27 @@ fun UserProfileContent(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp,vertical = 4.dp),
+                    .padding(horizontal = 24.dp, vertical = 4.dp),
                 colors = textFieldColors()
             )
 
             Button(
                 onClick = {
                     onSaveClick()
-                    resetEditingStates()
-                    initialProfile = profile
                     isImageChanged.value = false
-
+                    hasChanges.value = false
                 },
-                enabled = isAnyFieldEditing.value,
+                enabled = hasChanges.value,
+
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isAnyFieldEditing.value) Color(0xFF4CAF50) else Color.LightGray,
+                    containerColor = if ( !hasChanges.value) Color(0xFF4CAF50) else Color.LightGray,
                     contentColor = Color.White
                 ),
-                modifier = Modifier.padding(vertical = 16.dp)
+                modifier = Modifier.padding(24.dp)
             ) {
                 Text("Guardar cambios")
             }
+
 
         }
     }
@@ -492,3 +496,43 @@ fun textFieldColors() = TextFieldDefaults.colors(
     unfocusedContainerColor = Color.White,
     disabledContainerColor = Color.White
 )
+@Composable
+fun GenderSelector(
+    selectedGender: String,
+    onGenderSelected: (String) -> Unit,
+
+) {
+    val options = listOf("Mujer", "Hombre")
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        options.forEach { gender ->
+            val isSelected = gender == selectedGender
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .padding(8.dp)
+                    .clickable {
+                        onGenderSelected(gender)
+
+                    }
+            ) {
+                Icon(
+                    imageVector = if (gender == "Mujer") Icons.Outlined.Female else Icons.Outlined.Male,
+                    contentDescription = gender,
+                    modifier = Modifier.size(48.dp),
+                    tint = if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = gender,
+                    color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray
+                )
+            }
+        }
+    }
+}
