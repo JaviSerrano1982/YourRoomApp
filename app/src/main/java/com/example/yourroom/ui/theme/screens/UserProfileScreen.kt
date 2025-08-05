@@ -287,7 +287,7 @@ fun UserProfileContent(
             }
 
 
-
+            Spacer(modifier = Modifier.height(20.dp))
 
             TextField(
                 value = profile.firstName,
@@ -305,7 +305,7 @@ fun UserProfileContent(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp),
+                    .padding(horizontal = 24.dp,vertical = 4.dp),
                 colors = textFieldColors()
             )
 
@@ -325,7 +325,7 @@ fun UserProfileContent(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp),
+                    .padding(horizontal = 24.dp,vertical = 4.dp),
                 colors = textFieldColors()
             )
 
@@ -345,7 +345,7 @@ fun UserProfileContent(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp),
+                    .padding(horizontal = 24.dp,vertical = 4.dp),
                 colors = textFieldColors()
             )
 
@@ -365,7 +365,7 @@ fun UserProfileContent(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp),
+                    .padding(horizontal = 24.dp,vertical = 4.dp),
                 colors = textFieldColors()
             )
 
@@ -385,7 +385,7 @@ fun UserProfileContent(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp),
+                    .padding(horizontal = 24.dp,vertical = 4.dp),
                 colors = textFieldColors()
             )
 
@@ -405,7 +405,7 @@ fun UserProfileContent(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp),
+                    .padding(horizontal = 24.dp,vertical = 4.dp),
                 colors = textFieldColors()
             )
 
@@ -425,7 +425,7 @@ fun UserProfileContent(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp),
+                    .padding(horizontal = 24.dp,vertical = 4.dp),
                 colors = textFieldColors()
             )
 
