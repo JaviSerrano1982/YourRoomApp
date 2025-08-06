@@ -49,6 +49,7 @@ import com.example.yourroom.R
 import androidx.compose.material.icons.outlined.Male
 import androidx.compose.material.icons.outlined.Female
 import androidx.compose.material.icons.Icons
+import androidx.compose.ui.zIndex
 
 
 @Composable
@@ -128,15 +129,13 @@ fun UserProfileContent(
 
 ) {
     val photoUrl = profile.photoUrl.takeIf { it.isNotBlank() }
-    var initialProfile by remember { mutableStateOf(profile) }
     val isInitialProfileSet = remember { mutableStateOf(false) }
     val hasChanges = remember { mutableStateOf(false) }
 
 
     LaunchedEffect(Unit) {
         if (!isInitialProfileSet.value && profile.firstName.isNotBlank()) {
-            initialProfile = profile
-            isInitialProfileSet.value = true
+                     isInitialProfileSet.value = true
         }
     }
 
@@ -159,7 +158,7 @@ fun UserProfileContent(
     val isEditingEmail = remember { mutableStateOf(false) }
     val isEditingPhone = remember { mutableStateOf(false) }
     val isEditingLocation = remember { mutableStateOf(false) }
-    val isGenderChanged = remember { mutableStateOf(false) }
+
 
 
     fun resetEditingStates() {
@@ -178,6 +177,39 @@ fun UserProfileContent(
     Box(modifier = Modifier
         .fillMaxSize()
         .systemBarsPadding()) {
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(60.dp)
+                .background(
+                    brush = Brush.horizontalGradient(
+                        listOf(Color(0xFF7F00FF), Color(0xFF00BFFF))
+                    )
+                )
+                .padding(horizontal = 16.dp, vertical = 6.dp)
+                .align(Alignment.TopStart) // 👈 esto la fija arriba
+                .zIndex(1f) // 👈 asegura que quede encima del scroll
+        ) {
+            IconButton(
+                onClick = { navController.popBackStack() },
+                modifier = Modifier.align(Alignment.CenterStart)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Volver",
+                    tint = Color.White
+                )
+            }
+
+            Text(
+                text = "Mi perfil",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+                modifier = Modifier.align(Alignment.Center)
+            )
+        }
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -471,29 +503,35 @@ fun UserProfileContent(
                 colors = textFieldColors()
             )
 
+            Spacer(modifier = Modifier.height(70.dp))
+
+        }
+
+            // ✅ Botón fijo abajo
             Button(
                 onClick = {
                     resetEditingStates()
                     onSaveClick()
                     isImageChanged.value = false
                     hasChanges.value = false
-
                 },
                 enabled = hasChanges.value && !isSaving,
-
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if ( !hasChanges.value) Color(0xFF4CAF50) else Color(0xFF4CAF50),
+                    containerColor = if (hasChanges.value) Color(0xFF4CAF50) else Color.Gray,
                     contentColor = Color.White
                 ),
-                modifier = Modifier.padding(24.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding() // 👈 evita que lo tape la barra de gestos
             ) {
                 Text("Guardar cambios")
             }
-
-
         }
+
     }
-}
+
 
 
 @Preview(showBackground = true)
