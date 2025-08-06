@@ -1,5 +1,6 @@
 package com.example.yourroom.screens
 
+import android.R.attr.text
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -61,6 +62,9 @@ fun UserProfileScreen(
 
     var userId by remember { mutableStateOf(0L) }
     var localImageUri by remember { mutableStateOf<Uri?>(null) }
+    var isSaving by remember { mutableStateOf(false) }
+
+
 
     val imageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -96,16 +100,17 @@ fun UserProfileScreen(
         onUpdateField = { viewModel.updateField(it) },
 
         onSaveClick = {
+            isSaving = true
             scope.launch {
-                println("\uD83E\uDDE0 userId recuperado en bot\u00f3n: $userId")
                 if (userId > 0) {
                     viewModel.updateProfile(userId)
-                } else {
-                    println("\u26A0\uFE0F No se puede guardar, userId inv\u00e1lido")
                 }
+                isSaving = false
             }
-        },
-        isImageChanged = isImageChanged
+        }
+        ,
+        isImageChanged = isImageChanged,
+        isSaving = isSaving
 
     )
 }
@@ -118,7 +123,8 @@ fun UserProfileContent(
     onUpdateField: (com.example.yourroom.model.UserProfileDto.() -> com.example.yourroom.model.UserProfileDto) -> Unit,
     onSaveClick: () -> Unit,
     navController: NavController,
-    isImageChanged: MutableState<Boolean>
+    isImageChanged: MutableState<Boolean>,
+    isSaving: Boolean
 
 ) {
     val photoUrl = profile.photoUrl.takeIf { it.isNotBlank() }
@@ -127,18 +133,12 @@ fun UserProfileContent(
     val hasChanges = remember { mutableStateOf(false) }
 
 
-
-
-
-
     LaunchedEffect(Unit) {
         if (!isInitialProfileSet.value && profile.firstName.isNotBlank()) {
             initialProfile = profile
             isInitialProfileSet.value = true
         }
     }
-
-
 
     val hasProfilePhoto = localImageUri != null || photoUrl != null
 
@@ -252,7 +252,10 @@ fun UserProfileContent(
                         )
 
                         IconButton(
-                            onClick = onImageClick,
+                            onClick = {
+                                onImageClick()
+                                hasChanges.value = true
+                            },
                             modifier = Modifier
                                 .offset(x = -12.dp, y = -12.dp)
                                 .size(24.dp)
@@ -281,22 +284,24 @@ fun UserProfileContent(
 
             }
 
+            //CAMPOS DE DATOS
 
             Spacer(modifier = Modifier.height(20.dp))
 
             TextField(
                 value = profile.firstName,
                 onValueChange = {
-                    onUpdateField { copy(email = it) }
+                    onUpdateField { copy(firstName = it) }
                     hasChanges.value = true
                 }
                 ,
                 label = { Text("Nombre") },
-                enabled = isEditingFirstName.value,
+                enabled = isEditingFirstName.value && !isSaving,
                 trailingIcon = {
                     IconButton(onClick = {
                         isEditingFirstName.value = true
                         hasChanges.value = true},
+                        enabled = !isSaving
                         ) {
                         Icon(
                             Icons.Default.Edit,
@@ -313,11 +318,18 @@ fun UserProfileContent(
 
             TextField(
                 value = profile.lastName,
-                onValueChange = { onUpdateField { copy(lastName = it) } },
+                onValueChange = {
+                    onUpdateField { copy(lastName = it) }
+                    hasChanges.value = true
+                },
                 label = { Text("Apellidos") },
-                enabled = isEditingLastName.value,
+                enabled = isEditingLastName.value && !isSaving,
                 trailingIcon = {
-                    IconButton(onClick = { isEditingLastName.value = true }) {
+                    IconButton(onClick = {
+                        isEditingLastName.value = true
+                        hasChanges.value = true},
+                        enabled = !isSaving
+                    ) {
                         Icon(
                             Icons.Default.Edit,
                             contentDescription = "Editar",
@@ -333,11 +345,18 @@ fun UserProfileContent(
 
             TextField(
                 value = profile.birthDate,
-                onValueChange = { onUpdateField { copy(birthDate = it) } },
+                onValueChange = {
+                    onUpdateField { copy(birthDate = it) }
+                    hasChanges.value = true
+                },
                 label = { Text("Fecha de nacimiento (YYYY-MM-DD)") },
-                enabled = isEditingBirthDate.value,
+                enabled = isEditingBirthDate.value && !isSaving,
                 trailingIcon = {
-                    IconButton(onClick = { isEditingBirthDate.value = true }) {
+                    IconButton(onClick = {
+                        isEditingBirthDate.value = true
+                        hasChanges.value = true},
+                        enabled = !isSaving
+                    ) {
                         Icon(
                             Icons.Default.Edit,
                             contentDescription = "Editar",
@@ -366,20 +385,25 @@ fun UserProfileContent(
                 onGenderSelected = { gender ->
                     onUpdateField { copy(gender = gender) }
                     hasChanges.value = true
-                }
+                },
+                isEnabled = !isSaving
 
             )
 
-
-
-
             TextField(
                 value = profile.email,
-                onValueChange = { onUpdateField { copy(email = it) } },
+                onValueChange = {
+                    onUpdateField { copy(email = it) }
+                    hasChanges.value = true
+                },
                 label = { Text("Email") },
-                enabled = isEditingEmail.value,
+                enabled = isEditingEmail.value && !isSaving,
                 trailingIcon = {
-                    IconButton(onClick = { isEditingEmail.value = true }) {
+                    IconButton(onClick = {
+                        isEditingEmail.value = true
+                        hasChanges.value = true},
+                        enabled = !isSaving
+                    ) {
                         Icon(
                             Icons.Default.Edit,
                             contentDescription = "Editar",
@@ -395,11 +419,18 @@ fun UserProfileContent(
 
             TextField(
                 value = profile.phone,
-                onValueChange = { onUpdateField { copy(phone = it) } },
+                onValueChange = {
+                    onUpdateField { copy(phone = it) }
+                    hasChanges.value = true
+                },
                 label = { Text("Teléfono") },
-                enabled = isEditingPhone.value,
+                enabled = isEditingPhone.value  && !isSaving,
                 trailingIcon = {
-                    IconButton(onClick = { isEditingPhone.value = true }) {
+                    IconButton(onClick = {
+                        isEditingPhone.value = true
+                        hasChanges.value = true},
+                        enabled = !isSaving
+                    ) {
                         Icon(
                             Icons.Default.Edit,
                             contentDescription = "Editar",
@@ -415,11 +446,18 @@ fun UserProfileContent(
 
             TextField(
                 value = profile.location,
-                onValueChange = { onUpdateField { copy(location = it) } },
+                onValueChange = {
+                    onUpdateField { copy(location = it) }
+                    hasChanges.value = true
+                },
                 label = { Text("Ubicación") },
-                enabled = isEditingLocation.value,
+                enabled = isEditingLocation.value  && !isSaving,
                 trailingIcon = {
-                    IconButton(onClick = { isEditingLocation.value = true }) {
+                    IconButton(onClick = {
+                        isEditingLocation.value = true
+                        hasChanges.value = true},
+                        enabled = !isSaving
+                    ) {
                         Icon(
                             Icons.Default.Edit,
                             contentDescription = "Editar",
@@ -435,14 +473,16 @@ fun UserProfileContent(
 
             Button(
                 onClick = {
+                    resetEditingStates()
                     onSaveClick()
                     isImageChanged.value = false
                     hasChanges.value = false
+
                 },
-                enabled = hasChanges.value,
+                enabled = hasChanges.value && !isSaving,
 
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if ( !hasChanges.value) Color(0xFF4CAF50) else Color.LightGray,
+                    containerColor = if ( !hasChanges.value) Color(0xFF4CAF50) else Color(0xFF4CAF50),
                     contentColor = Color.White
                 ),
                 modifier = Modifier.padding(24.dp)
@@ -479,7 +519,8 @@ fun UserProfileContentPreview() {
         onUpdateField = {},
         onSaveClick = {},
         navController = fakeNavController,
-        isImageChanged = fakeImageChanged
+        isImageChanged = fakeImageChanged,
+        isSaving = false
 
     )
 }
@@ -500,9 +541,14 @@ fun textFieldColors() = TextFieldDefaults.colors(
 fun GenderSelector(
     selectedGender: String,
     onGenderSelected: (String) -> Unit,
-
+    isEnabled: Boolean
 ) {
-    val options = listOf("Mujer", "Hombre")
+    // Las claves internas deben coincidir con los valores que vas a guardar en la base de datos
+    val options = listOf(
+        "Hombre" to R.drawable.hombre,
+        "Mujer" to R.drawable.mujer,
+        "No binario" to R.drawable.nobinario
+    )
 
     Row(
         modifier = Modifier
@@ -510,26 +556,33 @@ fun GenderSelector(
             .padding(horizontal = 24.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        options.forEach { gender ->
-            val isSelected = gender == selectedGender
+        options.forEach { (genderKey, drawableRes) ->
+            val isSelected = genderKey == selectedGender
+
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .padding(8.dp)
-                    .clickable {
-                        onGenderSelected(gender)
-
+                    .clickable (enabled = isEnabled){
+                        onGenderSelected(genderKey)
                     }
             ) {
-                Icon(
-                    imageVector = if (gender == "Mujer") Icons.Outlined.Female else Icons.Outlined.Male,
-                    contentDescription = gender,
-                    modifier = Modifier.size(48.dp),
-                    tint = if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray
+                Image(
+                    painter = painterResource(id = drawableRes),
+                    contentDescription = genderKey,
+                    modifier = Modifier
+                        .size(45.dp)
+                        .clip(CircleShape)
+                        .border(
+                            width = 2.dp,
+                            color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                            shape = CircleShape
+                        )
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = gender,
+                    text = genderKey.replaceFirstChar { it.uppercase() },
+                    fontSize = 12.sp,
                     color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray
                 )
             }
