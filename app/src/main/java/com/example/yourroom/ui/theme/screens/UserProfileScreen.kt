@@ -49,6 +49,8 @@ import com.example.yourroom.R
 import androidx.compose.material.icons.outlined.Male
 import androidx.compose.material.icons.outlined.Female
 import androidx.compose.material.icons.Icons
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.zIndex
 
 
@@ -434,7 +436,8 @@ fun UserProfileContent(
 
         }
 
-            // ✅ Botón fijo abajo
+            // BOTÓN FIJO PARA GUARDAR CAMBIOS
+
             Button(
                 onClick = {
                     resetEditingStates()
@@ -499,36 +502,40 @@ fun EditableTextField(
     isSaving: Boolean,
     modifier: Modifier = Modifier
 ) {
-    Box(
+    val focusRequester = remember { FocusRequester() }
+
+    // Si el campo se activa, solicita el foco automáticamente
+    LaunchedEffect(isEditing.value) {
+        if (isEditing.value && !isSaving) {
+            focusRequester.requestFocus()
+        }
+    }
+
+    Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding( horizontal = 24.dp, vertical = 4.dp)
+            .padding(horizontal = 24.dp, vertical = 4.dp)
+            .clickable(enabled = !isSaving && !isEditing.value) {
+                isEditing.value = true
+            }
     ) {
         TextField(
             value = value,
-            onValueChange = { newValue ->
+            onValueChange = {
                 if (isEditing.value && !isSaving) {
-                    onValueChange(newValue)
+                    onValueChange(it)
                 }
             },
             label = { Text(label) },
             enabled = isEditing.value && !isSaving,
-            colors = textFieldColors(),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(focusRequester), // Aplica el focusRequester aquí
+            colors = textFieldColors()
         )
-
-        // 👇 Superficie invisible que activa la edición al tocar el campo
-        if (!isEditing.value && !isSaving) {
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .clickable {
-                        isEditing.value = true
-                    }
-            )
-        }
     }
 }
+
 
 
 
