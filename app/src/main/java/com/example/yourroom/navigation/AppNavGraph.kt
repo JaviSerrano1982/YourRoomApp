@@ -31,10 +31,10 @@ fun AppNavGraph(
         NavHost(
             navController = navController,
             //COMENTAR ESTE CÓDIGO PARA HACER BYPASS. (solo pruebas)
-           //startDestination = if (isLoggedIn && userId != 0L) "home" else "splash",
+           startDestination = if (isLoggedIn && userId != 0L) "home" else "splash",
 
             //Descomentar la siguiente línea para hacer Bypass (solo pruebas
-             startDestination="home",
+             //startDestination="home",
             modifier = Modifier.padding(innerPadding)
         ) {
             // Pantallas públicas

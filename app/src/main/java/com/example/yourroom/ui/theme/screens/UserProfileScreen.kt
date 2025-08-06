@@ -324,7 +324,7 @@ fun UserProfileContent(
             Spacer(modifier = Modifier.height(20.dp))
 
             Text(
-                text = "Datos básicos",
+                text = "Información básica",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
@@ -390,7 +390,7 @@ fun UserProfileContent(
             Spacer(modifier = Modifier.height(20.dp))
 
             Text(
-                text = "Datos privados",
+                text = "Información privada",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
