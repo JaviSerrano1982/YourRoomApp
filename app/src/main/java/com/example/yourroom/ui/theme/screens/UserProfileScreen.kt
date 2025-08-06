@@ -215,6 +215,7 @@ fun UserProfileContent(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .imePadding()
+                .background(Color.White)
                 ,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -320,87 +321,49 @@ fun UserProfileContent(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            TextField(
+            Text(
+                text = "Datos básicos",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 4.dp)
+            )
+
+            EditableTextField(
                 value = profile.firstName,
+                label = "Nombre",
                 onValueChange = {
                     onUpdateField { copy(firstName = it) }
                     hasChanges.value = true
-                }
-                ,
-                label = { Text("Nombre") },
-                enabled = isEditingFirstName.value && !isSaving,
-                trailingIcon = {
-                    IconButton(onClick = {
-                        isEditingFirstName.value = true
-                        hasChanges.value = true},
-                        enabled = !isSaving
-                        ) {
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = "Editar",
-                            modifier = Modifier.size(18.dp)
-                            )
-                    }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 4.dp),
-                colors = textFieldColors()
+                isEditing = isEditingFirstName,
+                isSaving = isSaving
             )
 
-            TextField(
+            EditableTextField(
                 value = profile.lastName,
+                label = "Apellidos",
                 onValueChange = {
                     onUpdateField { copy(lastName = it) }
                     hasChanges.value = true
                 },
-                label = { Text("Apellidos") },
-                enabled = isEditingLastName.value && !isSaving,
-                trailingIcon = {
-                    IconButton(onClick = {
-                        isEditingLastName.value = true
-                        hasChanges.value = true},
-                        enabled = !isSaving
-                    ) {
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = "Editar",
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 4.dp),
-                colors = textFieldColors()
+                isEditing = isEditingLastName,
+                isSaving = isSaving
             )
 
-            TextField(
+            EditableTextField(
                 value = profile.birthDate,
+                label = "Fecha de nacimiento (YYYY-MM-DD)",
                 onValueChange = {
                     onUpdateField { copy(birthDate = it) }
                     hasChanges.value = true
                 },
-                label = { Text("Fecha de nacimiento (YYYY-MM-DD)") },
-                enabled = isEditingBirthDate.value && !isSaving,
-                trailingIcon = {
-                    IconButton(onClick = {
-                        isEditingBirthDate.value = true
-                        hasChanges.value = true},
-                        enabled = !isSaving
-                    ) {
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = "Editar",
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 4.dp),
-                colors = textFieldColors()
+                isEditing = isEditingBirthDate,
+                isSaving = isSaving
             )
+
+            Spacer(modifier = Modifier.height(20.dp))
 
             Text(
                 text = "Género",
@@ -422,86 +385,50 @@ fun UserProfileContent(
 
             )
 
-            TextField(
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Text(
+                text = "Datos privados",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 4.dp)
+            )
+
+            EditableTextField(
                 value = profile.email,
+                label = "Email",
                 onValueChange = {
                     onUpdateField { copy(email = it) }
                     hasChanges.value = true
                 },
-                label = { Text("Email") },
-                enabled = isEditingEmail.value && !isSaving,
-                trailingIcon = {
-                    IconButton(onClick = {
-                        isEditingEmail.value = true
-                        hasChanges.value = true},
-                        enabled = !isSaving
-                    ) {
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = "Editar",
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 4.dp),
-                colors = textFieldColors()
+                isEditing = isEditingEmail,
+                isSaving = isSaving
             )
 
-            TextField(
+            EditableTextField(
                 value = profile.phone,
+                label = "Teléfono",
                 onValueChange = {
                     onUpdateField { copy(phone = it) }
                     hasChanges.value = true
                 },
-                label = { Text("Teléfono") },
-                enabled = isEditingPhone.value  && !isSaving,
-                trailingIcon = {
-                    IconButton(onClick = {
-                        isEditingPhone.value = true
-                        hasChanges.value = true},
-                        enabled = !isSaving
-                    ) {
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = "Editar",
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 4.dp),
-                colors = textFieldColors()
+                isEditing = isEditingPhone,
+                isSaving = isSaving
             )
 
-            TextField(
+            EditableTextField(
                 value = profile.location,
+                label = "Ubicación",
                 onValueChange = {
                     onUpdateField { copy(location = it) }
                     hasChanges.value = true
                 },
-                label = { Text("Ubicación") },
-                enabled = isEditingLocation.value  && !isSaving,
-                trailingIcon = {
-                    IconButton(onClick = {
-                        isEditingLocation.value = true
-                        hasChanges.value = true},
-                        enabled = !isSaving
-                    ) {
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = "Editar",
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 4.dp),
-                colors = textFieldColors()
+                isEditing = isEditingLocation,
+                isSaving = isSaving
             )
+
 
             Spacer(modifier = Modifier.height(70.dp))
 
@@ -562,6 +489,47 @@ fun UserProfileContentPreview() {
 
     )
 }
+
+@Composable
+fun EditableTextField(
+    value: String,
+    label: String,
+    onValueChange: (String) -> Unit,
+    isEditing: MutableState<Boolean>,
+    isSaving: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding( horizontal = 24.dp, vertical = 4.dp)
+    ) {
+        TextField(
+            value = value,
+            onValueChange = { newValue ->
+                if (isEditing.value && !isSaving) {
+                    onValueChange(newValue)
+                }
+            },
+            label = { Text(label) },
+            enabled = isEditing.value && !isSaving,
+            colors = textFieldColors(),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        // 👇 Superficie invisible que activa la edición al tocar el campo
+        if (!isEditing.value && !isSaving) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clickable {
+                        isEditing.value = true
+                    }
+            )
+        }
+    }
+}
+
 
 
 // Utilidad para evitar repetir los mismos colores
