@@ -56,6 +56,7 @@ fun UserProfileScreen(
     val isImageChanged by viewModel.isImageChanged.collectAsState()
     val fieldErrors by viewModel.fieldErrors.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
+    val emailErrorMessage by viewModel.emailErrorMessage.collectAsState()
 
     var showLeaveDialog by remember { mutableStateOf(false) }
 
@@ -118,7 +119,8 @@ fun UserProfileScreen(
         fieldErrors = fieldErrors,
         errorMessage = errorMessage,
         onRequestLeave = { showLeaveDialog = true },
-        onDismissError = { viewModel.clearError() }
+        onDismissError = { viewModel.clearError() },
+        emailErrorMessage = emailErrorMessage
     )
 }
 
@@ -136,7 +138,8 @@ fun UserProfileContent(
     hasChanges: Boolean,
     fieldErrors: FieldErrors,
     errorMessage: String?,
-    onDismissError: () -> Unit
+    onDismissError: () -> Unit,
+    emailErrorMessage: String?
 ) {
     val photoUrl = profile.photoUrl.takeIf { it.isNotBlank() }
     val hasProfilePhoto = localImageUri != null || photoUrl != null
@@ -368,7 +371,7 @@ fun UserProfileContent(
                 isEditing = isEditingEmail,
                 isSaving = isSaving,
                 isError = fieldErrors.email,
-                errorMessage = "Campo obligatorio"
+                errorMessage = emailErrorMessage ?: "Campo obligatorio"
             )
 
             EditableTextField(
@@ -581,6 +584,7 @@ fun UserProfileContentPreview() {
         hasChanges = true,
         fieldErrors = fakeFieldErrors,
         errorMessage = null,
-        onDismissError = {}
+        onDismissError = {},
+        emailErrorMessage = null
     )
 }

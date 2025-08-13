@@ -56,6 +56,10 @@ class UserProfileViewModel @Inject constructor(
 
     private var showErrors: Boolean = false
 
+    private val _emailErrorMessage = MutableStateFlow<String?>(null)
+    val emailErrorMessage: StateFlow<String?> = _emailErrorMessage
+
+
     /** ===== VALIDACIÓN ===== */
     private fun isFormComplete(p: UserProfileDto): Boolean {
         return p.firstName.isNotBlank() &&
@@ -84,15 +88,29 @@ class UserProfileViewModel @Inject constructor(
         }
         return valid
     }
-    private fun computeErrors(p: UserProfileDto) = FieldErrors(
-        firstName = p.firstName.isBlank(),
-        lastName  = p.lastName.isBlank(),
-        birthDate = p.birthDate.isBlank(),
-        gender    = p.gender.isBlank(),
-        email     = p.email.isBlank(),
-        phone     = p.phone.isBlank(),
-        location  = p.location.isBlank()
-    )
+
+    private fun isValidEmail(email: String): Boolean {
+        return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    }
+    private fun emailErrorMessage(email: String): String? =
+        when {
+            email.isBlank() -> "Campo obligatorio"
+            !isValidEmail(email) -> "Email inválido"
+            else -> null
+        }
+
+    private fun computeErrors(p: UserProfileDto): FieldErrors {
+        return FieldErrors(
+            firstName = p.firstName.isBlank(),
+            lastName = p.lastName.isBlank(),
+            birthDate = p.birthDate.isBlank(),
+            gender = p.gender.isBlank(),
+            email = p.email.isBlank() || !isValidEmail(p.email),
+            phone = p.phone.isBlank(),
+            location = p.location.isBlank()
+        )
+    }
+
 
     private fun hasAnyError(fe: FieldErrors) =
         fe.firstName || fe.lastName || fe.birthDate || fe.gender || fe.email || fe.phone || fe.location
@@ -180,47 +198,73 @@ class UserProfileViewModel @Inject constructor(
     fun updateField(update: UserProfileDto.() -> UserProfileDto) {
         _profile.value = _profile.value.update()
 
+        // Mensaje específico de email (se actualiza siempre)
+        _emailErrorMessage.value = emailErrorMessage(_profile.value.email)
+
+        val current = _profile.value
+        val base = initialProfile ?: current.also { initialProfile = it.copy() }
+        val fieldsChanged = current != base
+
         if (showErrors) {
-            val fe = computeErrors(_profile.value)
+            val fe = computeErrors(current)
             _fieldErrors.value = fe
-            // habilita guardar si ya no quedan errores o si cambió la imagen
-            _hasChanges.value = !hasAnyError(fe) || _isImageChanged.value
+
+            // ✅ Mantén el botón activo si:
+            // - hay cambios respecto al snapshot, o
+            // - cambió la imagen, o
+            // - ya no quedan errores (para permitir guardar aunque coincida con el snapshot)
+            _hasChanges.value = fieldsChanged || _isImageChanged.value || !hasAnyError(fe)
+
             if (!hasAnyError(fe)) {
-                _errorMessage.value = null // cierra diálogo si ya no hay errores
+                _errorMessage.value = null // cierra el diálogo si todo ya está OK
             }
         } else {
             // modo normal: botón activo si hay cambios vs snapshot o si cambió la imagen
-            recomputeHasChanges()
+            _hasChanges.value = fieldsChanged || _isImageChanged.value
         }
     }
+
 
 
 
     fun updateProfile(userId: Long) {
         if (_isSaving.value) return
         viewModelScope.launch {
-            if (!validateFields(showErrors = true)) {
-                showErrors = true                      // 👈 importante
-                _errorMessage.value = "Por favor, completa todos los campos obligatorios"
+            // 🔍 Validación completa (incluye formato de email)
+            val errors = computeErrors(_profile.value)
+            _emailErrorMessage.value = emailErrorMessage(_profile.value.email)
+            if (hasAnyError(errors)) {
+                _fieldErrors.value = errors
+                _errorMessage.value = "Por favor, corrige los campos marcados"
+                showErrors = true
                 return@launch
             }
+
+            // ✅ Si todo está bien, guardar
             _isSaving.value = true
             try {
-                val result = repository.updateProfile(userId, _profile.value)
+                val safeProfile = _profile.value
+                val result = repository.updateProfile(userId, safeProfile)
                 _profile.value = result
                 initialProfile = result.copy()
                 _isImageChanged.value = false
-                _fieldErrors.value = FieldErrors()
-                _errorMessage.value = null
+
+                //Reseteamos errore y mensajes
+                _emailErrorMessage.value = null
                 showErrors = false
+                _fieldErrors.value = FieldErrors() // limpia errores
+                _errorMessage.value = null
+
                 recomputeHasChanges()
             } catch (e: Exception) {
                 _errorMessage.value = e.message
+                e.printStackTrace()
             } finally {
                 _isSaving.value = false
             }
         }
     }
+
 
 
     fun clearError() {

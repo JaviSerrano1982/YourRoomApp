@@ -27,7 +27,7 @@ sealed class BottomNavItem(
     object Home : BottomNavItem("home", Icons.Default.Home, "Inicio")
     object Search : BottomNavItem("search", Icons.Default.Search, "Buscar")
     object Publish : BottomNavItem("publish", Icons.Default.Add, "Publicar")
-    object Favorites : BottomNavItem("favorites", Icons.Default.Star, "Favoritos")
+    object Favorites : BottomNavItem("favorites", Icons.Default.Favorite, "Favoritos")
     object Profile : BottomNavItem("profile", Icons.Default.Person, "Mi Perfil")
 }
 
