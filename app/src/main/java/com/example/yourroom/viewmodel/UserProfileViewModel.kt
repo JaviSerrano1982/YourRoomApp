@@ -59,6 +59,14 @@ class UserProfileViewModel @Inject constructor(
     private val _emailErrorMessage = MutableStateFlow<String?>(null)
     val emailErrorMessage: StateFlow<String?> = _emailErrorMessage
 
+    private val _saveSuccess = MutableStateFlow(false)
+    val saveSuccess: StateFlow<Boolean> = _saveSuccess
+
+    fun clearSaveSuccess() {
+        _saveSuccess.value = false
+    }
+
+
 
     /** ===== VALIDACIÓN ===== */
     private fun isFormComplete(p: UserProfileDto): Boolean {
@@ -248,6 +256,7 @@ class UserProfileViewModel @Inject constructor(
                 _profile.value = result
                 initialProfile = result.copy()
                 _isImageChanged.value = false
+                _saveSuccess.value = true
 
                 //Reseteamos errore y mensajes
                 _emailErrorMessage.value = null

@@ -11,10 +11,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,6 +31,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,6 +46,7 @@ import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.yourroom.model.UserProfileDto
 import com.example.yourroom.viewmodel.FieldErrors
+import kotlinx.coroutines.launch
 
 @Composable
 fun UserProfileScreen(
@@ -57,9 +62,11 @@ fun UserProfileScreen(
     val fieldErrors by viewModel.fieldErrors.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val emailErrorMessage by viewModel.emailErrorMessage.collectAsState()
+    val saveSuccess by viewModel.saveSuccess.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
     var showLeaveDialog by remember { mutableStateOf(false) }
-
 
 
     val context = LocalContext.current
@@ -69,6 +76,26 @@ fun UserProfileScreen(
     ) { uri: Uri? ->
         viewModel.setLocalImage(uri)
     }
+
+    LaunchedEffect(saveSuccess) {
+        if (saveSuccess) {
+            coroutineScope.launch {
+                val result = snackbarHostState.showSnackbar(
+                    message = "Datos guardados correctamente",
+                    actionLabel = "Inicio",
+                    duration = SnackbarDuration.Short
+                )
+                if (result == SnackbarResult.ActionPerformed) {
+                    navController.navigate("home") {
+                        popUpTo("home") { inclusive = true }
+                    }
+                }
+            }
+            viewModel.clearSaveSuccess()
+        }
+    }
+
+
 
     LaunchedEffect(Unit) {
         viewModel.initProfile(context)
@@ -101,27 +128,70 @@ fun UserProfileScreen(
         )
     }
 
-    UserProfileContent(
-        navController = navController,
-        profile = profile,
-        localImageUri = localImageUri,
-        onImageClick = { imageLauncher.launch("image/*") },
-        onUpdateField = { viewModel.updateField(it) },
-        onSaveClick = {
-            if (userId > 0) {
-                viewModel.updateProfile(userId)
-                viewModel.clearImageChange()
+    Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                Snackbar(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .clip(RoundedCornerShape(12.dp)),
+                    containerColor = Color(0xFF4CAF50), // Verde positivo
+                    contentColor = Color.White,
+                    action = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Acción principal: "Inicio"
+                            IconButton(
+                                onClick = { data.performAction() },
+                                modifier = Modifier
+                                    .size(32.dp) // mismo tamaño que la X
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Home,
+                                    contentDescription = "Ir a inicio",
+                                    tint = Color.White
+                                )
+                            }
+                            // Botón de cierre: "X"
+                            IconButton(onClick = { data.dismiss() }) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Cerrar",
+                                    tint = Color.White
+                                )
+                            }
+                        }
+                    }
+                ) {
+                    Text(data.visuals.message)
+                }
             }
-        },
-        isImageChanged = remember { mutableStateOf(isImageChanged) }, // Para Preview
-        isSaving = isSaving,
-        hasChanges = hasChanges,
-        fieldErrors = fieldErrors,
-        errorMessage = errorMessage,
-        onRequestLeave = { showLeaveDialog = true },
-        onDismissError = { viewModel.clearError() },
-        emailErrorMessage = emailErrorMessage
-    )
+        }
+    ) { padding ->
+        UserProfileContent(
+            navController = navController,
+            profile = profile,
+            localImageUri = localImageUri,
+            onImageClick = { imageLauncher.launch("image/*") },
+            onUpdateField = { viewModel.updateField(it) },
+            onSaveClick = {
+                if (userId > 0) {
+                    viewModel.updateProfile(userId)
+                    viewModel.clearImageChange()
+                }
+            },
+            isImageChanged = remember { mutableStateOf(isImageChanged) },
+            isSaving = isSaving,
+            hasChanges = hasChanges,
+            fieldErrors = fieldErrors,
+            errorMessage = errorMessage,
+            onRequestLeave = { showLeaveDialog = true },
+            onDismissError = { viewModel.clearError() },
+            emailErrorMessage = emailErrorMessage,
+            modifier = Modifier.padding(padding) // para evitar que el snackbar tape contenido
+        )
+    }
 }
 
 @Composable
@@ -139,7 +209,8 @@ fun UserProfileContent(
     fieldErrors: FieldErrors,
     errorMessage: String?,
     onDismissError: () -> Unit,
-    emailErrorMessage: String?
+    emailErrorMessage: String?,
+    modifier: Modifier = Modifier
 ) {
     val photoUrl = profile.photoUrl.takeIf { it.isNotBlank() }
     val hasProfilePhoto = localImageUri != null || photoUrl != null
@@ -405,7 +476,7 @@ fun UserProfileContent(
             },
             enabled = hasChanges && !isSaving,
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (hasChanges) Color(0xFF4CAF50) else Color.Gray,
+                containerColor = if (hasChanges) Color(0xFF2196F3) else Color.Gray,
                 contentColor = Color.White
             ),
             modifier = Modifier
