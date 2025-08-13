@@ -90,7 +90,7 @@ fun LoginScreen(navController: NavHostController) {
 
                             }
                         } else {
-                            errorText = "Email o contraseña incorrectos. )"
+                            errorText = "Email o contraseña incorrectos. "
                         }
                     } catch (e: Exception) {
                        e.printStackTrace()

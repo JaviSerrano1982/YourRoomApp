@@ -9,11 +9,19 @@ import com.example.yourroom.datastore.UserPreferences
 import com.example.yourroom.model.UserProfileDto
 import com.example.yourroom.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+data class FieldErrors(
+    val firstName: Boolean = false,
+    val lastName: Boolean = false,
+    val birthDate: Boolean = false,
+    val gender: Boolean = false,
+    val email: Boolean = false,
+    val phone: Boolean = false,
+    val location: Boolean = false
+)
 
 @HiltViewModel
 class UserProfileViewModel @Inject constructor(
@@ -41,6 +49,77 @@ class UserProfileViewModel @Inject constructor(
     private val _isImageChanged = MutableStateFlow(false)
     val isImageChanged: StateFlow<Boolean> = _isImageChanged
 
+    private val _fieldErrors = MutableStateFlow(FieldErrors())
+    val fieldErrors: StateFlow<FieldErrors> = _fieldErrors
+
+    private var initialProfile: UserProfileDto? = null
+
+    private var showErrors: Boolean = false
+
+    /** ===== VALIDACIÓN ===== */
+    private fun isFormComplete(p: UserProfileDto): Boolean {
+        return p.firstName.isNotBlank() &&
+                p.lastName.isNotBlank() &&
+                p.birthDate.isNotBlank() &&
+                p.gender.isNotBlank() &&
+                p.email.isNotBlank() &&
+                p.phone.isNotBlank() &&
+                p.location.isNotBlank()
+    }
+
+    fun validateFields(showErrors: Boolean = false): Boolean {
+        val p = _profile.value
+        val valid = isFormComplete(p)
+
+        if (showErrors) {
+            _fieldErrors.value = FieldErrors(
+                firstName = p.firstName.isBlank(),
+                lastName = p.lastName.isBlank(),
+                birthDate = p.birthDate.isBlank(),
+                gender = p.gender.isBlank(),
+                email = p.email.isBlank(),
+                phone = p.phone.isBlank(),
+                location = p.location.isBlank()
+            )
+        }
+        return valid
+    }
+    private fun computeErrors(p: UserProfileDto) = FieldErrors(
+        firstName = p.firstName.isBlank(),
+        lastName  = p.lastName.isBlank(),
+        birthDate = p.birthDate.isBlank(),
+        gender    = p.gender.isBlank(),
+        email     = p.email.isBlank(),
+        phone     = p.phone.isBlank(),
+        location  = p.location.isBlank()
+    )
+
+    private fun hasAnyError(fe: FieldErrors) =
+        fe.firstName || fe.lastName || fe.birthDate || fe.gender || fe.email || fe.phone || fe.location
+
+    private fun markInitial(p: UserProfileDto) {
+        _profile.value = p
+        initialProfile = p.copy()
+        _isImageChanged.value = false
+        _localImageUri.value = null
+        _fieldErrors.value = FieldErrors()   // si usas errores por campo
+        _errorMessage.value = null           // no mostrar diálogo al entrar
+        showErrors = false                   // si usas el flag de “mostrar errores”
+        recomputeHasChanges()
+    }
+
+
+    private fun recomputeHasChanges() {
+        val current = _profile.value
+        val initial = initialProfile
+        val fieldsChanged = initial != null && current != initial
+
+        // ✅ Botón activo si hay cambios en campos o si cambió la imagen
+        _hasChanges.value = _isImageChanged.value || fieldsChanged
+    }
+
+
+    /** ===== CICLO DE VIDA / CARGA ===== */
     fun initProfile(context: Context) {
         viewModelScope.launch {
             val prefs = UserPreferences(context)
@@ -50,60 +129,99 @@ class UserProfileViewModel @Inject constructor(
 
             if (storedId > 0) {
                 loadProfile(storedId)
-            } else {
-                Log.w("Perfil", "⚠️ userId inválido al cargar perfil")
             }
         }
-    }
-
-    fun setLocalImage(uri: Uri?) {
-        _localImageUri.value = uri
-        uri?.let {
-            updateField { copy(photoUrl = it.toString()) }
-            _isImageChanged.value = true
-        }
-    }
-
-    fun clearImageChange() {
-        _isImageChanged.value = false
     }
 
     fun loadProfile(userId: Long) {
         viewModelScope.launch {
             if (userId <= 0) return@launch
             try {
-                val profile = repository.getProfile(userId)
-                _profile.value = profile
-                _hasChanges.value = false
+                val p = repository.getProfile(userId)
+                markInitial(p)                         // ✅ perfil existente
             } catch (e: Exception) {
-                _errorMessage.value = e.message
-                e.printStackTrace()
+                val msg = e.message ?: ""
+                // ✅ si el backend devuelve 404 al no existir perfil, arrancamos vacío
+                if (msg.contains("404")) {
+                    markInitial(UserProfileDto())      // perfil nuevo -> estado vacío
+                } else {
+                    // otros errores sí los mostramos
+                    _errorMessage.value = "No se pudo cargar el perfil"
+                }
             }
         }
     }
 
+
+    /** ===== ACCIONES DE USUARIO ===== */
+    fun setLocalImage(uri: Uri?) {
+        _localImageUri.value = uri
+        uri?.let {
+            _isImageChanged.value = true
+            _profile.value = _profile.value.copy(photoUrl = it.toString())
+        } ?: run { _isImageChanged.value = false }
+
+        if (showErrors) {
+            val fe = computeErrors(_profile.value)
+            _fieldErrors.value = fe
+            _hasChanges.value = !hasAnyError(fe) || _isImageChanged.value
+        } else {
+            recomputeHasChanges()
+        }
+    }
+
+
+
+    fun clearImageChange() {
+        _isImageChanged.value = false
+        recomputeHasChanges()
+    }
+
+    fun updateField(update: UserProfileDto.() -> UserProfileDto) {
+        _profile.value = _profile.value.update()
+
+        if (showErrors) {
+            val fe = computeErrors(_profile.value)
+            _fieldErrors.value = fe
+            // habilita guardar si ya no quedan errores o si cambió la imagen
+            _hasChanges.value = !hasAnyError(fe) || _isImageChanged.value
+            if (!hasAnyError(fe)) {
+                _errorMessage.value = null // cierra diálogo si ya no hay errores
+            }
+        } else {
+            // modo normal: botón activo si hay cambios vs snapshot o si cambió la imagen
+            recomputeHasChanges()
+        }
+    }
+
+
+
     fun updateProfile(userId: Long) {
         if (_isSaving.value) return
         viewModelScope.launch {
+            if (!validateFields(showErrors = true)) {
+                showErrors = true                      // 👈 importante
+                _errorMessage.value = "Por favor, completa todos los campos obligatorios"
+                return@launch
+            }
             _isSaving.value = true
             try {
-                val safeProfile = _profile.value
-                val result = repository.updateProfile(userId, safeProfile)
+                val result = repository.updateProfile(userId, _profile.value)
                 _profile.value = result
-                _hasChanges.value = false
+                initialProfile = result.copy()
+                _isImageChanged.value = false
+                _fieldErrors.value = FieldErrors()
+                _errorMessage.value = null
+                showErrors = false
+                recomputeHasChanges()
             } catch (e: Exception) {
                 _errorMessage.value = e.message
-                e.printStackTrace()
             } finally {
                 _isSaving.value = false
             }
         }
     }
 
-    fun updateField(update: UserProfileDto.() -> UserProfileDto) {
-        _profile.value = _profile.value.update()
-        _hasChanges.value = true
-    }
 
     fun clearError() {
         _errorMessage.value = null

@@ -1,6 +1,7 @@
 package com.example.yourroom.ui.theme.screens
 
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -38,7 +39,9 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.yourroom.R
 import com.example.yourroom.viewmodel.UserProfileViewModel
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.yourroom.model.UserProfileDto
+import com.example.yourroom.viewmodel.FieldErrors
 
 @Composable
 fun UserProfileScreen(
@@ -51,6 +54,12 @@ fun UserProfileScreen(
     val userId by viewModel.userId.collectAsState()
     val localImageUri by viewModel.localImageUri.collectAsState()
     val isImageChanged by viewModel.isImageChanged.collectAsState()
+    val fieldErrors by viewModel.fieldErrors.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+
+    var showLeaveDialog by remember { mutableStateOf(false) }
+
+
 
     val context = LocalContext.current
 
@@ -62,6 +71,33 @@ fun UserProfileScreen(
 
     LaunchedEffect(Unit) {
         viewModel.initProfile(context)
+    }
+
+    BackHandler {
+        if (hasChanges && !isSaving) {
+            showLeaveDialog = true
+        } else {
+            navController.popBackStack()
+        }
+    }
+    // AlertDialog de confirmación para salir
+    if (showLeaveDialog) {
+        AlertDialog(
+            onDismissRequest = { showLeaveDialog = false },
+            title = { Text("Cambios sin guardar") },
+            text = { Text("Si sales ahora, los cambios no guardados se perderán.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLeaveDialog = false
+                        navController.popBackStack()
+                    }
+                ) { Text("Salir") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLeaveDialog = false }) { Text("Cancelar") }
+            }
+        )
     }
 
     UserProfileContent(
@@ -78,7 +114,11 @@ fun UserProfileScreen(
         },
         isImageChanged = remember { mutableStateOf(isImageChanged) }, // Para Preview
         isSaving = isSaving,
-        hasChanges = hasChanges
+        hasChanges = hasChanges,
+        fieldErrors = fieldErrors,
+        errorMessage = errorMessage,
+        onRequestLeave = { showLeaveDialog = true },
+        onDismissError = { viewModel.clearError() }
     )
 }
 
@@ -92,7 +132,11 @@ fun UserProfileContent(
     navController: NavController,
     isImageChanged: MutableState<Boolean>,
     isSaving: Boolean,
-    hasChanges: Boolean
+    onRequestLeave: () -> Unit,
+    hasChanges: Boolean,
+    fieldErrors: FieldErrors,
+    errorMessage: String?,
+    onDismissError: () -> Unit
 ) {
     val photoUrl = profile.photoUrl.takeIf { it.isNotBlank() }
     val hasProfilePhoto = localImageUri != null || photoUrl != null
@@ -114,6 +158,20 @@ fun UserProfileContent(
     val isEditingEmail = remember { mutableStateOf(false) }
     val isEditingPhone = remember { mutableStateOf(false) }
     val isEditingLocation = remember { mutableStateOf(false) }
+
+
+    if (errorMessage != null) {
+        AlertDialog(
+            onDismissRequest = onDismissError,
+            title = { Text("Datos incompletos") },
+            text  = { Text(errorMessage ?: "") },
+            confirmButton = {
+                TextButton(onClick = onDismissError) { Text("OK") }
+            }
+        )
+    }
+
+
 
     fun resetEditingStates() {
         isEditingFirstName.value = false
@@ -143,7 +201,17 @@ fun UserProfileContent(
                 .zIndex(2f)
         ) {
             IconButton(
-                onClick = { navController.popBackStack() },
+                onClick = {
+                    if (hasChanges && !isSaving) {
+                        // delega al Screen mostrando el diálogo
+                        // opción A: expón un callback onRequestLeave() desde Content
+                        // opción B (rápida): pásale un lambda para setear showLeaveDialog
+                        onRequestLeave()
+
+                    } else {
+                        navController.popBackStack()
+                    }
+                },
                 modifier = Modifier.align(Alignment.CenterStart)
             ) {
                 Icon(
@@ -223,6 +291,9 @@ fun UserProfileContent(
             }
 
             Spacer(modifier = Modifier.height(20.dp))
+
+            // CAMPOS
+
             Text(
                 text = "Información básica",
                 style = MaterialTheme.typography.labelLarge,
@@ -237,7 +308,10 @@ fun UserProfileContent(
                 label = "Nombre",
                 onValueChange = { onUpdateField { copy(firstName = it) } },
                 isEditing = isEditingFirstName,
-                isSaving = isSaving
+                isSaving = isSaving,
+                isError = fieldErrors.firstName,
+                errorMessage = "Campo obligatorio"
+
             )
 
             EditableTextField(
@@ -245,7 +319,9 @@ fun UserProfileContent(
                 label = "Apellidos",
                 onValueChange = { onUpdateField { copy(lastName = it) } },
                 isEditing = isEditingLastName,
-                isSaving = isSaving
+                isSaving = isSaving,
+                isError = fieldErrors.lastName,
+                errorMessage = "Campo obligatorio"
             )
 
             EditableTextField(
@@ -253,7 +329,9 @@ fun UserProfileContent(
                 label = "Fecha de nacimiento (YYYY-MM-DD)",
                 onValueChange = { onUpdateField { copy(birthDate = it) } },
                 isEditing = isEditingBirthDate,
-                isSaving = isSaving
+                isSaving = isSaving,
+                isError = fieldErrors.birthDate,
+                errorMessage = "Campo obligatorio"
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -269,7 +347,8 @@ fun UserProfileContent(
             GenderSelector(
                 selectedGender = profile.gender,
                 onGenderSelected = { gender -> onUpdateField { copy(gender = gender) } },
-                isEnabled = !isSaving
+                isEnabled = !isSaving,
+                isError = fieldErrors.gender
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -287,7 +366,9 @@ fun UserProfileContent(
                 label = "Email",
                 onValueChange = { onUpdateField { copy(email = it) } },
                 isEditing = isEditingEmail,
-                isSaving = isSaving
+                isSaving = isSaving,
+                isError = fieldErrors.email,
+                errorMessage = "Campo obligatorio"
             )
 
             EditableTextField(
@@ -295,7 +376,9 @@ fun UserProfileContent(
                 label = "Teléfono",
                 onValueChange = { onUpdateField { copy(phone = it) } },
                 isEditing = isEditingPhone,
-                isSaving = isSaving
+                isSaving = isSaving,
+                isError = fieldErrors.phone,
+                errorMessage = "Campo obligatorio"
             )
 
             EditableTextField(
@@ -303,7 +386,9 @@ fun UserProfileContent(
                 label = "Ubicación",
                 onValueChange = { onUpdateField { copy(location = it) } },
                 isEditing = isEditingLocation,
-                isSaving = isSaving
+                isSaving = isSaving,
+                isError = fieldErrors.location,
+                errorMessage = "Campo obligatorio"
             )
 
             Spacer(modifier = Modifier.height(70.dp))
@@ -344,6 +429,8 @@ fun EditableTextField(
     onValueChange: (String) -> Unit,
     isEditing: MutableState<Boolean>,
     isSaving: Boolean,
+    isError: Boolean = false,
+    errorMessage: String? = null,
     modifier: Modifier = Modifier
 ) {
     val focusRequester = FocusRequester()
@@ -371,6 +458,15 @@ fun EditableTextField(
             },
             label = { Text(label) },
             enabled = isEditing.value && !isSaving,
+            isError = isError,  // activa borde rojo
+            supportingText = {
+                if (isError && errorMessage != null) {
+                    Text(
+                        text = errorMessage,
+                        color = Color.Red
+                    )
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .focusRequester(focusRequester),
@@ -394,7 +490,8 @@ fun textFieldColors() = TextFieldDefaults.colors(
 fun GenderSelector(
     selectedGender: String,
     onGenderSelected: (String) -> Unit,
-    isEnabled: Boolean
+    isEnabled: Boolean,
+    isError: Boolean = false
 ) {
     val options = listOf(
         "Hombre" to R.drawable.hombre,
@@ -440,12 +537,21 @@ fun GenderSelector(
             }
         }
     }
+
+    if (isError) {
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = "Campo obligatorio",
+            color = Color.Red,
+            fontSize = 12.sp
+        )
+    }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun UserProfileContentPreview() {
-    val fakeProfile = UserProfileDto(
+    val fakeProfile = com.example.yourroom.model.UserProfileDto(
         firstName = "Javier",
         lastName = "Serrano",
         email = "javier@example.com",
@@ -458,6 +564,10 @@ fun UserProfileContentPreview() {
     val fakeNavController = rememberNavController()
     val fakeImageChanged = remember { mutableStateOf(false) }
 
+    // Importa FieldErrors:
+    // import com.example.yourroom.viewmodel.FieldErrors
+    val fakeFieldErrors = com.example.yourroom.viewmodel.FieldErrors()
+
     UserProfileContent(
         profile = fakeProfile,
         localImageUri = null,
@@ -466,7 +576,11 @@ fun UserProfileContentPreview() {
         onSaveClick = {},
         navController = fakeNavController,
         isImageChanged = fakeImageChanged,
+        onRequestLeave = {},
         isSaving = false,
-        hasChanges = true
+        hasChanges = true,
+        fieldErrors = fakeFieldErrors,
+        errorMessage = null,
+        onDismissError = {}
     )
 }
