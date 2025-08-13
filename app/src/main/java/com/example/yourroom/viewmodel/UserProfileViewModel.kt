@@ -164,10 +164,10 @@ class UserProfileViewModel @Inject constructor(
             if (userId <= 0) return@launch
             try {
                 val p = repository.getProfile(userId)
-                markInitial(p)                         // ✅ perfil existente
+                markInitial(p)                         //  perfil existente
             } catch (e: Exception) {
                 val msg = e.message ?: ""
-                // ✅ si el backend devuelve 404 al no existir perfil, arrancamos vacío
+                // si el backend devuelve 404 al no existir perfil, arrancamos vacío
                 if (msg.contains("404")) {
                     markInitial(UserProfileDto())      // perfil nuevo -> estado vacío
                 } else {

@@ -34,7 +34,7 @@ fun AppNavGraph(
            startDestination = if (isLoggedIn && userId != 0L) "home" else "splash",
 
             //Descomentar la siguiente línea para hacer Bypass (solo pruebas
-             //startDestination="home",
+            // startDestination="home",
             modifier = Modifier.padding(innerPadding)
         ) {
             // Pantallas públicas

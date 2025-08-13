@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Home
@@ -47,6 +48,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.yourroom.model.UserProfileDto
 import com.example.yourroom.viewmodel.FieldErrors
 import kotlinx.coroutines.launch
+import androidx.compose.material3.rememberDatePickerState
 
 @Composable
 fun UserProfileScreen(
@@ -398,15 +400,16 @@ fun UserProfileContent(
                 errorMessage = "Campo obligatorio"
             )
 
-            EditableTextField(
+            BirthDateField(
                 value = profile.birthDate,
-                label = "Fecha de nacimiento (YYYY-MM-DD)",
-                onValueChange = { onUpdateField { copy(birthDate = it) } },
-                isEditing = isEditingBirthDate,
+                onDateSelected = { newDate ->
+                    onUpdateField { copy(birthDate = newDate) }
+                },
                 isSaving = isSaving,
                 isError = fieldErrors.birthDate,
-                errorMessage = "Campo obligatorio"
+                errorMessage = if (fieldErrors.birthDate) "Campo obligatorio" else null
             )
+
 
             Spacer(modifier = Modifier.height(20.dp))
             Text(
@@ -476,7 +479,7 @@ fun UserProfileContent(
             },
             enabled = hasChanges && !isSaving,
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (hasChanges) Color(0xFF2196F3) else Color.Gray,
+                containerColor = if (hasChanges) Color(0xFF673AB7) else Color.Gray,
                 contentColor = Color.White
             ),
             modifier = Modifier
@@ -559,6 +562,115 @@ fun textFieldColors() = TextFieldDefaults.colors(
     unfocusedContainerColor = Color.White,
     disabledContainerColor = Color.White
 )
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BirthDateField(
+    value: String,
+    label: String = "Fecha de nacimiento",
+    onDateSelected: (String) -> Unit,
+    isSaving: Boolean,
+    isError: Boolean,
+    errorMessage: String?,
+    modifier: Modifier = Modifier
+) {
+    // --- Utilidades de fecha ---
+
+    // Formateador español
+    val dateFormatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")
+
+    fun parseToEpochMillis(dateStr: String): Long? = try {
+        val ld = java.time.LocalDate.parse(dateStr, dateFormatter)
+        ld.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+    } catch (_: Exception) { null }
+
+    fun formatFromEpoch(millis: Long): String {
+        val ld = java.time.Instant.ofEpochMilli(millis)
+            .atZone(java.time.ZoneId.systemDefault())
+            .toLocalDate()
+        return ld.format(dateFormatter)
+    }
+
+
+    // Estado del diálogo
+    var showPicker by remember { mutableStateOf(false) }
+
+    // Fecha inicial
+    val today = remember { java.time.LocalDate.now() }
+    val fallback = remember { today.minusYears(18) }
+    val initialMillis = remember(value) {
+        parseToEpochMillis(value)
+            ?: fallback.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+    }
+
+    val yearRange = 1900..today.year
+
+    // ✅ NO anidar remember: usa directamente rememberDatePickerState
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = initialMillis,
+        initialDisplayedMonthMillis = initialMillis,
+        yearRange = yearRange
+    )
+
+    // Campo readOnly con icono de calendario
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 4.dp)
+            .clickable(enabled = !isSaving) { showPicker = true }
+    ) {
+        Column {
+            TextField(
+                value = value,
+                onValueChange = { /* readOnly */ },
+                label = { Text(label) },
+                readOnly = true,
+                enabled = !isSaving,
+                isError = isError,
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.CalendarMonth,
+                        contentDescription = "Elegir fecha",
+                        modifier = Modifier.clickable(enabled = !isSaving) { showPicker = true }
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = textFieldColors()
+            )
+            if (isError && !errorMessage.isNullOrBlank()) {
+                Text(
+                    text = errorMessage,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(start = 16.dp, top = 2.dp)
+                )
+            }
+        }
+    }
+
+    if (showPicker) {
+        DatePickerDialog(
+            onDismissRequest = { showPicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let {
+                            onDateSelected(formatFromEpoch(it))
+                        }
+                        showPicker = false
+                    },
+                    enabled = datePickerState.selectedDateMillis != null
+                ) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPicker = false }) { Text("Cancelar") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+}
+
 
 @Composable
 fun GenderSelector(
