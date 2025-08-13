@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import com.example.yourroom.ui.theme.screens.*
-import com.example.yourroom.screens.UserProfileScreen
+import com.example.yourroom.ui.theme.screens.UserProfileScreen
 
 @Composable
 fun AppNavGraph(
