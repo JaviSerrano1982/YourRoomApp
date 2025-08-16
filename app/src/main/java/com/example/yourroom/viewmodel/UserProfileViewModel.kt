@@ -90,7 +90,7 @@ class UserProfileViewModel @Inject constructor(
                 birthDate = p.birthDate.isBlank(),
                 gender = p.gender.isBlank(),
                 email = p.email.isBlank(),
-                phone = p.phone.isBlank(),
+                phone = p.phone.isBlank() || !isValidPhone(p.phone),
                 location = p.location.isBlank()
             )
         }
@@ -106,6 +106,8 @@ class UserProfileViewModel @Inject constructor(
             !isValidEmail(email) -> "Email inválido"
             else -> null
         }
+    private fun cleanPhone(phone: String) = phone.filter(Char::isDigit)
+    private fun isValidPhone(phone: String): Boolean = cleanPhone(phone).length == 9
 
     private fun computeErrors(p: UserProfileDto): FieldErrors {
         return FieldErrors(
@@ -114,7 +116,7 @@ class UserProfileViewModel @Inject constructor(
             birthDate = p.birthDate.isBlank(),
             gender = p.gender.isBlank(),
             email = p.email.isBlank() || !isValidEmail(p.email),
-            phone = p.phone.isBlank(),
+            phone = p.phone.isBlank() || !isValidPhone(p.phone),
             location = p.location.isBlank()
         )
     }

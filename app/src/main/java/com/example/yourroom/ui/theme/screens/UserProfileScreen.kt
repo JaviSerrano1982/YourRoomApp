@@ -455,7 +455,10 @@ fun UserProfileContent(
                 isEditing = isEditingPhone,
                 isSaving = isSaving,
                 isError = fieldErrors.phone,
-                errorMessage = "Campo obligatorio"
+                errorMessage = if (fieldErrors.phone) {
+                    if (profile.phone.isBlank()) "Campo obligatorio" else "Debe tener 9 dígitos"
+                } else null
+
             )
 
             EditableTextField(
