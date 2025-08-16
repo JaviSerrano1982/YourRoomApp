@@ -561,7 +561,22 @@ fun EditableTextField(
             modifier = Modifier
                 .fillMaxWidth()
                 .focusRequester(focusRequester),
-            colors = textFieldColors()
+            colors = textFieldColors(),
+            trailingIcon = {
+                if (value.isNotEmpty()) {
+                    IconButton(
+                        onClick = { onValueChange("") },
+                        modifier = Modifier.size(20.dp)
+
+                        ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Borrar",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
         )
     }
 }
@@ -649,7 +664,9 @@ fun LocationAutocompleteField(
                             onValueChange("")
                             recompute("")        // cierra menú
                             focusRequester.requestFocus() // cursor sigue en el campo
-                        }) {
+                        },
+                            modifier = Modifier.size(20.dp)
+                        ) {
                             Icon(
                                 imageVector = Icons.Filled.Close,
                                 contentDescription = "Borrar"
