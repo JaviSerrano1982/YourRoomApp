@@ -853,7 +853,7 @@ fun GenderSelector(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .padding(8.dp)
-                    .clickable(enabled = isEnabled) {
+                    .clickable(enabled = isEnabled && !isSelected) {
                         onGenderSelected(genderKey)
                     }
             ) {

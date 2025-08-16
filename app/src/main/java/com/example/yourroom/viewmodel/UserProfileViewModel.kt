@@ -34,6 +34,9 @@ class UserProfileViewModel @Inject constructor(
     private val _isSaving = MutableStateFlow(false)
     val isSaving: StateFlow<Boolean> = _isSaving
 
+    // ---- NUEVO: flag de “ediciones pendientes” (dirty) ----
+    private val _hasUnsavedEdits = MutableStateFlow(false)
+
     private val _hasChanges = MutableStateFlow(false)
     val hasChanges: StateFlow<Boolean> = _hasChanges
 
@@ -53,7 +56,6 @@ class UserProfileViewModel @Inject constructor(
     val fieldErrors: StateFlow<FieldErrors> = _fieldErrors
 
     private var initialProfile: UserProfileDto? = null
-
     private var showErrors: Boolean = false
 
     private val _emailErrorMessage = MutableStateFlow<String?>(null)
@@ -65,8 +67,6 @@ class UserProfileViewModel @Inject constructor(
     fun clearSaveSuccess() {
         _saveSuccess.value = false
     }
-
-
 
     /** ===== VALIDACIÓN ===== */
     private fun isFormComplete(p: UserProfileDto): Boolean {
@@ -89,7 +89,7 @@ class UserProfileViewModel @Inject constructor(
                 lastName = p.lastName.isBlank(),
                 birthDate = p.birthDate.isBlank(),
                 gender = p.gender.isBlank(),
-                email = p.email.isBlank(),
+                email = p.email.isBlank() || !isValidEmail(p.email),
                 phone = p.phone.isBlank() || !isValidPhone(p.phone),
                 location = p.location.isBlank()
             )
@@ -106,6 +106,7 @@ class UserProfileViewModel @Inject constructor(
             !isValidEmail(email) -> "Email inválido"
             else -> null
         }
+
     private fun cleanPhone(phone: String) = phone.filter(Char::isDigit)
     private fun isValidPhone(phone: String): Boolean = cleanPhone(phone).length == 9
 
@@ -121,7 +122,6 @@ class UserProfileViewModel @Inject constructor(
         )
     }
 
-
     private fun hasAnyError(fe: FieldErrors) =
         fe.firstName || fe.lastName || fe.birthDate || fe.gender || fe.email || fe.phone || fe.location
 
@@ -133,19 +133,17 @@ class UserProfileViewModel @Inject constructor(
         _fieldErrors.value = FieldErrors()   // si usas errores por campo
         _errorMessage.value = null           // no mostrar diálogo al entrar
         showErrors = false                   // si usas el flag de “mostrar errores”
+        _hasUnsavedEdits.value = false       // << limpio tras cargar
         recomputeHasChanges()
     }
-
 
     private fun recomputeHasChanges() {
         val current = _profile.value
         val initial = initialProfile
         val fieldsChanged = initial != null && current != initial
-
-        // ✅ Botón activo si hay cambios en campos o si cambió la imagen
-        _hasChanges.value = _isImageChanged.value || fieldsChanged
+        // ✅ Botón activo si hay ediciones pendientes o cambio de imagen o diff real
+        _hasChanges.value = _hasUnsavedEdits.value || _isImageChanged.value || fieldsChanged
     }
-
 
     /** ===== CICLO DE VIDA / CARGA ===== */
     fun initProfile(context: Context) {
@@ -180,7 +178,6 @@ class UserProfileViewModel @Inject constructor(
         }
     }
 
-
     /** ===== ACCIONES DE USUARIO ===== */
     fun setLocalImage(uri: Uri?) {
         _localImageUri.value = uri
@@ -189,16 +186,14 @@ class UserProfileViewModel @Inject constructor(
             _profile.value = _profile.value.copy(photoUrl = it.toString())
         } ?: run { _isImageChanged.value = false }
 
+        // Al cambiar imagen, consideramos que hay edición pendiente
+        _hasUnsavedEdits.value = true
         if (showErrors) {
             val fe = computeErrors(_profile.value)
             _fieldErrors.value = fe
-            _hasChanges.value = !hasAnyError(fe) || _isImageChanged.value
-        } else {
-            recomputeHasChanges()
         }
+        recomputeHasChanges()
     }
-
-
 
     fun clearImageChange() {
         _isImageChanged.value = false
@@ -208,34 +203,22 @@ class UserProfileViewModel @Inject constructor(
     fun updateField(update: UserProfileDto.() -> UserProfileDto) {
         _profile.value = _profile.value.update()
 
+        // ✅ Cualquier edición marca “pendiente de guardar”
+        _hasUnsavedEdits.value = true
+
         // Mensaje específico de email (se actualiza siempre)
         _emailErrorMessage.value = emailErrorMessage(_profile.value.email)
 
-        val current = _profile.value
-        val base = initialProfile ?: current.also { initialProfile = it.copy() }
-        val fieldsChanged = current != base
-
         if (showErrors) {
-            val fe = computeErrors(current)
+            val fe = computeErrors(_profile.value)
             _fieldErrors.value = fe
-
-            // ✅ Mantén el botón activo si:
-            // - hay cambios respecto al snapshot, o
-            // - cambió la imagen, o
-            // - ya no quedan errores (para permitir guardar aunque coincida con el snapshot)
-            _hasChanges.value = fieldsChanged || _isImageChanged.value || !hasAnyError(fe)
-
             if (!hasAnyError(fe)) {
                 _errorMessage.value = null // cierra el diálogo si todo ya está OK
             }
-        } else {
-            // modo normal: botón activo si hay cambios vs snapshot o si cambió la imagen
-            _hasChanges.value = fieldsChanged || _isImageChanged.value
         }
+        // Estado final de hasChanges se recalcula siempre con el flag dirty
+        recomputeHasChanges()
     }
-
-
-
 
     fun updateProfile(userId: Long) {
         if (_isSaving.value) return
@@ -260,12 +243,14 @@ class UserProfileViewModel @Inject constructor(
                 _isImageChanged.value = false
                 _saveSuccess.value = true
 
-                //Reseteamos errore y mensajes
+                // Reseteamos errores y mensajes
                 _emailErrorMessage.value = null
                 showErrors = false
                 _fieldErrors.value = FieldErrors() // limpia errores
                 _errorMessage.value = null
 
+                // ✅ Limpia el flag de ediciones pendientes tras guardar OK
+                _hasUnsavedEdits.value = false
                 recomputeHasChanges()
             } catch (e: Exception) {
                 _errorMessage.value = e.message
@@ -275,8 +260,6 @@ class UserProfileViewModel @Inject constructor(
             }
         }
     }
-
-
 
     fun clearError() {
         _errorMessage.value = null
