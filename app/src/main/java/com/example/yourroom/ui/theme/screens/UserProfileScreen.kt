@@ -32,7 +32,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,11 +43,17 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.yourroom.R
 import com.example.yourroom.viewmodel.UserProfileViewModel
 import androidx.compose.ui.zIndex
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.yourroom.model.UserProfileDto
 import com.example.yourroom.viewmodel.FieldErrors
 import kotlinx.coroutines.launch
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.window.PopupProperties
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+
 
 @Composable
 fun UserProfileScreen(
@@ -69,6 +74,7 @@ fun UserProfileScreen(
     val coroutineScope = rememberCoroutineScope()
 
     var showLeaveDialog by remember { mutableStateOf(false) }
+    val isEditingLocation = remember { mutableStateOf(false) }
 
 
     val context = LocalContext.current
@@ -191,6 +197,7 @@ fun UserProfileScreen(
             onRequestLeave = { showLeaveDialog = true },
             onDismissError = { viewModel.clearError() },
             emailErrorMessage = emailErrorMessage,
+            isEditingLocation = isEditingLocation,
             modifier = Modifier.padding(padding) // para evitar que el snackbar tape contenido
         )
     }
@@ -212,6 +219,8 @@ fun UserProfileContent(
     errorMessage: String?,
     onDismissError: () -> Unit,
     emailErrorMessage: String?,
+    isEditingLocation: MutableState<Boolean>,
+
     modifier: Modifier = Modifier
 ) {
     val photoUrl = profile.photoUrl.takeIf { it.isNotBlank() }
@@ -233,7 +242,7 @@ fun UserProfileContent(
     val isEditingGender = remember { mutableStateOf(false) }
     val isEditingEmail = remember { mutableStateOf(false) }
     val isEditingPhone = remember { mutableStateOf(false) }
-    val isEditingLocation = remember { mutableStateOf(false) }
+
 
 
     if (errorMessage != null) {
@@ -461,7 +470,7 @@ fun UserProfileContent(
 
             )
 
-            EditableTextField(
+            LocationAutocompleteField(
                 value = profile.location,
                 label = "Ubicación",
                 onValueChange = { onUpdateField { copy(location = it) } },
@@ -470,6 +479,8 @@ fun UserProfileContent(
                 isError = fieldErrors.location,
                 errorMessage = "Campo obligatorio"
             )
+
+
 
             Spacer(modifier = Modifier.height(70.dp))
         }
@@ -554,6 +565,130 @@ fun EditableTextField(
         )
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LocationAutocompleteField(
+    value: String,
+    label: String = "Ubicación",
+    onValueChange: (String) -> Unit,
+    isEditing: MutableState<Boolean>, // compat
+    isSaving: Boolean,
+    isError: Boolean,
+    errorMessage: String?
+) {
+    val ctx = LocalContext.current
+    val all = remember { com.example.yourroom.location.MunicipiosRepository.getUiList(ctx) }
+    val scope = rememberCoroutineScope()
+    var searchJob by remember { mutableStateOf<Job?>(null) }
+
+
+    val focusRequester = remember { FocusRequester() }
+    var hasFocus by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
+    var suggestions by remember {
+        mutableStateOf(
+            emptyList<com.example.yourroom.location.MunicipiosRepository.MunicipioUi>()
+        )
+    }
+
+    fun recompute(query: String) {
+        val q = query.trim()
+        suggestions = if (q.length >= 2) {
+            com.example.yourroom.location.MunicipiosRepository.filter(all, q)
+        } else emptyList()
+        expanded = hasFocus && suggestions.isNotEmpty()
+    }
+
+    LaunchedEffect(isSaving) {
+        if (isSaving) expanded = false
+    }
+    LaunchedEffect(all) { recompute(value) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 4.dp)
+    ) {
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { wantOpen ->
+                expanded = wantOpen && hasFocus && suggestions.isNotEmpty()
+            }
+        ) {
+            TextField(
+                value = value,
+                onValueChange = { newVal ->
+                    val clean = newVal.replace(Regex("\\s+"), " ")
+                    onValueChange(clean)
+
+                    // cancelamos cualquier búsqueda pendiente
+                    searchJob?.cancel()
+                    // lanzamos una nueva con un pequeño delay
+                    searchJob = scope.launch {
+                        delay(120)              // 👈 espera 120ms antes de recomputar
+                        recompute(clean)        // tu función que filtra sugerencias
+                    }
+                },
+                label = { Text(label) },
+                singleLine = true,
+                isError = isError,
+                enabled = !isSaving,
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester)
+                    .onFocusChanged { f ->
+                        hasFocus = f.isFocused
+                        expanded = f.isFocused && suggestions.isNotEmpty()
+                    },
+                colors = textFieldColors(),
+                trailingIcon = {
+                    if (value.isNotEmpty()) {
+                        IconButton(onClick = {
+                            onValueChange("")
+                            recompute("")        // cierra menú
+                            focusRequester.requestFocus() // cursor sigue en el campo
+                        }) {
+                            Icon(
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = "Borrar"
+                            )
+                        }
+                    }
+                }
+            )
+
+
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                properties = PopupProperties(focusable = false)
+            ) {
+                suggestions.forEach { s ->
+                    DropdownMenuItem(
+                        text = { Text(s.label) },
+                        onClick = {
+                            onValueChange(s.label)
+                            expanded = false
+                            focusRequester.requestFocus()
+                        }
+                    )
+                }
+            }
+        }
+
+        if (isError && !errorMessage.isNullOrBlank()) {
+            Text(
+                text = errorMessage!!,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(start = 16.dp, top = 2.dp)
+            )
+        }
+    }
+}
+
 
 @Composable
 fun textFieldColors() = TextFieldDefaults.colors(
@@ -756,6 +891,7 @@ fun UserProfileContentPreview() {
     // Importa FieldErrors:
     // import com.example.yourroom.viewmodel.FieldErrors
     val fakeFieldErrors = com.example.yourroom.viewmodel.FieldErrors()
+    val fakeIsEditingLocation = remember { mutableStateOf(false) }
 
     UserProfileContent(
         profile = fakeProfile,
@@ -771,6 +907,7 @@ fun UserProfileContentPreview() {
         fieldErrors = fakeFieldErrors,
         errorMessage = null,
         onDismissError = {},
-        emailErrorMessage = null
+        emailErrorMessage = null,
+        isEditingLocation = fakeIsEditingLocation
     )
 }
