@@ -51,6 +51,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.window.PopupProperties
+import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 
@@ -72,6 +73,7 @@ fun UserProfileScreen(
     val saveSuccess by viewModel.saveSuccess.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
+    val isUploadingPhoto by viewModel.isUploadingPhoto.collectAsState()
 
     var showLeaveDialog by remember { mutableStateOf(false) }
     val isEditingLocation = remember { mutableStateOf(false) }
@@ -82,7 +84,7 @@ fun UserProfileScreen(
     val imageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        viewModel.setLocalImage(uri)
+        viewModel.uploadProfileImage(uri)
     }
 
     LaunchedEffect(saveSuccess) {
@@ -189,7 +191,7 @@ fun UserProfileScreen(
                     viewModel.clearImageChange()
                 }
             },
-            isImageChanged = remember { mutableStateOf(isImageChanged) },
+            isImageChanged = isImageChanged,
             isSaving = isSaving,
             hasChanges = hasChanges,
             fieldErrors = fieldErrors,
@@ -198,6 +200,7 @@ fun UserProfileScreen(
             onDismissError = { viewModel.clearError() },
             emailErrorMessage = emailErrorMessage,
             isEditingLocation = isEditingLocation,
+            isUploadingPhoto = isUploadingPhoto,
             modifier = Modifier.padding(padding) // para evitar que el snackbar tape contenido
         )
     }
@@ -211,7 +214,7 @@ fun UserProfileContent(
     onUpdateField: (UserProfileDto.() -> UserProfileDto) -> Unit,
     onSaveClick: () -> Unit,
     navController: NavController,
-    isImageChanged: MutableState<Boolean>,
+    isImageChanged: Boolean,
     isSaving: Boolean,
     onRequestLeave: () -> Unit,
     hasChanges: Boolean,
@@ -219,6 +222,7 @@ fun UserProfileContent(
     errorMessage: String?,
     onDismissError: () -> Unit,
     emailErrorMessage: String?,
+    isUploadingPhoto: Boolean,
     isEditingLocation: MutableState<Boolean>,
 
     modifier: Modifier = Modifier
@@ -249,7 +253,7 @@ fun UserProfileContent(
         AlertDialog(
             onDismissRequest = onDismissError,
             title = { Text("Datos incompletos") },
-            text  = { Text(errorMessage ?: "") },
+            text  = { Text(errorMessage) },
             confirmButton = {
                 TextButton(onClick = onDismissError) { Text("OK") }
             }
@@ -363,6 +367,18 @@ fun UserProfileContent(
                                 tint = Color.White,
                                 modifier = Modifier.size(18.dp)
                             )
+                        }
+                        // Overlay de progreso durante la subida
+                        if (isUploadingPhoto) {
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .clip(CircleShape)
+                                    .background(Color.Black.copy(alpha = 0.35f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
                         }
                     }
                     Spacer(modifier = Modifier.height(20.dp))
@@ -903,12 +919,10 @@ fun UserProfileContentPreview() {
         photoUrl = ""
     )
     val fakeNavController = rememberNavController()
-    val fakeImageChanged = remember { mutableStateOf(false) }
-
-    // Importa FieldErrors:
-    // import com.example.yourroom.viewmodel.FieldErrors
+    val fakeImageChanged = false
     val fakeFieldErrors = com.example.yourroom.viewmodel.FieldErrors()
     val fakeIsEditingLocation = remember { mutableStateOf(false) }
+
 
     UserProfileContent(
         profile = fakeProfile,
@@ -925,6 +939,7 @@ fun UserProfileContentPreview() {
         errorMessage = null,
         onDismissError = {},
         emailErrorMessage = null,
-        isEditingLocation = fakeIsEditingLocation
+          isEditingLocation = fakeIsEditingLocation,
+        isUploadingPhoto = false
     )
 }

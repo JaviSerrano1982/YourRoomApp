@@ -6,6 +6,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
     alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.google.services)
+
 
 }
 
@@ -93,6 +95,18 @@ dependencies {
     implementation(libs.logging.interceptor.v4120)
 
     implementation(libs.material.icons.extended)
+
+    // ➕ Firebase BOM (sin versión en artefactos Firebase)
+    implementation(platform(libs.firebase.bom))
+
+    // ➕ Firebase Storage y Auth
+    implementation(libs.firebase.storage.ktx)
+    implementation(libs.firebase.auth.ktx)
+
+    // ➕ Coroutines para Tasks (await())
+    implementation(libs.kotlinx.coroutines.play.services)
+
+
 
 
 

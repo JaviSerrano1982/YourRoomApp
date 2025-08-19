@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "592042423817",
+    "project_id": "your-room-4277c",
+    "storage_bucket": "your-room-4277c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:592042423817:android:c8ea3c472b89f73cc9aad8",
+        "android_client_info": {
+          "package_name": "com.example.yourroom"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDrZ9VbPHvHOiNAmGE9BvwZUSOJ-1YJRus"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

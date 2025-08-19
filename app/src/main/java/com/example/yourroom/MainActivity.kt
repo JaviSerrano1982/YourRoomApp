@@ -45,7 +45,7 @@ class MainActivity : ComponentActivity() {
                 val isLoggedIn by userPreferences.isLoggedInFlow.collectAsState(initial = false)
 
                 //Descomentar este código para pasar directamente al login. (Solo pruebas)
-               // val isLoggedIn = true
+               //val isLoggedIn = true
 
 
                     AppNavGraph(navController, isLoggedIn, userId)
