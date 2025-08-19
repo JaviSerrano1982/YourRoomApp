@@ -12,6 +12,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.tasks.await
 
 data class FieldErrors(
     val firstName: Boolean = false,
@@ -63,6 +66,8 @@ class UserProfileViewModel @Inject constructor(
 
     private val _saveSuccess = MutableStateFlow(false)
     val saveSuccess: StateFlow<Boolean> = _saveSuccess
+    private val _isUploadingPhoto = MutableStateFlow(false)
+    val isUploadingPhoto: StateFlow<Boolean> = _isUploadingPhoto
 
     fun clearSaveSuccess() {
         _saveSuccess.value = false
@@ -260,6 +265,47 @@ class UserProfileViewModel @Inject constructor(
             }
         }
     }
+    /** Sube la imagen seleccionada a Firebase Storage y actualiza photoUrl con la URL pública */
+    fun uploadProfileImage(uri: Uri?) {
+        if (uri == null) return
+        viewModelScope.launch {
+            try {
+                _isUploadingPhoto.value = true
+                _errorMessage.value = null
+
+                // Asegura sesión de Firebase (vale anónimo)
+                val auth = FirebaseAuth.getInstance()
+                if (auth.currentUser == null) {
+                    auth.signInAnonymously().await()
+                }
+                val uid = auth.currentUser?.uid ?: throw IllegalStateException("No auth UID")
+
+                // Ruta fija para sobre-escribir siempre
+                val ref = FirebaseStorage.getInstance()
+                    .reference.child("users/$uid/profile.jpg")
+
+                // Sube el fichero
+                ref.putFile(uri).await()
+
+                // URL de descarga
+                val downloadUrl = ref.downloadUrl.await().toString()
+
+                // Actualiza el perfil local con la URL real
+                _profile.value = _profile.value.copy(photoUrl = "$downloadUrl?ts=${System.currentTimeMillis()}")
+
+                // marca cambios
+                _localImageUri.value = uri
+                _isImageChanged.value = true
+                _hasUnsavedEdits.value = true
+                recomputeHasChanges()
+            } catch (e: Exception) {
+                _errorMessage.value = "No se pudo subir la imagen: ${e.message}"
+            } finally {
+                _isUploadingPhoto.value = false
+            }
+        }
+    }
+
 
     fun clearError() {
         _errorMessage.value = null
