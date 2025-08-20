@@ -42,6 +42,7 @@ fun HomeScreen(
         Button(onClick = {
             scope.launch {
                 userPreferences.clearSession()
+                com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
                 navController.navigate("login") {
                     popUpTo("home") { inclusive = true }
                 }
