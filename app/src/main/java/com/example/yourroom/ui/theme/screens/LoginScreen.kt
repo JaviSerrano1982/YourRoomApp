@@ -29,16 +29,17 @@ import com.example.yourroom.R
 import com.example.yourroom.datastore.UserPreferences
 import com.example.yourroom.model.AuthRequest
 import com.example.yourroom.network.RetrofitClient
-
 import kotlinx.coroutines.launch
 import com.example.yourroom.ui.theme.YourRoomGradient
-
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.ui.text.input.VisualTransformation
 import com.example.yourroom.navigation.BottomNavItem
 import kotlinx.coroutines.flow.first
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.tasks.await
+
 
 
 @Composable
@@ -78,6 +79,14 @@ fun LoginScreen(navController: NavHostController) {
                                 userPrefs.setUserLoggedIn(true)
                                 userPrefs.saveAuthToken(token)
                                 userPrefs.saveUserId(userId)
+
+                                // REFRESCAR UID ANÓNIMO DE FIREBASE PARA ESTE USUARIO
+                                try {
+                                    refreshFirebaseAnonSession()
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+
+                                }
 
                                 errorText = null
 
@@ -248,6 +257,13 @@ fun LoginScreenContent(
         }
     }
 }
+
+suspend fun refreshFirebaseAnonSession() {
+    val auth = FirebaseAuth.getInstance()
+    auth.signOut()                   // cierra el UID anónimo anterior
+    auth.signInAnonymously().await() // crea un UID anónimo nuevo
+}
+
 
 @Preview(showBackground = true)
 @Composable
