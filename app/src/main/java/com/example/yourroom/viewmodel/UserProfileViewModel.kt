@@ -8,14 +8,18 @@ import androidx.lifecycle.viewModelScope
 import com.example.yourroom.datastore.UserPreferences
 import com.example.yourroom.model.UserProfileDto
 import com.example.yourroom.repository.UserRepository
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
 
+/**
+ * Estructura de errores por campo para el formulario de perfil.
+ * Cada flag indica si el campo está en error (true = hay error).
+ */
 data class FieldErrors(
     val firstName: Boolean = false,
     val lastName: Boolean = false,
@@ -26,54 +30,95 @@ data class FieldErrors(
     val location: Boolean = false
 )
 
+/**
+ * ViewModel responsable de:
+ * - Cargar/guardar el perfil del usuario mediante el repositorio.
+ * - Validar campos y exponer errores individuales y generales.
+ * - Gestionar el ciclo de vida del “estado sucio” (ediciones pendientes).
+ * - Subir imagen a Firebase Storage y persistir la URL en backend.
+ * - Iniciar sesión en Firebase (token personalizado).
+ *
+ * Exposición de estado mediante StateFlow para que la UI (Compose) reaccione
+ * a cambios de forma declarativa.
+ */
 @HiltViewModel
 class UserProfileViewModel @Inject constructor(
     private val repository: UserRepository
 ) : ViewModel() {
 
+    // ---------------------------------------------------------------------
+    // ESTADO DE UI (StateFlow) — leído por las pantallas Compose
+    // ---------------------------------------------------------------------
+
+    /** Perfil en edición/visualización. */
     private val _profile = MutableStateFlow(UserProfileDto())
     val profile: StateFlow<UserProfileDto> = _profile
 
+    /** Spinner/botón deshabilitado durante guardado. */
     private val _isSaving = MutableStateFlow(false)
     val isSaving: StateFlow<Boolean> = _isSaving
 
-    // ---- NUEVO: flag de “ediciones pendientes” (dirty) ----
+    /**
+     * Flag interno: hay ediciones pendientes (dirty). Se pone a true ante
+     * cualquier cambio de campo o imagen, y se limpia tras un guardado exitoso.
+     */
     private val _hasUnsavedEdits = MutableStateFlow(false)
 
+    /**
+     * Estado compuesto que la UI usa para habilitar acciones (p.e. botón “Guardar”):
+     * hay cambios si existe diff con el estado inicial O hay imagen cambiada
+     * O hay ediciones pendientes marcadas.
+     */
     private val _hasChanges = MutableStateFlow(false)
     val hasChanges: StateFlow<Boolean> = _hasChanges
 
+    /** Mensaje de error general (para diálogos/toasts en UI). */
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
+    /** userId del backend (no confundir con uid de Firebase). */
     private val _userId = MutableStateFlow(0L)
     val userId: StateFlow<Long> = _userId
 
+    /** URI local de imagen seleccionada (antes/después de subir). */
     private val _localImageUri = MutableStateFlow<Uri?>(null)
     val localImageUri: StateFlow<Uri?> = _localImageUri
 
+    /** True si el usuario ha cambiado la imagen (para habilitar guardado). */
     private val _isImageChanged = MutableStateFlow(false)
     val isImageChanged: StateFlow<Boolean> = _isImageChanged
 
+    /** Errores de validación por campo (para resaltar inputs). */
     private val _fieldErrors = MutableStateFlow(FieldErrors())
     val fieldErrors: StateFlow<FieldErrors> = _fieldErrors
 
-    private var initialProfile: UserProfileDto? = null
-    private var showErrors: Boolean = false
-
+    /** Mensaje específico de error para email (formato/campo vacío). */
     private val _emailErrorMessage = MutableStateFlow<String?>(null)
     val emailErrorMessage: StateFlow<String?> = _emailErrorMessage
 
+    /** True cuando un guardado ha terminado con éxito (para mostrar feedback). */
     private val _saveSuccess = MutableStateFlow(false)
     val saveSuccess: StateFlow<Boolean> = _saveSuccess
+
+    /** True mientras se está subiendo la foto a Firebase Storage. */
     private val _isUploadingPhoto = MutableStateFlow(false)
     val isUploadingPhoto: StateFlow<Boolean> = _isUploadingPhoto
 
-    fun clearSaveSuccess() {
-        _saveSuccess.value = false
-    }
+    // ---------------------------------------------------------------------
+    // ESTADO INTERNO — no expuesto directamente a la UI
+    // ---------------------------------------------------------------------
 
-    /** ===== VALIDACIÓN ===== */
+    /** Snapshot del perfil cargado inicialmente para detectar cambios. */
+    private var initialProfile: UserProfileDto? = null
+
+    /** Controla si debemos “enseñar” errores en caliente. */
+    private var showErrors: Boolean = false
+
+    // ---------------------------------------------------------------------
+    // UTILIDADES DE VALIDACIÓN
+    // ---------------------------------------------------------------------
+
+    /** Comprueba que todos los campos obligatorios estén completos (no vacíos). */
     private fun isFormComplete(p: UserProfileDto): Boolean {
         return p.firstName.isNotBlank() &&
                 p.lastName.isNotBlank() &&
@@ -84,27 +129,21 @@ class UserProfileViewModel @Inject constructor(
                 p.location.isNotBlank()
     }
 
+    /** Valida el formulario y, si `showErrors = true`, actualiza errores por campo. */
     fun validateFields(showErrors: Boolean = false): Boolean {
         val p = _profile.value
         val valid = isFormComplete(p)
-
         if (showErrors) {
-            _fieldErrors.value = FieldErrors(
-                firstName = p.firstName.isBlank(),
-                lastName = p.lastName.isBlank(),
-                birthDate = p.birthDate.isBlank(),
-                gender = p.gender.isBlank(),
-                email = p.email.isBlank() || !isValidEmail(p.email),
-                phone = p.phone.isBlank() || !isValidPhone(p.phone),
-                location = p.location.isBlank()
-            )
+            _fieldErrors.value = computeErrors(p)
         }
         return valid
     }
 
-    private fun isValidEmail(email: String): Boolean {
-        return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
-    }
+    /** Valida formato de email. */
+    private fun isValidEmail(email: String): Boolean =
+        android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+
+    /** Mensaje específico para el campo email (obligatorio + formato). */
     private fun emailErrorMessage(email: String): String? =
         when {
             email.isBlank() -> "Campo obligatorio"
@@ -112,9 +151,13 @@ class UserProfileViewModel @Inject constructor(
             else -> null
         }
 
+    /** Normaliza teléfono dejando solo dígitos. */
     private fun cleanPhone(phone: String) = phone.filter(Char::isDigit)
+
+    /** Regla actual: un teléfono válido debe tener 9 dígitos. */
     private fun isValidPhone(phone: String): Boolean = cleanPhone(phone).length == 9
 
+    /** Construye el objeto de errores por campo a partir del perfil actual. */
     private fun computeErrors(p: UserProfileDto): FieldErrors {
         return FieldErrors(
             firstName = p.firstName.isBlank(),
@@ -127,63 +170,88 @@ class UserProfileViewModel @Inject constructor(
         )
     }
 
+    /** Devuelve true si existe al menos un error de campo. */
     private fun hasAnyError(fe: FieldErrors) =
         fe.firstName || fe.lastName || fe.birthDate || fe.gender || fe.email || fe.phone || fe.location
 
+    // ---------------------------------------------------------------------
+    // GESTIÓN DE ESTADO INICIAL Y CAMBIOS
+    // ---------------------------------------------------------------------
+
+    /**
+     * Fija el perfil “inicial”, limpia errores y marca el estado como no editado.
+     * También sincroniza la URI local de imagen (si existe photoUrl).
+     */
     private fun markInitial(p: UserProfileDto) {
         _profile.value = p
         initialProfile = p.copy()
         _isImageChanged.value = false
         _localImageUri.value = if (p.photoUrl.isNotBlank()) Uri.parse(p.photoUrl) else null
-        _fieldErrors.value = FieldErrors()   // si usas errores por campo
-        _errorMessage.value = null           // no mostrar diálogo al entrar
-        showErrors = false                   // si usas el flag de “mostrar errores”
-        _hasUnsavedEdits.value = false       // << limpio tras cargar
+        _fieldErrors.value = FieldErrors()
+        _errorMessage.value = null
+        showErrors = false
+        _hasUnsavedEdits.value = false
         recomputeHasChanges()
     }
 
+    /** Recalcula el flag `hasChanges` combinando “dirty”, cambio de imagen y diff real. */
     private fun recomputeHasChanges() {
         val current = _profile.value
         val initial = initialProfile
         val fieldsChanged = initial != null && current != initial
-        // ✅ Botón activo si hay ediciones pendientes o cambio de imagen o diff real
         _hasChanges.value = _hasUnsavedEdits.value || _isImageChanged.value || fieldsChanged
     }
 
-    /** ===== CICLO DE VIDA / CARGA ===== */
+    // ---------------------------------------------------------------------
+    // CICLO DE VIDA / CARGA INICIAL
+    // ---------------------------------------------------------------------
+
+    /**
+     * Carga el userId desde DataStore y, si es válido (>0), solicita el perfil al backend.
+     * Debe llamarse al entrar en la pantalla de perfil.
+     */
     fun initProfile(context: Context) {
         viewModelScope.launch {
             val prefs = UserPreferences(context)
             val storedId = prefs.userIdFlow.first()
             _userId.value = storedId
             Log.d("Perfil", "✅ userId cargado al entrar: $storedId")
-
             if (storedId > 0) {
                 loadProfile(storedId)
             }
         }
     }
 
+    /**
+     * Solicita el perfil al backend. Si el servidor devuelve 404 (perfil inexistente),
+     * inicializa el estado con un perfil vacío para que el usuario pueda completarlo.
+     */
     fun loadProfile(userId: Long) {
         viewModelScope.launch {
             if (userId <= 0) return@launch
             try {
                 val p = repository.getProfile(userId)
-                markInitial(p)                         //  perfil existente
+                markInitial(p)
             } catch (e: Exception) {
                 val msg = e.message ?: ""
-                // si el backend devuelve 404 al no existir perfil, arrancamos vacío
                 if (msg.contains("404")) {
-                    markInitial(UserProfileDto())      // perfil nuevo -> estado vacío
+                    // Perfil no existe todavía en backend -> pantalla vacía
+                    markInitial(UserProfileDto())
                 } else {
-                    // otros errores sí los mostramos
                     _errorMessage.value = "No se pudo cargar el perfil"
                 }
             }
         }
     }
 
-    /** ===== ACCIONES DE USUARIO ===== */
+    // ---------------------------------------------------------------------
+    // ACCIONES DE USUARIO: CAMPOS E IMAGEN
+    // ---------------------------------------------------------------------
+
+    /**
+     * Actualiza la imagen local seleccionada (galería/cámara).
+     * Marca edición pendiente y recalcula errores si corresponde.
+     */
     fun setLocalImage(uri: Uri?) {
         _localImageUri.value = uri
         uri?.let {
@@ -191,46 +259,57 @@ class UserProfileViewModel @Inject constructor(
             _profile.value = _profile.value.copy(photoUrl = it.toString())
         } ?: run { _isImageChanged.value = false }
 
-        // Al cambiar imagen, consideramos que hay edición pendiente
         _hasUnsavedEdits.value = true
+
         if (showErrors) {
-            val fe = computeErrors(_profile.value)
-            _fieldErrors.value = fe
+            _fieldErrors.value = computeErrors(_profile.value)
         }
         recomputeHasChanges()
     }
 
+    /** Permite limpiar el “cambio de imagen” (útil tras cancelar o revertir). */
     fun clearImageChange() {
         _isImageChanged.value = false
         recomputeHasChanges()
     }
 
+    /**
+     * Actualiza uno o varios campos del perfil.
+     * Ejemplo de uso desde UI:
+     *   viewModel.updateField { copy(firstName = nuevoNombre) }
+     */
     fun updateField(update: UserProfileDto.() -> UserProfileDto) {
         _profile.value = _profile.value.update()
-
-        // ✅ Cualquier edición marca “pendiente de guardar”
         _hasUnsavedEdits.value = true
 
-        // Mensaje específico de email (se actualiza siempre)
+        // Mantenemos el feedback específico de email actualizado
         _emailErrorMessage.value = emailErrorMessage(_profile.value.email)
 
         if (showErrors) {
             val fe = computeErrors(_profile.value)
             _fieldErrors.value = fe
             if (!hasAnyError(fe)) {
-                _errorMessage.value = null // cierra el diálogo si todo ya está OK
+                _errorMessage.value = null // cierra diálogo si todo ya está OK
             }
         }
-        // Estado final de hasChanges se recalcula siempre con el flag dirty
         recomputeHasChanges()
     }
 
+    // ---------------------------------------------------------------------
+    // GUARDADO DE PERFIL (BACKEND)
+    // ---------------------------------------------------------------------
+
+    /**
+     * Valida y guarda el perfil en el backend.
+     * - Si hay errores, se actualizan los errores por campo y se expone un error general.
+     * - Si todo va bien, actualiza el estado inicial y marca el guardado como exitoso.
+     */
     fun updateProfile(userId: Long) {
         if (_isSaving.value) return
         viewModelScope.launch {
-            // 🔍 Validación completa (incluye formato de email)
             val errors = computeErrors(_profile.value)
             _emailErrorMessage.value = emailErrorMessage(_profile.value.email)
+
             if (hasAnyError(errors)) {
                 _fieldErrors.value = errors
                 _errorMessage.value = "Por favor, corrige los campos marcados"
@@ -238,23 +317,24 @@ class UserProfileViewModel @Inject constructor(
                 return@launch
             }
 
-            // ✅ Si todo está bien, guardar
             _isSaving.value = true
             try {
                 val safeProfile = _profile.value
                 val result = repository.updateProfile(userId, safeProfile)
+
+                // Sincroniza estado local con la respuesta del servidor
                 _profile.value = result
                 initialProfile = result.copy()
                 _isImageChanged.value = false
                 _saveSuccess.value = true
 
-                // Reseteamos errores y mensajes
+                // Limpia errores y mensajes
                 _emailErrorMessage.value = null
-                showErrors = false
-                _fieldErrors.value = FieldErrors() // limpia errores
+                _fieldErrors.value = FieldErrors()
                 _errorMessage.value = null
+                showErrors = false
 
-                // ✅ Limpia el flag de ediciones pendientes tras guardar OK
+                // Ya no hay ediciones pendientes
                 _hasUnsavedEdits.value = false
                 recomputeHasChanges()
             } catch (e: Exception) {
@@ -265,9 +345,25 @@ class UserProfileViewModel @Inject constructor(
             }
         }
     }
-    /** Sube la imagen seleccionada a Firebase Storage y actualiza photoUrl con la URL pública */
+
+    /** Permite a la UI “consumir” el evento de guardado exitoso. */
+    fun clearSaveSuccess() {
+        _saveSuccess.value = false
+    }
+
+    // ---------------------------------------------------------------------
+    // SUBIDA DE IMAGEN (FIREBASE STORAGE) + PERSISTENCIA DE URL EN BACKEND
+    // ---------------------------------------------------------------------
+
+    /**
+     * Sube la imagen seleccionada a Firebase Storage y actualiza `photoUrl` con la URL pública.
+     * Posteriormente persiste la URL en tu backend mediante `repository.updateProfile`.
+     *
+     * Nota: requiere que haya sesión en Firebase. Si no hay, hace sign-in anónimo.
+     */
     fun uploadProfileImage(uri: Uri?) {
         if (uri == null) return
+
         Log.d("UploadDebug", "uploadProfileImage() llamado con uri = $uri")
         val currentUser = FirebaseAuth.getInstance().currentUser
         Log.d("UploadDebug", "UID Firebase actual: ${currentUser?.uid}")
@@ -277,21 +373,18 @@ class UserProfileViewModel @Inject constructor(
             return
         }
 
-
-
-
         viewModelScope.launch {
             try {
                 _isUploadingPhoto.value = true
                 _errorMessage.value = null
 
-                // Asegura sesión activa
+                // Asegura sesión activa (si entró aquí sin tenerla)
                 val auth = FirebaseAuth.getInstance()
                 if (auth.currentUser == null) {
                     auth.signInAnonymously().await()
                 }
 
-                // Ruta en Firebase Storage (por userId del backend)
+                // Ruta en Firebase Storage (organizado por userId del backend)
                 val userId = _userId.value
                 val ref = FirebaseStorage.getInstance()
                     .reference.child("users/$userId/profile.jpg")
@@ -299,7 +392,7 @@ class UserProfileViewModel @Inject constructor(
                 // Sube imagen
                 ref.putFile(uri).await()
 
-                // Obtiene URL pública
+                // Obtiene URL pública y le añade un query param para bust de caché
                 val downloadUrl = ref.downloadUrl.await().toString()
                 val finalUrl = if (downloadUrl.contains("?")) {
                     "$downloadUrl&ts=${System.currentTimeMillis()}"
@@ -307,9 +400,7 @@ class UserProfileViewModel @Inject constructor(
                     "$downloadUrl?ts=${System.currentTimeMillis()}"
                 }
 
-
-
-                // Guarda en el backend
+                // Intenta persistir la URL en el backend
                 try {
                     val updated = repository.updateProfile(
                         userId = userId,
@@ -318,10 +409,11 @@ class UserProfileViewModel @Inject constructor(
                     _profile.value = updated
                     initialProfile = updated.copy()
                 } catch (e: Exception) {
-                    _errorMessage.value = "Subida OK pero no se pudo guardar la URL en el servidor: ${e.message}"
+                    _errorMessage.value =
+                        "Subida OK pero no se pudo guardar la URL en el servidor: ${e.message}"
                 }
 
-                // Actualiza estado local
+                // Actualiza estado local (aunque haya fallado el guardado en backend)
                 _profile.value = _profile.value.copy(photoUrl = finalUrl)
                 _localImageUri.value = uri
                 _isImageChanged.value = true
@@ -335,10 +427,18 @@ class UserProfileViewModel @Inject constructor(
         }
     }
 
+    // ---------------------------------------------------------------------
+    // AUTENTICACIÓN EN FIREBASE (TOKEN PERSONALIZADO)
+    // ---------------------------------------------------------------------
+
+    /**
+     * Cierra cualquier sesión previa y entra a Firebase con un token personalizado
+     * que típicamente te provee tu backend (Custom Auth).
+     */
     fun loginToFirebaseWithCustomToken(token: String) {
         viewModelScope.launch {
             try {
-                FirebaseAuth.getInstance().signOut() // Por si hubiera sesión anterior
+                FirebaseAuth.getInstance().signOut()
                 FirebaseAuth.getInstance().signInWithCustomToken(token).await()
                 Log.d("FirebaseAuth", "✅ UID en Firebase: ${FirebaseAuth.getInstance().currentUser?.uid}")
             } catch (e: Exception) {
@@ -348,8 +448,11 @@ class UserProfileViewModel @Inject constructor(
         }
     }
 
+    // ---------------------------------------------------------------------
+    // UTILIDADES DE UI
+    // ---------------------------------------------------------------------
 
-
+    /** Limpia el mensaje de error general (útil tras cerrar diálogos/snackbars). */
     fun clearError() {
         _errorMessage.value = null
     }
