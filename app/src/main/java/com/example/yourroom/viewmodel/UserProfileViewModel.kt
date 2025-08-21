@@ -134,7 +134,7 @@ class UserProfileViewModel @Inject constructor(
         _profile.value = p
         initialProfile = p.copy()
         _isImageChanged.value = false
-        _localImageUri.value = null
+        _localImageUri.value = if (p.photoUrl.isNotBlank()) Uri.parse(p.photoUrl) else null
         _fieldErrors.value = FieldErrors()   // si usas errores por campo
         _errorMessage.value = null           // no mostrar diálogo al entrar
         showErrors = false                   // si usas el flag de “mostrar errores”
@@ -301,7 +301,13 @@ class UserProfileViewModel @Inject constructor(
 
                 // Obtiene URL pública
                 val downloadUrl = ref.downloadUrl.await().toString()
-                val finalUrl = "$downloadUrl?ts=${System.currentTimeMillis()}"
+                val finalUrl = if (downloadUrl.contains("?")) {
+                    "$downloadUrl&ts=${System.currentTimeMillis()}"
+                } else {
+                    "$downloadUrl?ts=${System.currentTimeMillis()}"
+                }
+
+
 
                 // Guarda en el backend
                 try {
