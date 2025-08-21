@@ -1,6 +1,7 @@
 package com.example.yourroom.ui.theme.screens
 
 
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -36,14 +37,20 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.ui.text.input.VisualTransformation
 import com.example.yourroom.navigation.BottomNavItem
+import com.example.yourroom.viewmodel.UserProfileViewModel
 import kotlinx.coroutines.flow.first
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.tasks.await
+import androidx.hilt.navigation.compose.hiltViewModel
+
 
 
 
 @Composable
-fun LoginScreen(navController: NavHostController) {
+fun LoginScreen(
+    navController: NavHostController,
+    userProfileViewModel: UserProfileViewModel = hiltViewModel()
+) {
 
     Modifier.background(YourRoomGradient)
 
@@ -80,38 +87,48 @@ fun LoginScreen(navController: NavHostController) {
                                 userPrefs.saveAuthToken(token)
                                 userPrefs.saveUserId(userId)
 
-                                // REFRESCAR UID ANÓNIMO DE FIREBASE PARA ESTE USUARIO
                                 try {
-                                    refreshFirebaseAnonSession()
+                                    val bearer = "Bearer $token"
+                                    val firebaseToken = RetrofitClient.api.getFirebaseToken(bearer).token
+
+                                    // 🔐 Login directo con Firebase usando el custom token
+                                    try {
+                                        FirebaseAuth.getInstance().signOut()
+                                        FirebaseAuth.getInstance().signInWithCustomToken(firebaseToken).await()
+
+                                        Log.d("FirebaseAuth", "✅ UID en Firebase: ${FirebaseAuth.getInstance().currentUser?.uid}")
+                                    } catch (e: Exception) {
+                                        Log.e("FirebaseAuth", "❌ Error al loguear en Firebase: ${e.message}")
+                                        errorText = "Error al conectar con Firebase: ${e.message}"
+                                        return@launch
+                                    }
+
+                                    errorText = null
+
+                                    navController.navigate("home") {
+                                        popUpTo("login") { inclusive = true }
+                                    }
                                 } catch (e: Exception) {
                                     e.printStackTrace()
-
-                                }
-
-                                errorText = null
-
-                                navController.navigate("home") {
-                                    popUpTo("login") { inclusive = true }
+                                    errorText = "Error al conectar con Firebase"
+                                    return@launch
                                 }
                             } else {
-
                                 errorText = "Respuesta vacía del servidor."
-
                             }
                         } else {
-                            errorText = "Email o contraseña incorrectos. "
+                            errorText = "Email o contraseña incorrectos."
                         }
                     } catch (e: Exception) {
-                       e.printStackTrace()
+                        e.printStackTrace()
                         errorText = "Error al conectar con el servidor."
                     }
                 }
-
-
             } else {
                 errorText = "Por favor, completa los campos."
             }
-        },
+        }
+        ,
         onRegisterClick = {
             navController.navigate("register")
         },
