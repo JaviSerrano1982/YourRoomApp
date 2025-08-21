@@ -49,18 +49,35 @@ import kotlinx.coroutines.launch
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.window.PopupProperties
-import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 
-
+/**
+ * Pantalla de edición de perfil de usuario.
+ *
+ * Responsabilidades:
+ * - Mostrar información del perfil y permitir su edición campo a campo.
+ * - Gestionar cambios no guardados (hasChanges) y confirmación de salida.
+ * - Lanzar el selector de imágenes y mostrar progreso al subir foto.
+ * - Validar campos mostrando errores por campo y mensajes globales.
+ *
+ * Estados clave leídos del ViewModel:
+ *  - profile, isSaving, hasChanges, errorMessage, emailErrorMessage,
+ *    fieldErrors, isImageChanged, isUploadingPhoto y saveSuccess.
+ *
+ * Navegación:
+ *  - Al guardar con éxito, ofrece acción para ir a "home".
+ *  - Confirma la salida si hay cambios sin guardar.
+ */
 @Composable
 fun UserProfileScreen(
     navController: NavHostController,
     viewModel: UserProfileViewModel = hiltViewModel()
 ) {
+    // --- StateFlows del VieModel a estados Compose ---
     val profile by viewModel.profile.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
     val hasChanges by viewModel.hasChanges.collectAsState()
@@ -71,22 +88,24 @@ fun UserProfileScreen(
     val errorMessage by viewModel.errorMessage.collectAsState()
     val emailErrorMessage by viewModel.emailErrorMessage.collectAsState()
     val saveSuccess by viewModel.saveSuccess.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
-    val coroutineScope = rememberCoroutineScope()
     val isUploadingPhoto by viewModel.isUploadingPhoto.collectAsState()
 
+    // --- UI helpers ---
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
     var showLeaveDialog by remember { mutableStateOf(false) }
-    val isEditingLocation = remember { mutableStateOf(false) }
-
-
+    val isEditingLocation = rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
 
+    // Lanzador del picker de imágenes (galería)
     val imageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
+        // Subida directa a Firebase + actualización de estado
         viewModel.uploadProfileImage(uri)
     }
 
+    // Feedback al guardar con éxito (snackbar)
     LaunchedEffect(saveSuccess) {
         if (saveSuccess) {
             coroutineScope.launch {
@@ -105,12 +124,12 @@ fun UserProfileScreen(
         }
     }
 
-
-
+    // Carga inicial de perfil desde DataStore + backend
     LaunchedEffect(Unit) {
         viewModel.initProfile(context)
     }
 
+    // Intercepta el botón "atrás" para confirmar salida si hay cambios
     BackHandler {
         if (hasChanges && !isSaving) {
             showLeaveDialog = true
@@ -118,7 +137,8 @@ fun UserProfileScreen(
             navController.popBackStack()
         }
     }
-    // AlertDialog de confirmación para salir
+
+    // Diálogo de confirmación de salida
     if (showLeaveDialog) {
         AlertDialog(
             onDismissRequest = { showLeaveDialog = false },
@@ -138,6 +158,7 @@ fun UserProfileScreen(
         )
     }
 
+    // --- Scaffold con Snackbar personalizado ---
     Scaffold(
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState) { data ->
@@ -148,14 +169,11 @@ fun UserProfileScreen(
                     containerColor = Color(0xFF4CAF50), // Verde positivo
                     contentColor = Color.White,
                     action = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             // Acción principal: "Inicio"
                             IconButton(
                                 onClick = { data.performAction() },
-                                modifier = Modifier
-                                    .size(32.dp) // mismo tamaño que la X
+                                modifier = Modifier.size(32.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.Home,
@@ -201,11 +219,17 @@ fun UserProfileScreen(
             emailErrorMessage = emailErrorMessage,
             isEditingLocation = isEditingLocation,
             isUploadingPhoto = isUploadingPhoto,
-            modifier = Modifier.padding(padding) // para evitar que el snackbar tape contenido
+            modifier = Modifier.padding(padding) // evita solape con snackbar
         )
     }
 }
 
+/**
+ * Contenido principal de la pantalla de perfil:
+ * - Cabecera con foto + botón para cambiar imagen.
+ * - Secciones con campos editables (nombre, apellidos, fecha, género, email, teléfono, ubicación).
+ * - Botón fijo “Guardar cambios”.
+ */
 @Composable
 fun UserProfileContent(
     profile: UserProfileDto,
@@ -224,9 +248,9 @@ fun UserProfileContent(
     emailErrorMessage: String?,
     isUploadingPhoto: Boolean,
     isEditingLocation: MutableState<Boolean>,
-
     modifier: Modifier = Modifier
 ) {
+    // Fuente de imagen con cache-busting para ver la última subida
     val imageModel: Any? = when {
         localImageUri != null -> localImageUri
         profile.photoUrl.isNotBlank() -> {
@@ -236,7 +260,6 @@ fun UserProfileContent(
         }
         else -> null
     }
-
     val imagePainter = rememberAsyncImagePainter(
         model = imageModel,
         placeholder = painterResource(R.drawable.avatar_default),
@@ -244,29 +267,25 @@ fun UserProfileContent(
         fallback = painterResource(R.drawable.avatar_default)
     )
 
+    // Flags de edición por campo (persisten en recomposiciones)
+    val isEditingFirstName = rememberSaveable { mutableStateOf(false) }
+    val isEditingLastName = rememberSaveable { mutableStateOf(false) }
+    val isEditingBirthDate = rememberSaveable { mutableStateOf(false) }
+    val isEditingGender = rememberSaveable { mutableStateOf(false) }
+    val isEditingEmail = rememberSaveable { mutableStateOf(false) }
+    val isEditingPhone = rememberSaveable { mutableStateOf(false) }
 
-    val isEditingFirstName = remember { mutableStateOf(false) }
-    val isEditingLastName = remember { mutableStateOf(false) }
-    val isEditingBirthDate = remember { mutableStateOf(false) }
-    val isEditingGender = remember { mutableStateOf(false) }
-    val isEditingEmail = remember { mutableStateOf(false) }
-    val isEditingPhone = remember { mutableStateOf(false) }
-
-
-
+    // Diálogo de error global (validación completa)
     if (errorMessage != null) {
         AlertDialog(
             onDismissRequest = onDismissError,
             title = { Text("Datos incompletos") },
             text  = { Text(errorMessage) },
-            confirmButton = {
-                TextButton(onClick = onDismissError) { Text("OK") }
-            }
+            confirmButton = { TextButton(onClick = onDismissError) { Text("OK") } }
         )
     }
 
-
-
+    // Helper para cerrar todos los modos edición (útil antes de guardar)
     fun resetEditingStates() {
         isEditingFirstName.value = false
         isEditingLastName.value = false
@@ -277,9 +296,9 @@ fun UserProfileContent(
         isEditingLocation.value = false
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize().then(modifier)) {
 
-        // Topbar fija
+        // --- TopBar fija con degradado y botón "atrás" ---
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -296,12 +315,7 @@ fun UserProfileContent(
         ) {
             IconButton(
                 onClick = {
-                    if (hasChanges && !isSaving) {
-                        onRequestLeave()
-
-                    } else {
-                        navController.popBackStack()
-                    }
+                    if (hasChanges && !isSaving) onRequestLeave() else navController.popBackStack()
                 },
                 modifier = Modifier.align(Alignment.CenterStart)
             ) {
@@ -320,6 +334,7 @@ fun UserProfileContent(
             )
         }
 
+        // --- Contenido scrollable ---
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -329,7 +344,7 @@ fun UserProfileContent(
                 .padding(top = 50.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Cabecera
+            // Cabecera con avatar + botón cámara + overlay de progreso
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -370,19 +385,15 @@ fun UserProfileContent(
                                 modifier = Modifier.size(18.dp)
                             )
                         }
-                        // Overlay de progreso durante la subida
                         if (isUploadingPhoto) {
+                            // Overlay de progreso para feedback durante la subida
                             Box(
                                 modifier = Modifier
                                     .matchParentSize()
                                     .clip(CircleShape),
-                                    //.background(Color.Black.copy(alpha = 0.35f)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                CircularProgressIndicator(
-                                    color=Color.White
-
-                                )
+                                CircularProgressIndicator(color = Color.White)
                             }
                         }
                     }
@@ -398,16 +409,8 @@ fun UserProfileContent(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // CAMPOS
-
-            Text(
-                text = "Información básica",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 4.dp)
-            )
+            // --- Sección: Información básica ---
+            SectionTitle("Información básica")
 
             EditableTextField(
                 value = profile.firstName,
@@ -417,7 +420,6 @@ fun UserProfileContent(
                 isSaving = isSaving,
                 isError = fieldErrors.firstName,
                 errorMessage = "Campo obligatorio"
-
             )
 
             EditableTextField(
@@ -432,24 +434,16 @@ fun UserProfileContent(
 
             BirthDateField(
                 value = profile.birthDate,
-                onDateSelected = { newDate ->
-                    onUpdateField { copy(birthDate = newDate) }
-                },
+                onDateSelected = { newDate -> onUpdateField { copy(birthDate = newDate) } },
                 isSaving = isSaving,
                 isError = fieldErrors.birthDate,
                 errorMessage = if (fieldErrors.birthDate) "Campo obligatorio" else null
             )
 
-
             Spacer(modifier = Modifier.height(20.dp))
-            Text(
-                text = "Género",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 4.dp)
-            )
+
+            // --- Sección: Género ---
+            SectionTitle("Género")
 
             GenderSelector(
                 selectedGender = profile.gender,
@@ -459,14 +453,9 @@ fun UserProfileContent(
             )
 
             Spacer(modifier = Modifier.height(20.dp))
-            Text(
-                text = "Información privada",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 4.dp)
-            )
+
+            // --- Sección: Información privada ---
+            SectionTitle("Información privada")
 
             EditableTextField(
                 value = profile.email,
@@ -488,25 +477,22 @@ fun UserProfileContent(
                 errorMessage = if (fieldErrors.phone) {
                     if (profile.phone.isBlank()) "Campo obligatorio" else "Debe tener 9 dígitos"
                 } else null
-
             )
 
             LocationAutocompleteField(
                 value = profile.location,
                 label = "Ubicación",
                 onValueChange = { onUpdateField { copy(location = it) } },
-                isEditing = isEditingLocation,
+                isEditing = isEditingLocation, // controla apertura/cierre
                 isSaving = isSaving,
                 isError = fieldErrors.location,
                 errorMessage = "Campo obligatorio"
             )
 
-
-
             Spacer(modifier = Modifier.height(70.dp))
         }
 
-        // Botón fijo
+        // --- Botón fijo inferior: Guardar cambios ---
         Button(
             onClick = {
                 resetEditingStates()
@@ -534,6 +520,25 @@ fun UserProfileContent(
     }
 }
 
+/** Título de sección reutilizable para no repetir estilos. */
+@Composable
+private fun SectionTitle(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 4.dp)
+    )
+}
+
+/**
+ * Campo de texto “editable por toque”:
+ * - Modo visual: al tocar el contenedor, entra en modo edición.
+ * - Modo edición: habilita el TextField y hace focus automático.
+ * - Muestra error y mensaje de apoyo cuando `isError = true`.
+ */
 @Composable
 fun EditableTextField(
     value: String,
@@ -564,19 +569,14 @@ fun EditableTextField(
         TextField(
             value = value,
             onValueChange = {
-                if (isEditing.value && !isSaving) {
-                    onValueChange(it)
-                }
+                if (isEditing.value && !isSaving) onValueChange(it)
             },
             label = { Text(label) },
             enabled = isEditing.value && !isSaving,
-            isError = isError,  // activa borde rojo
+            isError = isError,
             supportingText = {
                 if (isError && errorMessage != null) {
-                    Text(
-                        text = errorMessage,
-                        color = Color.Red
-                    )
+                    Text(text = errorMessage, color = Color.Red)
                 }
             },
             modifier = Modifier
@@ -588,8 +588,7 @@ fun EditableTextField(
                     IconButton(
                         onClick = { onValueChange("") },
                         modifier = Modifier.size(20.dp)
-
-                        ) {
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Borrar",
@@ -602,13 +601,18 @@ fun EditableTextField(
     }
 }
 
+/**
+ * Autocompletado de ubicación con menú desplegable de sugerencias.
+ * - Filtra sobre la lista local de municipios (repositorio local).
+ * - Usa un pequeño debounce (120ms) para mejorar la UX al escribir.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LocationAutocompleteField(
     value: String,
     label: String = "Ubicación",
     onValueChange: (String) -> Unit,
-    isEditing: MutableState<Boolean>, // compat
+    isEditing: MutableState<Boolean>, // compat con tu flujo actual
     isSaving: Boolean,
     isError: Boolean,
     errorMessage: String?
@@ -618,14 +622,11 @@ fun LocationAutocompleteField(
     val scope = rememberCoroutineScope()
     var searchJob by remember { mutableStateOf<Job?>(null) }
 
-
     val focusRequester = remember { FocusRequester() }
     var hasFocus by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
     var suggestions by remember {
-        mutableStateOf(
-            emptyList<com.example.yourroom.location.MunicipiosRepository.MunicipioUi>()
-        )
+        mutableStateOf(emptyList<com.example.yourroom.location.MunicipiosRepository.MunicipioUi>())
     }
 
     fun recompute(query: String) {
@@ -636,9 +637,7 @@ fun LocationAutocompleteField(
         expanded = hasFocus && suggestions.isNotEmpty()
     }
 
-    LaunchedEffect(isSaving) {
-        if (isSaving) expanded = false
-    }
+    LaunchedEffect(isSaving) { if (isSaving) expanded = false }
     LaunchedEffect(all) { recompute(value) }
 
     Column(
@@ -657,13 +656,10 @@ fun LocationAutocompleteField(
                 onValueChange = { newVal ->
                     val clean = newVal.replace(Regex("\\s+"), " ")
                     onValueChange(clean)
-
-                    // cancelamos cualquier búsqueda pendiente
                     searchJob?.cancel()
-                    // lanzamos una nueva con un pequeño delay
                     searchJob = scope.launch {
-                        delay(120)              // 👈 espera 120ms antes de recomputar
-                        recompute(clean)        // tu función que filtra sugerencias
+                        delay(120)      // Debounce
+                        recompute(clean)
                     }
                 },
                 label = { Text(label) },
@@ -681,11 +677,12 @@ fun LocationAutocompleteField(
                 colors = textFieldColors(),
                 trailingIcon = {
                     if (value.isNotEmpty()) {
-                        IconButton(onClick = {
-                            onValueChange("")
-                            recompute("")        // cierra menú
-                            focusRequester.requestFocus() // cursor sigue en el campo
-                        },
+                        IconButton(
+                            onClick = {
+                                onValueChange("")
+                                recompute("")           // cierra menú
+                                focusRequester.requestFocus()
+                            },
                             modifier = Modifier.size(20.dp)
                         ) {
                             Icon(
@@ -696,7 +693,6 @@ fun LocationAutocompleteField(
                     }
                 }
             )
-
 
             DropdownMenu(
                 expanded = expanded,
@@ -727,7 +723,7 @@ fun LocationAutocompleteField(
     }
 }
 
-
+/** Paleta de colores consistente para todos los TextField. */
 @Composable
 fun textFieldColors() = TextFieldDefaults.colors(
     focusedIndicatorColor = MaterialTheme.colorScheme.primary,
@@ -739,6 +735,11 @@ fun textFieldColors() = TextFieldDefaults.colors(
     disabledContainerColor = Color.White
 )
 
+/**
+ * Selector de fecha (dd/MM/yyyy) usando Material3 DatePicker.
+ * - Campo de solo lectura con icono de calendario.
+ * - Diálogo con fecha inicial sensata (18 años por defecto si no hay valor).
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BirthDateField(
@@ -751,8 +752,6 @@ fun BirthDateField(
     modifier: Modifier = Modifier
 ) {
     // --- Utilidades de fecha ---
-
-    // Formateador español
     val dateFormatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
     fun parseToEpochMillis(dateStr: String): Long? = try {
@@ -767,21 +766,16 @@ fun BirthDateField(
         return ld.format(dateFormatter)
     }
 
-
-    // Estado del diálogo
+    // Estado del diálogo y fecha inicial
     var showPicker by remember { mutableStateOf(false) }
-
-    // Fecha inicial
     val today = remember { java.time.LocalDate.now() }
     val fallback = remember { today.minusYears(18) }
     val initialMillis = remember(value) {
         parseToEpochMillis(value)
             ?: fallback.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
     }
-
     val yearRange = 1900..today.year
 
-    // ✅ NO anidar remember: usa directamente rememberDatePickerState
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = initialMillis,
         initialDisplayedMonthMillis = initialMillis,
@@ -838,16 +832,18 @@ fun BirthDateField(
                     enabled = datePickerState.selectedDateMillis != null
                 ) { Text("OK") }
             },
-            dismissButton = {
-                TextButton(onClick = { showPicker = false }) { Text("Cancelar") }
-            }
+            dismissButton = { TextButton(onClick = { showPicker = false }) { Text("Cancelar") } }
         ) {
             DatePicker(state = datePickerState)
         }
     }
 }
 
-
+/**
+ * Selector de género con 3 opciones:
+ * - Resalta la opción activa con borde y color.
+ * - Deshabilita interacción cuando `isEnabled = false`.
+ */
 @Composable
 fun GenderSelector(
     selectedGender: String,
@@ -910,24 +906,26 @@ fun GenderSelector(
     }
 }
 
+/**
+ PREVIEW PARA PODER DISEÑAR Y EDITAR LA PANTALLA SIN TENER QUE EJECUTAR LA APP
+ */
 @Preview(showBackground = true)
 @Composable
 fun UserProfileContentPreview() {
-    val fakeProfile = com.example.yourroom.model.UserProfileDto(
+    val fakeProfile = UserProfileDto(
         firstName = "Javier",
         lastName = "Serrano",
         email = "javier@example.com",
         phone = "600123456",
         location = "Madrid",
-        gender = "Masculino",
-        birthDate = "1995-05-10",
+        gender = "Hombre",          // ⇦ unifica con GenderSelector
+        birthDate = "10/05/1995",   // ⇦ unifica con BirthDateField (dd/MM/yyyy)
         photoUrl = ""
     )
     val fakeNavController = rememberNavController()
     val fakeImageChanged = false
-    val fakeFieldErrors = com.example.yourroom.viewmodel.FieldErrors()
+    val fakeFieldErrors = FieldErrors()
     val fakeIsEditingLocation = remember { mutableStateOf(false) }
-
 
     UserProfileContent(
         profile = fakeProfile,
@@ -944,7 +942,7 @@ fun UserProfileContentPreview() {
         errorMessage = null,
         onDismissError = {},
         emailErrorMessage = null,
-          isEditingLocation = fakeIsEditingLocation,
+        isEditingLocation = fakeIsEditingLocation,
         isUploadingPhoto = false
     )
 }
