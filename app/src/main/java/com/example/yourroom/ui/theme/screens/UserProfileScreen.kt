@@ -227,18 +227,23 @@ fun UserProfileContent(
 
     modifier: Modifier = Modifier
 ) {
-    val photoUrl = profile.photoUrl.takeIf { it.isNotBlank() }
-    val hasProfilePhoto = localImageUri != null || photoUrl != null
-
-    val imagePainter = if (hasProfilePhoto) {
-        rememberAsyncImagePainter(
-            model = localImageUri ?: photoUrl,
-            placeholder = painterResource(R.drawable.avatar_default),
-            error = painterResource(R.drawable.avatar_default)
-        )
-    } else {
-        painterResource(R.drawable.avatar_default)
+    val imageModel: Any? = when {
+        localImageUri != null -> localImageUri
+        profile.photoUrl.isNotBlank() -> {
+            val url = profile.photoUrl
+            val hasQueryParams = url.contains("?")
+            url + if (hasQueryParams) "&ts=${System.currentTimeMillis()}" else "?ts=${System.currentTimeMillis()}"
+        }
+        else -> null
     }
+
+    val imagePainter = rememberAsyncImagePainter(
+        model = imageModel,
+        placeholder = painterResource(R.drawable.avatar_default),
+        error = painterResource(R.drawable.avatar_default),
+        fallback = painterResource(R.drawable.avatar_default)
+    )
+
 
     val isEditingFirstName = remember { mutableStateOf(false) }
     val isEditingLastName = remember { mutableStateOf(false) }
@@ -292,9 +297,6 @@ fun UserProfileContent(
             IconButton(
                 onClick = {
                     if (hasChanges && !isSaving) {
-                        // delega al Screen mostrando el diálogo
-                        // opción A: expón un callback onRequestLeave() desde Content
-                        // opción B (rápida): pásale un lambda para setear showLeaveDialog
                         onRequestLeave()
 
                     } else {
@@ -373,11 +375,14 @@ fun UserProfileContent(
                             Box(
                                 modifier = Modifier
                                     .matchParentSize()
-                                    .clip(CircleShape)
-                                    .background(Color.Black.copy(alpha = 0.35f)),
+                                    .clip(CircleShape),
+                                    //.background(Color.Black.copy(alpha = 0.35f)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                CircularProgressIndicator()
+                                CircularProgressIndicator(
+                                    color=Color.White
+
+                                )
                             }
                         }
                     }
