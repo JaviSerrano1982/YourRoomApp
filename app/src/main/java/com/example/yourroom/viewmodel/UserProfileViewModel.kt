@@ -268,32 +268,55 @@ class UserProfileViewModel @Inject constructor(
     /** Sube la imagen seleccionada a Firebase Storage y actualiza photoUrl con la URL pública */
     fun uploadProfileImage(uri: Uri?) {
         if (uri == null) return
+        Log.d("UploadDebug", "uploadProfileImage() llamado con uri = $uri")
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        Log.d("UploadDebug", "UID Firebase actual: ${currentUser?.uid}")
+
+        if (currentUser == null) {
+            _errorMessage.value = "Usuario no logueado en Firebase. No se puede subir la imagen."
+            return
+        }
+
+
+
+
         viewModelScope.launch {
             try {
                 _isUploadingPhoto.value = true
                 _errorMessage.value = null
 
-                // Asegura sesión de Firebase (vale anónimo)
+                // Asegura sesión activa
                 val auth = FirebaseAuth.getInstance()
                 if (auth.currentUser == null) {
                     auth.signInAnonymously().await()
                 }
-                val uid = auth.currentUser?.uid ?: throw IllegalStateException("No auth UID")
 
-                // Ruta fija para sobre-escribir siempre
+                // Ruta en Firebase Storage (por userId del backend)
+                val userId = _userId.value
                 val ref = FirebaseStorage.getInstance()
-                    .reference.child("users/$uid/profile.jpg")
+                    .reference.child("users/$userId/profile.jpg")
 
-                // Sube el fichero
+                // Sube imagen
                 ref.putFile(uri).await()
 
-                // URL de descarga
+                // Obtiene URL pública
                 val downloadUrl = ref.downloadUrl.await().toString()
+                val finalUrl = "$downloadUrl?ts=${System.currentTimeMillis()}"
 
-                // Actualiza el perfil local con la URL real
-                _profile.value = _profile.value.copy(photoUrl = "$downloadUrl?ts=${System.currentTimeMillis()}")
+                // Guarda en el backend
+                try {
+                    val updated = repository.updateProfile(
+                        userId = userId,
+                        _profile.value.copy(photoUrl = finalUrl)
+                    )
+                    _profile.value = updated
+                    initialProfile = updated.copy()
+                } catch (e: Exception) {
+                    _errorMessage.value = "Subida OK pero no se pudo guardar la URL en el servidor: ${e.message}"
+                }
 
-                // marca cambios
+                // Actualiza estado local
+                _profile.value = _profile.value.copy(photoUrl = finalUrl)
                 _localImageUri.value = uri
                 _isImageChanged.value = true
                 _hasUnsavedEdits.value = true
@@ -305,6 +328,20 @@ class UserProfileViewModel @Inject constructor(
             }
         }
     }
+
+    fun loginToFirebaseWithCustomToken(token: String) {
+        viewModelScope.launch {
+            try {
+                FirebaseAuth.getInstance().signOut() // Por si hubiera sesión anterior
+                FirebaseAuth.getInstance().signInWithCustomToken(token).await()
+                Log.d("FirebaseAuth", "✅ UID en Firebase: ${FirebaseAuth.getInstance().currentUser?.uid}")
+            } catch (e: Exception) {
+                Log.e("FirebaseAuth", "❌ Error al loguear en Firebase: ${e.message}")
+                _errorMessage.value = "Error al conectar con Firebase: ${e.message}"
+            }
+        }
+    }
+
 
 
     fun clearError() {
