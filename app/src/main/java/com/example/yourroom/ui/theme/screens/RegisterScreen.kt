@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,12 +27,24 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.ui.text.input.VisualTransformation
 
+// ---------------------------------------------------------------------
+// PANTALLA DE REGISTRO
+// ---------------------------------------------------------------------
+
+/**
+ * Mantiene el estado local de los campos y ejecuta la lógica de validación
+ * y registro de usuario contra el backend.
+ *
+ * Flujo:
+ * 1. Valida que los campos no estén vacíos y que las contraseñas coincidan.
+ * 2. Llama al backend vía Retrofit para registrar el usuario.
+ * 3. Si es exitoso, navega a la pantalla "success".
+ * 4. Si falla, muestra un mensaje de error en pantalla.
+ */
 @Composable
 fun RegisterScreen(navController: NavHostController) {
     var name by remember { mutableStateOf("") }
@@ -49,7 +62,11 @@ fun RegisterScreen(navController: NavHostController) {
         onPasswordChange = { password = it },
         confirmPassword = confirmPassword,
         onConfirmPasswordChange = { confirmPassword = it },
+
         onRegisterClick = {
+            // -----------------------------
+            // Validación mínima en cliente
+            // -----------------------------
             if (name.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
                 errorText = "Por favor, completa todos los campos."
             } else if (password != confirmPassword) {
@@ -57,6 +74,9 @@ fun RegisterScreen(navController: NavHostController) {
             } else {
                 errorText = null
 
+                // -----------------------------
+                // Llamada al backend
+                // -----------------------------
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
                         val newUser = User(
@@ -70,7 +90,7 @@ fun RegisterScreen(navController: NavHostController) {
 
                         withContext(Dispatchers.Main) {
                             if (response.isSuccessful) {
-                                // Registro correcto: ir al succes screen
+                                // Éxito → navegar a SuccessScreen
                                 navController.navigate("success") {
                                     popUpTo("register") { inclusive = true }
                                 }
@@ -85,15 +105,29 @@ fun RegisterScreen(navController: NavHostController) {
                     }
                 }
             }
-        }
-        ,
+        },
+
         onBackToLoginClick = {
+            // Vuelve al login
             navController.popBackStack()
         },
+
         errorText = errorText
     )
 }
 
+// ---------------------------------------------------------------------
+// UI DE REGISTRO
+// ---------------------------------------------------------------------
+
+/**
+ * Dibuja la UI del registro:
+ * - Fondo con degradado y logo.
+ * - Campos: nombre, email, contraseña, confirmar contraseña.
+ * - Toggle de visibilidad de contraseña (compartido por ambos campos).
+ * - Botones "Registrarse" y "Iniciar sesión".
+ * - Mensaje de error si existe.
+ */
 @Composable
 fun RegisterScreenContent(
     name: String,
@@ -109,6 +143,7 @@ fun RegisterScreenContent(
     errorText: String?
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -122,6 +157,7 @@ fun RegisterScreenContent(
                 .offset(y = (-60).dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Logo
             Image(
                 painter = painterResource(id = R.drawable.your_room_logo),
                 contentDescription = "Logo",
@@ -130,6 +166,7 @@ fun RegisterScreenContent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Campo Nombre
             OutlinedTextField(
                 value = name,
                 onValueChange = onNameChange,
@@ -140,6 +177,7 @@ fun RegisterScreenContent(
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Campo Email
             OutlinedTextField(
                 value = email,
                 onValueChange = onEmailChange,
@@ -151,6 +189,7 @@ fun RegisterScreenContent(
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Campo Contraseña
             OutlinedTextField(
                 value = password,
                 onValueChange = onPasswordChange,
@@ -159,11 +198,7 @@ fun RegisterScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
-                    val image = if (passwordVisible)
-                        Icons.Filled.Visibility
-                    else
-                        Icons.Filled.VisibilityOff
-
+                    val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                     val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
 
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -174,6 +209,7 @@ fun RegisterScreenContent(
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Campo Confirmar Contraseña
             OutlinedTextField(
                 value = confirmPassword,
                 onValueChange = onConfirmPasswordChange,
@@ -182,11 +218,7 @@ fun RegisterScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
-                    val image = if (passwordVisible)
-                        Icons.Filled.Visibility
-                    else
-                        Icons.Filled.VisibilityOff
-
+                    val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                     val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
 
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -197,12 +229,13 @@ fun RegisterScreenContent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Fila de botones
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp)
             ) {
-                // Botón Registrarse (activo)
+                // Botón Registrarse
                 Button(
                     onClick = onRegisterClick,
                     modifier = Modifier.weight(1f),
@@ -221,7 +254,7 @@ fun RegisterScreenContent(
                     Text("Registrarse")
                 }
 
-                // Botón Iniciar sesión (solo navegación)
+                // Botón Iniciar sesión
                 OutlinedButton(
                     onClick = onBackToLoginClick,
                     modifier = Modifier.weight(1f),
@@ -241,7 +274,7 @@ fun RegisterScreenContent(
                 }
             }
 
-
+            // Mensaje de error
             errorText?.let {
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
@@ -254,6 +287,13 @@ fun RegisterScreenContent(
     }
 }
 
+// ---------------------------------------------------------------------
+// PREVIEW
+// ---------------------------------------------------------------------
+
+/**
+ * Preview para visualizar la pantalla de registro en Android Studio.
+ */
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun RegisterScreenPreview() {
@@ -271,6 +311,3 @@ fun RegisterScreenPreview() {
         errorText = null
     )
 }
-
-
-
