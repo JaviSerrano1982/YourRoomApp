@@ -19,6 +19,20 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 
+// ---------------------------------------------------------------------
+// DEFINICIÓN DE ITEMS DE NAVEGACIÓN INFERIOR
+// ---------------------------------------------------------------------
+
+/**
+ * Clase sellada que define los elementos de la barra de navegación inferior.
+ *
+ * Cada item tiene:
+ * - Una ruta de navegación (route).
+ * - Un icono (ImageVector).
+ * - Un texto (label).
+ *
+ * Los objetos definidos representan las secciones principales de la app.
+ */
 sealed class BottomNavItem(
     val route: String,
     val icon: ImageVector,
@@ -31,6 +45,20 @@ sealed class BottomNavItem(
     object Profile : BottomNavItem("profile", Icons.Default.Person, "Mi Perfil")
 }
 
+// ---------------------------------------------------------------------
+// COMPONENTE: BARRA DE NAVEGACIÓN INFERIOR
+// ---------------------------------------------------------------------
+
+/**
+ * Barra de navegación inferior (BottomNavigationBar).
+ *
+ * - Muestra los items definidos en [BottomNavItem].
+ * - Resalta el item seleccionado con un color distinto.
+ * - Permite navegar entre las rutas principales de la app.
+ *
+ * Comportamiento especial:
+ * - El item "Publicar" se dibuja como un botón circular con gradiente.
+ */
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
     val items = listOf(
@@ -41,6 +69,7 @@ fun BottomNavigationBar(navController: NavHostController) {
         BottomNavItem.Profile
     )
 
+    // Ruta actual para saber qué item está seleccionado
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
     NavigationBar(
@@ -53,6 +82,9 @@ fun BottomNavigationBar(navController: NavHostController) {
         items.forEach { item ->
             val isSelected = currentRoute == item.route
 
+            // -----------------------------
+            // Caso especial: botón "Publicar"
+            // -----------------------------
             if (item == BottomNavItem.Publish) {
                 NavigationBarItem(
                     selected = isSelected,
@@ -90,6 +122,9 @@ fun BottomNavigationBar(navController: NavHostController) {
                     )
                 )
             } else {
+                // -----------------------------
+                // Items normales: Inicio, Buscar, Favoritos, Perfil
+                // -----------------------------
                 NavigationBarItem(
                     selected = isSelected,
                     onClick = {
