@@ -120,13 +120,13 @@ class UserProfileViewModel @Inject constructor(
 
     /** Comprueba que todos los campos obligatorios estén completos (no vacíos). */
     private fun isFormComplete(p: UserProfileDto): Boolean {
-        return p.firstName.isNotBlank() &&
-                p.lastName.isNotBlank() &&
-                p.birthDate.isNotBlank() &&
-                p.gender.isNotBlank() &&
-                p.email.isNotBlank() &&
-                p.phone.isNotBlank() &&
-                p.location.isNotBlank()
+        return p.firstName.isNullOrBlank() &&
+                p.lastName.isNullOrBlank() &&
+                p.birthDate.isNullOrBlank() &&
+                p.gender.isNullOrBlank() &&
+                p.email.isNullOrBlank() &&
+                p.phone.isNullOrBlank() &&
+                p.location.isNullOrBlank()
     }
 
     /** Valida el formulario y, si `showErrors = true`, actualiza errores por campo. */
@@ -144,12 +144,16 @@ class UserProfileViewModel @Inject constructor(
         android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
 
     /** Mensaje específico para el campo email (obligatorio + formato). */
-    private fun emailErrorMessage(email: String): String? =
-        when {
-            email.isBlank() -> "Campo obligatorio"
-            !isValidEmail(email) -> "Email inválido"
-            else -> null
-        }
+    // antes
+// fun emailErrorMessage(email: String): String?
+
+// después
+    fun emailErrorMessage(email: String?): String? {
+        if (email.isNullOrBlank()) return "Campo obligatorio"
+        val ok = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+        return if (!ok) "Email no válido" else null
+    }
+
 
     /** Normaliza teléfono dejando solo dígitos. */
     private fun cleanPhone(phone: String) = phone.filter(Char::isDigit)
@@ -160,13 +164,13 @@ class UserProfileViewModel @Inject constructor(
     /** Construye el objeto de errores por campo a partir del perfil actual. */
     private fun computeErrors(p: UserProfileDto): FieldErrors {
         return FieldErrors(
-            firstName = p.firstName.isBlank(),
-            lastName = p.lastName.isBlank(),
-            birthDate = p.birthDate.isBlank(),
-            gender = p.gender.isBlank(),
-            email = p.email.isBlank() || !isValidEmail(p.email),
-            phone = p.phone.isBlank() || !isValidPhone(p.phone),
-            location = p.location.isBlank()
+            firstName = p.firstName.isNullOrBlank(),
+            lastName = p.lastName.isNullOrBlank(),
+            birthDate = p.birthDate.isNullOrBlank(),
+            gender = p.gender.isNullOrBlank(),
+            email = p.email.isNullOrBlank() || !isValidEmail(p.email),
+            phone = p.phone.isNullOrBlank() || !isValidPhone(p.phone),
+            location = p.location.isNullOrBlank()
         )
     }
 
@@ -186,7 +190,7 @@ class UserProfileViewModel @Inject constructor(
         _profile.value = p
         initialProfile = p.copy()
         _isImageChanged.value = false
-        _localImageUri.value = if (p.photoUrl.isNotBlank()) Uri.parse(p.photoUrl) else null
+        _localImageUri.value = if (p.photoUrl.isNullOrBlank()) Uri.parse(p.photoUrl) else null
         _fieldErrors.value = FieldErrors()
         _errorMessage.value = null
         showErrors = false
@@ -229,20 +233,42 @@ class UserProfileViewModel @Inject constructor(
     fun loadProfile(userId: Long) {
         viewModelScope.launch {
             if (userId <= 0) return@launch
+
+            _isSaving.value = true
             try {
-                val p = repository.getProfile(userId)
-                markInitial(p)
-            } catch (e: Exception) {
-                val msg = e.message ?: ""
-                if (msg.contains("404")) {
-                    // Perfil no existe todavía en backend -> pantalla vacía
-                    markInitial(UserProfileDto())
-                } else {
-                    _errorMessage.value = "No se pudo cargar el perfil"
-                }
+                val dto = runCatching { repository.getProfile(userId) }
+                    .fold(
+                        onSuccess = { it },                      // puede ser null según tu repo
+                        onFailure = { e ->
+                            // 404 => perfil inexistente -> tratar como vacío
+                            val http = e as? retrofit2.HttpException
+                            if (http?.code() == 404 || e.message?.contains("404") == true) null
+                            else throw e
+                        }
+                    )
+
+                // Perfil vacío OK (no es error)
+                markInitial(dto ?: UserProfileDto())
+                _fieldErrors.value = FieldErrors()
+                _emailErrorMessage.value = null
+                _hasChanges.value = false
+                _errorMessage.value = null                 // <- clave: NO mostrar diálogo
+
+            } catch (e: retrofit2.HttpException) {
+                // Otros códigos != 404: si quieres, muestra snackbar, pero NO el diálogo
+                _errorMessage.value = null
+            } catch (_: java.io.IOException) {
+                // Sin conexión: no muestres el diálogo de "Datos incompletos"
+                _errorMessage.value = null
+            } catch (_: Exception) {
+                _errorMessage.value = null
+            } finally {
+                _isSaving.value = false
             }
         }
     }
+
+
 
     // ---------------------------------------------------------------------
     // ACCIONES DE USUARIO: CAMPOS E IMAGEN
