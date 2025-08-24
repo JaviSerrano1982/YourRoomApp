@@ -5,21 +5,65 @@ import com.example.yourroom.R
 import org.json.JSONObject
 import java.text.Normalizer
 
+// ---------------------------------------------------------------------
+// REPOSITORIO DE MUNICIPIOS (CARGA + BÚSQUEDA LOCAL)
+// ---------------------------------------------------------------------
+
+/**
+ * Carga un dataset de municipios desde un recurso JSON local (raw/municipios_es)
+ * y ofrece una búsqueda rápida (case/diacritics-insensitive) sobre una lista
+ * preparada para la UI.
+ *
+ * Notas:
+ * * - Se calcula y cachea una lista "UI" con etiqueta amigable y un campo
+ *   pre-normalizado para acelerar las búsquedas.
+ * - La búsqueda no re-ordena toda la lista: prioriza "empieza por" y luego "contiene".
+ */
 object MunicipiosRepository {
 
-    // --- Modelo con etiqueta "bonita" y versión pre-normalizada para búsquedas ---
+    // -----------------------------------------------------------------
+    // MODELO PARA LA UI
+    // -----------------------------------------------------------------
+
+    /**
+     * Representa un municipio listo para pintar en la UI.
+     *
+     * @param label Etiqueta amigable: "Elche (Alicante/Alacant)".
+     * @param name Nombre del municipio ya formateado (sin artículos finales).
+     * @param provinceName Nombre visible de la provincia (map por código).
+     * @param provinceCode Código de provincia de 2 dígitos (ej: "03").
+     * @param code Código de municipio si está presente en el dataset (puede ser vacío).
+     * @param normLabel Versión pre-normalizada de label (sin tildes y minúsculas),
+     *                  usada para búsquedas rápidas sin recalcular en cada item.
+     */
     data class MunicipioUi(
-        val label: String,      // "Elche (Alicante/Alacant)"
-        val name: String,       // "Elche"
+        val label: String,
+        val name: String,
         val provinceName: String,
-        val provinceCode: String, // "03"
+        val provinceCode: String,
         val code: String,
-        val normLabel: String   // label pre-normalizada (sin tildes, minúsculas)
+        val normLabel: String
     )
 
+    /** Cachea la lista UI procesada para evitar releer/parsear el JSON. */
     private var cacheUi: List<MunicipioUi>? = null
 
-    /** Carga y prepara todo una vez (con normLabel precalculado). */
+    // -----------------------------------------------------------------
+    // CARGA + PREPROCESADO
+    // -----------------------------------------------------------------
+
+    /**
+     * Lee el JSON de municipios del recurso raw y lo transforma en una lista
+     * de [MunicipioUi] con campos listos para pintar y buscar.
+     *
+     * - Detecta dinámicamente los índices de las columnas (por nombres posibles).
+     * - Aplica `prettyName` para ordenar artículos finales ("..., el/la/los/las/l'").
+     * - Mapea código de provincia → nombre.
+     * - Pre-normaliza `label` para búsquedas rápidas (campo `normLabel`).
+     * - Elimina duplicados por `label` (por si el dataset trae variantes).
+     *
+     * El resultado se cachea en memoria.
+     */
     fun getUiList(context: Context): List<MunicipioUi> {
         cacheUi?.let { return it }
 
@@ -73,7 +117,21 @@ object MunicipiosRepository {
         return dedup
     }
 
-    /** Búsqueda rápida: sin normalizar cada elemento ni ordenar toda la lista. */
+    // -----------------------------------------------------------------
+    // BÚSQUEDA RÁPIDA (UX primero: empieza-por, luego contiene)
+    // -----------------------------------------------------------------
+
+    /**
+     * Filtra una lista de municipios usando una query normalizada.
+     *
+     * Regla de ranking:
+     * 1) Primero resultados cuyo `normLabel` EMPIEZA por la query.
+     * 2) Si faltan resultados, completa con los que solo CONTIENEN la query.
+     *
+     * @param all Lista previamente generada por [getUiList].
+     * @param query Texto introducido por el usuario (se normaliza internamente).
+     * @param limit Número máximo de resultados a devolver (por defecto 10).
+     */
     fun filter(all: List<MunicipioUi>, query: String, limit: Int = 10): List<MunicipioUi> {
         val q = norm(query).trim()
         if (q.length < 2) return emptyList()
@@ -99,8 +157,16 @@ object MunicipiosRepository {
         return starts
     }
 
-    // -------- helpers --------
+    // -----------------------------------------------------------------
+    // HELPERS: FORMATEO + NORMALIZACIÓN
+    // -----------------------------------------------------------------
 
+    /**
+     * Reordena nombres con artículo final para mostrarlos como
+     * "El/La/Los/Las/L' <Nombre>" en vez de "<Nombre>, el/la/los/las/l'".
+     *
+     * Ej: "Pobla de Farnals, la" → "La Pobla de Farnals"
+     */
     private fun prettyName(raw: String): String {
         val m = Regex("^(.+),\\s*(el|la|los|las|l')$", RegexOption.IGNORE_CASE).find(raw.trim())
         return if (m != null) {
@@ -108,10 +174,21 @@ object MunicipiosRepository {
         } else raw.trim()
     }
 
+    /**
+     * Normaliza strings para comparación/búsqueda:
+     * - Pasa a NFD y elimina marcas diacríticas (tildes).
+     * - Convierte a minúsculas.
+     * - Facilita búsquedas "sin tildes" y case-insensitive.
+     */
     private fun norm(s: String) = Normalizer.normalize(s, Normalizer.Form.NFD)
         .replace("\\p{Mn}+".toRegex(), "")
         .lowercase()
 
+    // -----------------------------------------------------------------
+    // MAPA CÓDIGO→PROVINCIA (NOMBRES VISIBLES)
+    // -----------------------------------------------------------------
+
+    /** Mapa estático del código de provincia (2 dígitos) a su nombre visible. */
     private val PROVINCE_BY_CODE = mapOf(
         "01" to "Álava/Araba","02" to "Albacete","03" to "Alicante/Alacant","04" to "Almería",
         "05" to "Ávila","06" to "Badajoz","07" to "Illes Balears","08" to "Barcelona",
