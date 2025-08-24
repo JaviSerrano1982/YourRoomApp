@@ -253,7 +253,7 @@ fun UserProfileContent(
     // Fuente de imagen con cache-busting para ver la última subida
     val imageModel: Any? = when {
         localImageUri != null -> localImageUri
-        profile.photoUrl.isNotBlank() -> {
+        !profile.photoUrl.isNullOrBlank() -> {
             val url = profile.photoUrl
             val hasQueryParams = url.contains("?")
             url + if (hasQueryParams) "&ts=${System.currentTimeMillis()}" else "?ts=${System.currentTimeMillis()}"
@@ -276,7 +276,7 @@ fun UserProfileContent(
     val isEditingPhone = rememberSaveable { mutableStateOf(false) }
 
     // Diálogo de error global (validación completa)
-    if (errorMessage != null) {
+    if (!isSaving && hasChanges && errorMessage != null) {
         AlertDialog(
             onDismissRequest = onDismissError,
             title = { Text("Datos incompletos") },
@@ -399,7 +399,7 @@ fun UserProfileContent(
                     }
                     Spacer(modifier = Modifier.height(20.dp))
                     Text(
-                        text = "${profile.firstName} ${profile.lastName}",
+                        text = "${profile.firstName.orEmpty()} ${profile.lastName.orEmpty()}",
                         color = Color.White,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
@@ -413,7 +413,7 @@ fun UserProfileContent(
             SectionTitle("Información básica")
 
             EditableTextField(
-                value = profile.firstName,
+                value = profile.firstName.orEmpty(),
                 label = "Nombre",
                 onValueChange = { onUpdateField { copy(firstName = it) } },
                 isEditing = isEditingFirstName,
@@ -423,7 +423,7 @@ fun UserProfileContent(
             )
 
             EditableTextField(
-                value = profile.lastName,
+                value = profile.lastName.orEmpty(),
                 label = "Apellidos",
                 onValueChange = { onUpdateField { copy(lastName = it) } },
                 isEditing = isEditingLastName,
@@ -433,7 +433,7 @@ fun UserProfileContent(
             )
 
             BirthDateField(
-                value = profile.birthDate,
+                value = profile.birthDate.orEmpty(),
                 onDateSelected = { newDate -> onUpdateField { copy(birthDate = newDate) } },
                 isSaving = isSaving,
                 isError = fieldErrors.birthDate,
@@ -446,7 +446,7 @@ fun UserProfileContent(
             SectionTitle("Género")
 
             GenderSelector(
-                selectedGender = profile.gender,
+                selectedGender = profile.gender.orEmpty(),
                 onGenderSelected = { gender -> onUpdateField { copy(gender = gender) } },
                 isEnabled = !isSaving,
                 isError = fieldErrors.gender
@@ -458,7 +458,7 @@ fun UserProfileContent(
             SectionTitle("Información privada")
 
             EditableTextField(
-                value = profile.email,
+                value = profile.email.orEmpty(),
                 label = "Email",
                 onValueChange = { onUpdateField { copy(email = it) } },
                 isEditing = isEditingEmail,
@@ -468,19 +468,19 @@ fun UserProfileContent(
             )
 
             EditableTextField(
-                value = profile.phone,
+                value = profile.phone.orEmpty(),
                 label = "Teléfono",
                 onValueChange = { onUpdateField { copy(phone = it) } },
                 isEditing = isEditingPhone,
                 isSaving = isSaving,
                 isError = fieldErrors.phone,
                 errorMessage = if (fieldErrors.phone) {
-                    if (profile.phone.isBlank()) "Campo obligatorio" else "Debe tener 9 dígitos"
+                    if (profile.phone.isNullOrBlank()) "Campo obligatorio" else "Debe tener 9 dígitos"
                 } else null
             )
 
             LocationAutocompleteField(
-                value = profile.location,
+                value = profile.location.orEmpty(),
                 label = "Ubicación",
                 onValueChange = { onUpdateField { copy(location = it) } },
                 isEditing = isEditingLocation, // controla apertura/cierre

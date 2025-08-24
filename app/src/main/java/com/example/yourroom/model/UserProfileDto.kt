@@ -13,12 +13,13 @@ package com.example.yourroom.model
  * - Se usa para transportar información entre la app y la API REST.
  **/
 data class UserProfileDto(
-    val firstName: String = "",
-    val lastName: String = "",
-    val location: String = "",
-    val gender: String = "",
-    val birthDate: String = "",
-    val phone: String = "",
-    val email: String = "",
-    val photoUrl: String = ""
+    val firstName: String? = null,
+    val lastName: String? = null,
+    val location: String? = null,
+    val gender: String? = null,
+    val birthDate: String? = null,
+    val phone: String? = null,
+    val email: String? = null,
+    val photoUrl: String? = null
 )
+
