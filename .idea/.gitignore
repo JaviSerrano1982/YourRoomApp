@@ -1,3 +1,32 @@
-# Default ignored files
-/shelf/
-/workspace.xml
+# === Android Studio / IntelliJ ===
+*.iml
+.idea/
+.DS_Store
+
+# === Gradle ===
+.gradle/
+build/
+**/build/
+
+# Local gradle properties (contienen claves locales, NUNCA subir)
+local.properties
+
+# === Android Studio specific ===
+captures/
+.externalNativeBuild/
+.cxx/
+
+# === Archivos de configuración de IDEA que no sirven en git ===
+.idea/caches
+.idea/libraries
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+.idea/deploymentTargetSelector.xml
+
+# === Logs ===
+*.log
+
+# === OS-specific ===
+Thumbs.db
