@@ -250,13 +250,15 @@ fun UserProfileContent(
     isEditingLocation: MutableState<Boolean>,
     modifier: Modifier = Modifier
 ) {
-    // Fuente de imagen con cache-busting para ver la última subida
+    // Cache-buster estable: solo cambia cuando cambia la foto
+    val cacheBust = remember(profile.photoUrl, localImageUri) { System.currentTimeMillis() }
+
     val imageModel: Any? = when {
         localImageUri != null -> localImageUri
         !profile.photoUrl.isNullOrBlank() -> {
             val url = profile.photoUrl
             val hasQueryParams = url.contains("?")
-            url + if (hasQueryParams) "&ts=${System.currentTimeMillis()}" else "?ts=${System.currentTimeMillis()}"
+            url + if (hasQueryParams) "&ts=$cacheBust" else "?ts=$cacheBust"
         }
         else -> null
     }

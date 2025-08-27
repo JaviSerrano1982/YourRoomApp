@@ -1,5 +1,6 @@
 package com.example.yourroom.ui.theme.screens
 
+import android.R.color.white
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -37,7 +38,8 @@ fun SuccessScreen(onNavigateToLogin: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(SuccesGradient)
+            //.background(SuccesGradient)
+            .background(color = Color.White)
             .padding(32.dp),
         contentAlignment = Alignment.Center
     ) {
