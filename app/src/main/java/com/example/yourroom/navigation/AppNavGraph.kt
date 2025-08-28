@@ -94,9 +94,10 @@ fun AppNavGraph(
                 SearchScreen()
             }
             composable("publish") {
-                showBottomBar.value = true
-                PublishScreen()
+                showBottomBar.value = false
+                PublishRoomScreen(navController)
             }
+
             composable("favorites") {
                 showBottomBar.value = true
                 FavoritesScreen()
