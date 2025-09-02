@@ -7,7 +7,15 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import com.example.yourroom.ui.theme.screens.*
-import com.example.yourroom.ui.theme.screens.UserProfileScreen
+import com.example.yourroom.ui.theme.screens.profile.UserProfileScreen
+import com.example.yourroom.ui.theme.screens.auth.LoginScreen
+import com.example.yourroom.ui.theme.screens.auth.RegisterScreen
+import com.example.yourroom.ui.theme.screens.favorites.FavoritesScreen
+import com.example.yourroom.ui.theme.screens.home.HomeScreen
+import com.example.yourroom.ui.theme.screens.publish.PublishBasicsScreen
+import com.example.yourroom.ui.theme.screens.publish.PublishDetailsScreen
+import com.example.yourroom.ui.theme.screens.publish.PublishPhotosScreen
+import com.example.yourroom.ui.theme.screens.succes.SuccessScreen
 
 // ---------------------------------------------------------------------
 // NAVEGACIÓN PRINCIPAL DE LA APP (NavGraph)
@@ -93,9 +101,22 @@ fun AppNavGraph(
                 showBottomBar.value = true
                 SearchScreen()
             }
-            composable("publish") {
-                showBottomBar.value = false
-                PublishRoomScreen(navController)
+            navigation(
+                startDestination = "publish/basics",
+                route = "publish"
+            ) {
+                composable("publish/basics") {
+                    showBottomBar.value = false
+                    PublishBasicsScreen(navController)
+                }
+                composable("publish/details") {
+                    showBottomBar.value = false
+                    PublishDetailsScreen(navController)
+                }
+                composable("publish/photos") {
+                    showBottomBar.value = false
+                    PublishPhotosScreen(navController)
+                }
             }
 
             composable("favorites") {

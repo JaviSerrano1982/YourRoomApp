@@ -1,4 +1,4 @@
-package com.example.yourroom.ui.theme.screens
+package com.example.yourroom.ui.theme.screens.profile
 
 import android.net.Uri
 import androidx.activity.compose.BackHandler
@@ -52,8 +52,13 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.window.PopupProperties
+import com.example.yourroom.location.MunicipiosRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 /**
  * Pantalla de edición de perfil de usuario.
@@ -159,6 +164,7 @@ fun UserProfileScreen(
     }
 
     // --- Scaffold con Snackbar personalizado ---
+    //Aparece en la en la parte inferior de la pantalla cuando se guardan los datos con éxito
     Scaffold(
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState) { data ->
@@ -620,7 +626,7 @@ fun LocationAutocompleteField(
     errorMessage: String?
 ) {
     val ctx = LocalContext.current
-    val all = remember { com.example.yourroom.location.MunicipiosRepository.getUiList(ctx) }
+    val all = remember { MunicipiosRepository.getUiList(ctx) }
     val scope = rememberCoroutineScope()
     var searchJob by remember { mutableStateOf<Job?>(null) }
 
@@ -628,13 +634,13 @@ fun LocationAutocompleteField(
     var hasFocus by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
     var suggestions by remember {
-        mutableStateOf(emptyList<com.example.yourroom.location.MunicipiosRepository.MunicipioUi>())
+        mutableStateOf(emptyList<MunicipiosRepository.MunicipioUi>())
     }
 
     fun recompute(query: String) {
         val q = query.trim()
         suggestions = if (q.length >= 2) {
-            com.example.yourroom.location.MunicipiosRepository.filter(all, q)
+            MunicipiosRepository.filter(all, q)
         } else emptyList()
         expanded = hasFocus && suggestions.isNotEmpty()
     }
@@ -754,27 +760,27 @@ fun BirthDateField(
     modifier: Modifier = Modifier
 ) {
     // --- Utilidades de fecha ---
-    val dateFormatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")
+    val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
     fun parseToEpochMillis(dateStr: String): Long? = try {
-        val ld = java.time.LocalDate.parse(dateStr, dateFormatter)
-        ld.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val ld = LocalDate.parse(dateStr, dateFormatter)
+        ld.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
     } catch (_: Exception) { null }
 
     fun formatFromEpoch(millis: Long): String {
-        val ld = java.time.Instant.ofEpochMilli(millis)
-            .atZone(java.time.ZoneId.systemDefault())
+        val ld = Instant.ofEpochMilli(millis)
+            .atZone(ZoneId.systemDefault())
             .toLocalDate()
         return ld.format(dateFormatter)
     }
 
     // Estado del diálogo y fecha inicial
     var showPicker by remember { mutableStateOf(false) }
-    val today = remember { java.time.LocalDate.now() }
+    val today = remember { LocalDate.now() }
     val fallback = remember { today.minusYears(18) }
     val initialMillis = remember(value) {
         parseToEpochMillis(value)
-            ?: fallback.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+            ?: fallback.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
     }
     val yearRange = 1900..today.year
 

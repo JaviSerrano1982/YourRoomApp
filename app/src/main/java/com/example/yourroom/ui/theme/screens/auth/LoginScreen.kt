@@ -1,4 +1,4 @@
-package com.example.yourroom.ui.theme.screens
+package com.example.yourroom.ui.theme.screens.auth
 
 import android.util.Log
 import androidx.compose.foundation.BorderStroke

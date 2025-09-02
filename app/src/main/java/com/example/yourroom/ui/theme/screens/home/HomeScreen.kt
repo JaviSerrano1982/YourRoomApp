@@ -1,7 +1,6 @@
-package com.example.yourroom.ui.theme.screens
+package com.example.yourroom.ui.theme.screens.home
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,6 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.yourroom.datastore.UserPreferences
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 @Composable
@@ -42,7 +42,7 @@ fun HomeScreen(
         Button(onClick = {
             scope.launch {
                 userPreferences.clearSession()
-                com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+                FirebaseAuth.getInstance().signOut()
                 navController.navigate("login") {
                     popUpTo("home") { inclusive = true }
                 }

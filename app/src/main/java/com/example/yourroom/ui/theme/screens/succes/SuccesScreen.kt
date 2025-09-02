@@ -1,6 +1,5 @@
-package com.example.yourroom.ui.theme.screens
+package com.example.yourroom.ui.theme.screens.succes
 
-import android.R.color.white
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -15,7 +14,6 @@ import com.airbnb.lottie.compose.*
 import com.example.yourroom.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import com.example.yourroom.ui.theme.SuccesGradient
 
 // ---------------------------------------------------------------------
 // PANTALLA DE ÉXITO (POST-REGISTRO)
