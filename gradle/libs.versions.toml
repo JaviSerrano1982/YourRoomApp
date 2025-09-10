@@ -33,6 +33,7 @@ hilt = "2.51"
 hiltCompiler = "1.2.0"
 
 [libraries]
+androidx-compose-ui-text = { module = "androidx.compose.ui:ui-text" }
 coil-compose-v260 = { module = "io.coil-kt:coil-compose", version.ref = "coilComposeVersion" }
 firebase-auth-ktx = { module = "com.google.firebase:firebase-auth-ktx" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
@@ -72,6 +73,7 @@ material-icons-extended = { module = "androidx.compose.material:material-icons-e
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofitVersion" }
 ui = { module = "androidx.compose.ui:ui", version.ref = "ui" }
 androidx-compiler = { group = "androidx.databinding", name = "compiler", version.ref = "compiler" }
+androidx-ui-text = { module = "androidx.compose.ui:ui-text" }
 
 
 [plugins]
