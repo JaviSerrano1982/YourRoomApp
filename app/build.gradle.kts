@@ -106,6 +106,9 @@ dependencies {
     // ➕ Coroutines para Tasks (await())
     implementation(libs.kotlinx.coroutines.play.services)
 
+    implementation(libs.androidx.compose.ui.text)
+
+
 
 
 
