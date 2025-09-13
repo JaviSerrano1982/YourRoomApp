@@ -10,7 +10,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 
 @Composable
-fun PublishPhotosScreen(navController: NavController) {
+fun PublishPhotosScreen(
+    navController: NavController,
+    spaceId: Long) {
     Scaffold(
         bottomBar = {
             Row(
@@ -23,8 +25,8 @@ fun PublishPhotosScreen(navController: NavController) {
                     Text("Atrás")
                 }
                 Button(onClick = {
-                    // Aquí de momento volvemos al perfil al terminar
-                    navController.navigate("profile") {
+                    // Volvemos a home
+                    navController.navigate("home") {
                         popUpTo(PublishRoutes.Root) { inclusive = true }
                     }
                 }) {

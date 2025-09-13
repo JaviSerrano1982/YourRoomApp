@@ -1,8 +1,11 @@
 package com.example.yourroom.ui.theme.screens.publish
 
 object PublishRoutes {
-    const val Root = "publish"
-    const val Basics = "publish/basics"
-    const val Details = "publish/details"
-    const val Photos = "publish/photos"
+    const val Root = "publish" // pantalla de Básicos
+    const val Details = "publish/{spaceId}/details"
+    const val Photos = "publish/{spaceId}/photos"
+
+
+    fun details(spaceId: Long) = "publish/$spaceId/details"
+    fun photos(spaceId: Long) = "publish/$spaceId/photos"
 }

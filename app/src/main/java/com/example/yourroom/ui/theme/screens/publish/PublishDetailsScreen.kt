@@ -9,7 +9,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 
 @Composable
-fun PublishDetailsScreen(navController: NavController) {
+fun PublishDetailsScreen(
+    navController: NavController,
+    spaceId: Long) {
     Scaffold(
         bottomBar = {
             Row(
@@ -21,9 +23,10 @@ fun PublishDetailsScreen(navController: NavController) {
                 OutlinedButton(onClick = { navController.popBackStack() }) {
                     Text("Atrás")
                 }
-                Button(onClick = { navController.navigate(PublishRoutes.Photos) }) {
+                Button(onClick = { navController.navigate(PublishRoutes.photos(spaceId)) }) {
                     Text("Siguiente")
                 }
+
             }
         }
     ) { padding ->
