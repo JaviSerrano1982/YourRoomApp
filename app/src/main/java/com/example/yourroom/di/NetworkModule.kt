@@ -3,6 +3,7 @@ package com.example.yourroom.di
 import android.content.Context
 import com.example.yourroom.datastore.UserPreferences
 import com.example.yourroom.network.AuthInterceptor
+import com.example.yourroom.network.SpaceApiService
 import com.example.yourroom.network.UserApiService
 import dagger.Module
 import dagger.Provides
@@ -100,4 +101,31 @@ object NetworkModule {
     fun provideUserPreferences(@ApplicationContext context: Context): UserPreferences {
         return UserPreferences(context)
     }
+
+    // -----------------------------------------------------------------
+// PROVEEDOR: SPACE API (Singleton)
+// -----------------------------------------------------------------
+
+    /**
+     * Expone una instancia única de [SpaceApiService], interfaz de Retrofit que
+     * define todas las llamadas HTTP relacionadas con los espacios (crear sala,
+     * actualizar básicos, actualizar detalles, etc.).
+     *
+     * - Recibe como parámetro el objeto [Retrofit] que Hilt ya sabe cómo construir
+     *   (con baseUrl, interceptores, convertidores de JSON, etc.).
+     * - Llama a `retrofit.create(SpaceApiService::class.java)` para que Retrofit
+     *   genere en tiempo de ejecución la implementación real de la interfaz.
+     * - Se anota con [@Singleton] para que Hilt reutilice siempre la misma instancia
+     *   en todo el ciclo de vida de la app.
+     *
+     * De esta forma, cualquier clase que dependa de [SpaceApiService] (p. ej.
+     * un `SpaceRepository`) puede solicitarlo vía inyección de dependencias y
+     * recibirá automáticamente la implementación correcta sin tener que
+     * instanciarla manualmente.
+     */
+
+    @Provides
+    @Singleton
+    fun provideSpaceApi(retrofit: Retrofit): SpaceApiService =
+        retrofit.create(SpaceApiService::class.java)
 }

@@ -8,56 +8,62 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
-
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.yourroom.viewmodel.PublishSpaceViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PublishBasicsScreen(navController: NavController) {
+fun PublishBasicsScreen(
+    navController: NavController,
+    vm: PublishSpaceViewModel = hiltViewModel()
+) {
+    val ui by vm.ui.collectAsState()
 
-    // Estados de los campos
-    var title by rememberSaveable { mutableStateOf("") }
-    var location by rememberSaveable { mutableStateOf("") }
-    var address by rememberSaveable { mutableStateOf("") }
-    var capacity by rememberSaveable { mutableStateOf("") }
-    var price by rememberSaveable { mutableStateOf("") }
-    var photoUri by rememberSaveable { mutableStateOf<Uri?>(null) }
-
-    // Photo picker
+    // Photo picker (igual que el tuyo, pero guardando en el VM)
     val pickPhoto = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri -> if (uri != null) photoUri = uri }
+    ) { uri: Uri? -> vm.setPhotoUri(uri) }
 
-    // Validación mínima para habilitar el botón
-    val isNextEnabled = title.isNotBlank()
-            && location.isNotBlank()
-            && address.isNotBlank()
-            && capacity.toIntOrNull()?.let { it > 0 } == true
-            && price.toDoubleOrNull()?.let { it > 0.0 } == true
-            && photoUri != null
+    // Misma validación que ya hacías tú
+    val isNextEnabled = remember(ui) {
+        ui.title.isNotBlank() &&
+                ui.location.isNotBlank() &&
+                ui.address.isNotBlank() &&
+                (ui.capacity.toIntOrNull()?.let { it > 0 } == true) &&
+                (ui.price.replace(',', '.').toDoubleOrNull()?.let { it > 0.0 } == true) &&
+                ui.photoUri != null
+    }
 
     Scaffold(
         bottomBar = {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                OutlinedButton(onClick = { navController.popBackStack() }) {
-                    Text("Atrás")
-                }
+                OutlinedButton(onClick = { navController.popBackStack() }) { Text("Atrás") }
                 Button(
-                    onClick = { navController.navigate(PublishRoutes.Details) },
-                    enabled = isNextEnabled
+                    onClick = {
+                        vm.submitBasics { id ->
+                            // Navegamos pasando el id creado/actualizado
+                            navController.navigate(PublishRoutes.details(id))
+                        }
+                    },
+                    enabled = isNextEnabled && !ui.isLoading
                 ) {
-                    Text("Siguiente")
+                    if (ui.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Siguiente")
+                    }
                 }
             }
         }
@@ -69,10 +75,14 @@ fun PublishBasicsScreen(navController: NavController) {
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            if (ui.error != null) {
+                Text(ui.error!!, color = MaterialTheme.colorScheme.error)
+            }
+
             // Título
             OutlinedTextField(
-                value = title,
-                onValueChange = { title = it },
+                value = ui.title,
+                onValueChange = vm::onTitleChange,
                 label = { Text("Título de la sala") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -81,8 +91,8 @@ fun PublishBasicsScreen(navController: NavController) {
 
             // Ubicación
             OutlinedTextField(
-                value = location,
-                onValueChange = { location = it },
+                value = ui.location,
+                onValueChange = vm::onLocationChange,
                 label = { Text("Ubicación (ciudad o zona)") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -91,8 +101,8 @@ fun PublishBasicsScreen(navController: NavController) {
 
             // Dirección
             OutlinedTextField(
-                value = address,
-                onValueChange = { address = it },
+                value = ui.address,
+                onValueChange = vm::onAddressChange,
                 label = { Text("Dirección") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -101,11 +111,9 @@ fun PublishBasicsScreen(navController: NavController) {
 
             // Capacidad
             OutlinedTextField(
-                value = capacity,
+                value = ui.capacity,
                 onValueChange = { input ->
-                    if (input.isEmpty() || input.all { it.isDigit() }) {
-                        capacity = input
-                    }
+                    if (input.isEmpty() || input.all { it.isDigit() }) vm.onCapacityChange(input)
                 },
                 label = { Text("Capacidad (personas)") },
                 singleLine = true,
@@ -118,11 +126,11 @@ fun PublishBasicsScreen(navController: NavController) {
 
             // Precio
             OutlinedTextField(
-                value = price,
+                value = ui.price,
                 onValueChange = { input ->
                     val sanitized = input.replace(',', '.')
                     if (sanitized.isEmpty() || sanitized.matches(Regex("""\d*([.]\d{0,2})?"""))) {
-                        price = sanitized
+                        vm.onPriceChange(sanitized)
                     }
                 },
                 label = { Text("Precio alquiler (€ / hora)") },
@@ -135,18 +143,15 @@ fun PublishBasicsScreen(navController: NavController) {
                 )
             )
 
-            // Foto
-            Card(
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            // Foto (sin subir aún; solo guardamos la Uri para el flujo)
+            Card(modifier = Modifier.fillMaxWidth()) {
                 Column(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text("Foto principal", style = MaterialTheme.typography.titleMedium)
                     Text(
-                        if (photoUri != null) "1 foto seleccionada"
-                        else "Ninguna foto seleccionada",
+                        if (ui.photoUri != null) "1 foto seleccionada" else "Ninguna foto seleccionada",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     OutlinedButton(
@@ -156,7 +161,7 @@ fun PublishBasicsScreen(navController: NavController) {
                             )
                         }
                     ) {
-                        Text(if (photoUri != null) "Cambiar foto" else "Seleccionar foto")
+                        Text(if (ui.photoUri != null) "Cambiar foto" else "Seleccionar foto")
                     }
                 }
             }

@@ -16,6 +16,9 @@ import com.example.yourroom.ui.theme.screens.publish.PublishBasicsScreen
 import com.example.yourroom.ui.theme.screens.publish.PublishDetailsScreen
 import com.example.yourroom.ui.theme.screens.publish.PublishPhotosScreen
 import com.example.yourroom.ui.theme.screens.succes.SuccessScreen
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.example.yourroom.ui.theme.screens.publish.PublishRoutes
 
 // ---------------------------------------------------------------------
 // NAVEGACIÓN PRINCIPAL DE LA APP (NavGraph)
@@ -32,6 +35,7 @@ import com.example.yourroom.ui.theme.screens.succes.SuccessScreen
  * @param isLoggedIn indica si el usuario ya está autenticado.
  * @param userId identificador del usuario (0L si aún no existe).
  */
+
 @Composable
 fun AppNavGraph(
     navController: NavHostController,
@@ -101,33 +105,41 @@ fun AppNavGraph(
                 showBottomBar.value = true
                 SearchScreen()
             }
+            composable("profile") {
+                showBottomBar.value = false
+                UserProfileScreen(navController)
+            }
+
+            // navigation(...)
             navigation(
                 startDestination = "publish/basics",
-                route = "publish"
+                route = PublishRoutes.Root
             ) {
                 composable("publish/basics") {
                     showBottomBar.value = false
                     PublishBasicsScreen(navController)
                 }
-                composable("publish/details") {
+
+                composable(
+                    route = PublishRoutes.Details,        // "publish/{spaceId}/details"
+                    arguments = listOf(navArgument("spaceId") { type = NavType.LongType })
+                ) { backStackEntry ->
                     showBottomBar.value = false
-                    PublishDetailsScreen(navController)
+                    val spaceId = backStackEntry.arguments?.getLong("spaceId") ?: 0L
+                    PublishDetailsScreen(navController, spaceId)
                 }
-                composable("publish/photos") {
+
+                composable(
+                    route = PublishRoutes.Photos,         // "publish/{spaceId}/photos"
+                    arguments = listOf(navArgument("spaceId") { type = NavType.LongType })
+                ) { backStackEntry ->
                     showBottomBar.value = false
-                    PublishPhotosScreen(navController)
+                    val spaceId = backStackEntry.arguments?.getLong("spaceId") ?: 0L
+                    PublishPhotosScreen(navController, spaceId)
                 }
             }
 
-            composable("favorites") {
-                showBottomBar.value = true
-                FavoritesScreen()
-            }
-            composable("profile") {
-                // En perfil ocultamos la BottomBar (ej: para editar datos)
-                showBottomBar.value = false
-                UserProfileScreen(navController)
-            }
+
         }
     }
 }
