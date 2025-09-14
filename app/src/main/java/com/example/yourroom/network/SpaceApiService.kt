@@ -38,4 +38,8 @@ interface SpaceApiService {
     // Lista mis espacios
     @GET("api/spaces/me")
     suspend fun getMine(): List<SpaceResponse>
+
+    @DELETE("api/spaces/{id}")
+    suspend fun deleteSpace(@Path("id") id: Long): retrofit2.Response<Unit>
+
 }
