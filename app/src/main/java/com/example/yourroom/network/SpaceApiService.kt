@@ -10,7 +10,7 @@ interface SpaceApiService {
 
 
     // Crea un espacio con datos de Básicos
-    @POST("api/spaces")
+    @POST("api/spaces/basics")
     suspend fun createSpace(@Body body: SpaceBasicsRequest): SpaceResponse
 
 
