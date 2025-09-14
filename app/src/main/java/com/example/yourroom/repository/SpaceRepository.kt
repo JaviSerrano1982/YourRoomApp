@@ -15,4 +15,7 @@ class SpaceRepository @Inject constructor(
     suspend fun updateDetails(id: Long, body: SpaceDetailsRequest): SpaceResponse = api.updateDetails(id, body)
     suspend fun getOne(id: Long): SpaceResponse = api.getOne(id)
     suspend fun getMine(): List<SpaceResponse> = api.getMine()
+    suspend fun deleteSpace(id: Long): retrofit2.Response<Unit> {
+        return api.deleteSpace(id)
+    }
 }

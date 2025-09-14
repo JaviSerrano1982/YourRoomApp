@@ -1,9 +1,14 @@
 package com.example.yourroom.viewmodel
 
 import android.net.Uri
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.yourroom.model.SpaceBasicsRequest
+import com.example.yourroom.model.SpaceDetailsRequest
 import com.example.yourroom.model.SpaceResponse
 import com.example.yourroom.repository.SpaceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -12,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.getOrElse
 
 @HiltViewModel
 class PublishSpaceViewModel @Inject constructor(
@@ -92,3 +98,74 @@ class PublishSpaceViewModel @Inject constructor(
         }
     }
 }
+@HiltViewModel
+class PublishDetailsViewModel @Inject constructor(
+    private val repo: SpaceRepository,
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
+
+    val spaceId: Long = checkNotNull(savedStateHandle["spaceId"])
+
+    data class UiState(
+        val sizeM2Text: String = "",
+        val availability: String = "",
+        val services: String = "",
+        val description: String = "",
+        val isSaving: Boolean = false,
+        val error: String? = null
+    )
+    var uiState by mutableStateOf(UiState())
+        private set
+
+    fun onSize(v: String) { uiState = uiState.copy(sizeM2Text = v.filter { it.isDigit() }) }
+    fun onAvailability(v: String) { uiState = uiState.copy(availability = v) }
+    fun onServices(v: String) { uiState = uiState.copy(services = v) }
+    fun onDescription(v: String) { uiState = uiState.copy(description = v) }
+
+    private fun buildRequest(): SpaceDetailsRequest {
+        val size = uiState.sizeM2Text.takeIf { it.isNotBlank() }?.toInt()
+        return SpaceDetailsRequest(
+            sizeM2 = size,
+            availability = uiState.availability.trim().ifBlank { null },
+            services = uiState.services.trim().ifBlank { null },
+            description = uiState.description.trim().ifBlank { null }
+        )
+    }
+
+    /** Guarda y devuelve true/false. Úsalo desde la UI para decidir navegar. */
+    suspend fun saveDetailsAwait(): Boolean {
+        val req = buildRequest()
+        uiState = uiState.copy(isSaving = true, error = null)
+        return try {
+            repo.updateDetails(spaceId, req)
+            uiState = uiState.copy(isSaving = false)
+            true
+        } catch (e: Exception) {
+            uiState = uiState.copy(isSaving = false, error = e.message ?: "Error al guardar")
+            false
+        }
+    }
+    fun cancelAndDelete(onSuccess: () -> Unit) {
+        uiState = uiState.copy(isSaving = true, error = null)
+        viewModelScope.launch {
+            try {
+                val resp = repo.deleteSpace(spaceId)
+                if (resp.isSuccessful) {
+                    uiState = uiState.copy(isSaving = false)
+                    onSuccess()
+                } else {
+                    uiState = uiState.copy(
+                        isSaving = false,
+                        error = "Error al borrar (HTTP ${resp.code()})"
+                    )
+                }
+            } catch (e: Exception) {
+                uiState = uiState.copy(isSaving = false, error = e.message ?: "Error al borrar")
+            }
+        }
+    }
+
+
+}
+
+
