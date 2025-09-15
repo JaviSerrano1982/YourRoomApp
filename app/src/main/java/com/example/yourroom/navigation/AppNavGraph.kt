@@ -66,8 +66,8 @@ fun AppNavGraph(
             // -----------------------------
             // Por defecto: splash → login → home
             // Bypass para pruebas: cambiar a "home"
-            startDestination = if (isLoggedIn && userId != 0L) "home" else "splash",
-            // startDestination = "home", // <- Bypass (solo pruebas)
+            //startDestination = if (isLoggedIn && userId != 0L) "home" else "splash",
+             startDestination = "home", // <- Bypass (solo pruebas)
 
             modifier = Modifier.padding(innerPadding)
         ) {
