@@ -80,7 +80,9 @@ fun PublishBasicsScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .height(70.dp)
                     .padding(16.dp),
+
                 horizontalArrangement = Arrangement.End
             ) {
 
@@ -208,7 +210,7 @@ fun PublishBasicsScreen(
                         imeAction = ImeAction.Done
                     )
                 )
-                Spacer(Modifier.height(6.dp))
+
 
                 // Foto
                 Card(modifier = Modifier.fillMaxWidth()) {
@@ -231,7 +233,7 @@ fun PublishBasicsScreen(
                     }
                 }
 
-                Spacer(Modifier.height(8.dp)) // pequeño aire antes del bottom bar
+
             }
         }
     }
