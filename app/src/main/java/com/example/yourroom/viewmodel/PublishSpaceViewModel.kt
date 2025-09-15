@@ -97,6 +97,36 @@ class PublishSpaceViewModel @Inject constructor(
             }
         }
     }
+    fun cancelAndDelete(onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            val id = _ui.value.spaceId ?: run {
+                // No hay borrador creado aún: vuelve a Home sin llamar al backend
+                onSuccess()
+                return@launch
+            }
+
+            try {
+                _ui.update { it.copy(isLoading = true, error = null) }
+                val resp = repo.deleteSpace(id)
+                if (resp.isSuccessful) {
+                    _ui.update { it.copy(isLoading = false, spaceId = null) }
+                    onSuccess()
+                } else {
+                    _ui.update {
+                        it.copy(
+                            isLoading = false,
+                            error = "Error al borrar (HTTP ${resp.code()})"
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                _ui.update {
+                    it.copy(isLoading = false, error = e.message ?: "Error al borrar")
+                }
+            }
+        }
+    }
+
 }
 @HiltViewModel
 class PublishDetailsViewModel @Inject constructor(
@@ -164,6 +194,8 @@ class PublishDetailsViewModel @Inject constructor(
             }
         }
     }
+
+
 
 
 }

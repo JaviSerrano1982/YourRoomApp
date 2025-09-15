@@ -14,6 +14,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.yourroom.viewmodel.PublishDetailsViewModel
 import kotlinx.coroutines.launch
 
@@ -152,18 +153,16 @@ fun PublishDetailsScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showCancelDialog = false
-                    // Borrado en backend y salida del flujo
                     viewModel.cancelAndDelete {
-                        // Después de borrar, sal del flujo. Aquí usamos un back simple.
-                        // Si prefieres ir a Home con popUpTo, cámbialo por tu ruta:
-                        // navController.navigate(PublishRoutes.home()) {
-                        //     popUpTo(PublishRoutes.home()) { inclusive = true }
-                        // }
-                        navController.popBackStack()
+                        // Limpia toda la pila y navega a Home
+                        navController.navigate(PublishRoutes.home()) {
+                            // Sube hasta el startDestination y lo borra borra también
+                            popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
+                            launchSingleTop = true
+                            restoreState = false
+                        }
                     }
-                }) {
-                    Text("Sí, borrar")
-                }
+                }) { Text("Sí, borrar") }
             },
             dismissButton = {
                 TextButton(onClick = { showCancelDialog = false }) {
@@ -172,4 +171,5 @@ fun PublishDetailsScreen(
             }
         )
     }
+
 }
