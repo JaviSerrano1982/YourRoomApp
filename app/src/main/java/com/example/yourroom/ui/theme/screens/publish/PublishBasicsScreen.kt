@@ -6,8 +6,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -16,6 +18,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -27,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import coil.compose.AsyncImage
 import com.example.yourroom.R
 import com.example.yourroom.viewmodel.PublishSpaceViewModel
 
@@ -212,26 +216,50 @@ fun PublishBasicsScreen(
                 )
 
 
-                // Foto
                 Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier.padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp), // padding interno de la Card
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Foto principal", style = MaterialTheme.typography.titleMedium)
-                        Text(
-                            if (ui.photoUri != null) "1 foto seleccionada" else "Ninguna foto seleccionada",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        OutlinedButton(
-                            onClick = {
-                                pickPhoto.launch(
-                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                )
-                            }
-                        ) { Text(if (ui.photoUri != null) "Cambiar foto" else "Seleccionar foto") }
+                        // IZQUIERDA: texto + botón
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text("Foto principal", style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                if (ui.photoUri != null) "1 foto seleccionada" else "Ninguna foto seleccionada",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            OutlinedButton(
+                                onClick = {
+                                    pickPhoto.launch(
+                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                    )
+                                }
+                            ) { Text(if (ui.photoUri != null) "Cambiar foto" else "Seleccionar foto") }
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp)) // separación entre texto y foto
+
+                        // DERECHA: imagen en miniatura con padding y bordes redondeados
+                        if (ui.photoUri != null) {
+                            AsyncImage(
+                                model = ui.photoUri,
+                                contentDescription = "Foto seleccionada",
+                                modifier = Modifier
+                                    .size(90.dp) // tamaño fijo
+                                    .clip(RoundedCornerShape(12.dp)) // respeta esquinas redondeadas
+                                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
                     }
                 }
+
+
 
 
             }
