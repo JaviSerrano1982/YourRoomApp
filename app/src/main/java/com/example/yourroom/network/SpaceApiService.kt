@@ -42,4 +42,8 @@ interface SpaceApiService {
     @DELETE("api/spaces/{id}")
     suspend fun deleteSpace(@Path("id") id: Long): retrofit2.Response<Unit>
 
+    @POST("api/spaces/draft")
+    suspend fun createDraft(): SpaceResponse
+
+
 }

@@ -47,7 +47,10 @@ fun PublishBasicsScreen(
     // Photo picker (guardamos la Uri en el VM)
     val pickPhoto = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri: Uri? -> vm.setPhotoUri(uri) }
+    ) { uri: Uri? ->
+        if (uri != null) vm.onMainPhotoSelected(uri)
+    }
+
 
     // Validación mínima para habilitar "Siguiente"
     val isNextEnabled = remember(ui) {
@@ -235,11 +238,16 @@ fun PublishBasicsScreen(
                             )
                             OutlinedButton(
                                 onClick = {
-                                    pickPhoto.launch(
-                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                    )
+                                    vm.onAddMainPhotoClicked {
+                                        pickPhoto.launch(
+                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                        )
+                                    }
                                 }
-                            ) { Text(if (ui.photoUri != null) "Cambiar foto" else "Seleccionar foto") }
+                            ) {
+                                Text(if (ui.photoUri != null) "Cambiar foto" else "Seleccionar foto")
+                            }
+
                         }
 
                         Spacer(modifier = Modifier.width(12.dp)) // separación entre texto y foto

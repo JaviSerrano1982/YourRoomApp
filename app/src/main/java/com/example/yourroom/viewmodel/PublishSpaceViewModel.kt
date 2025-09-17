@@ -7,21 +7,27 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.yourroom.model.PhotoRequest
 import com.example.yourroom.model.SpaceBasicsRequest
 import com.example.yourroom.model.SpaceDetailsRequest
 import com.example.yourroom.model.SpaceResponse
+import com.example.yourroom.repository.PhotoRepository
 import com.example.yourroom.repository.SpaceRepository
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import kotlin.getOrElse
 
 @HiltViewModel
 class PublishSpaceViewModel @Inject constructor(
-    private val repo: SpaceRepository
+    private val repo: SpaceRepository,
+    private val photoRepo: PhotoRepository,
 ) : ViewModel() {
 
     data class UiState(
@@ -126,6 +132,69 @@ class PublishSpaceViewModel @Inject constructor(
             }
         }
     }
+    private suspend fun ensureSpaceId(): Long {
+        _ui.value.spaceId?.let { return it }
+        return try {
+            val draft = repo.createDraft()
+            _ui.update { it.copy(spaceId = draft.id) }
+            draft.id
+        } catch (e: retrofit2.HttpException) {
+            _ui.update { it.copy(error = "Error creando borrador (HTTP ${e.code()})") }
+            -1L
+        } catch (e: Exception) {
+            _ui.update { it.copy(error = e.message ?: "Error inesperado") }
+            -1L
+        }
+    }
+
+
+
+
+    fun onAddMainPhotoClicked(openPicker: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                _ui.update { it.copy(isLoading = true, error = null) }
+                ensureSpaceId()                   // 👈 crea el draft automáticamente
+                openPicker()
+            } finally {
+                _ui.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
+    fun onMainPhotoSelected(uri: Uri) {
+        viewModelScope.launch {
+            try {
+                _ui.update { it.copy(isLoading = true, photoUri = uri) }
+                val spaceId = ensureSpaceId()
+                val downloadUrl = uploadToFirebase(spaceId, uri)
+                photoRepo.add(spaceId, PhotoRequest(url = downloadUrl, primary = true))
+            } finally {
+                _ui.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+    private suspend fun uploadToFirebase(spaceId: Long, uri: Uri): String {
+        ensureFirebaseSession()
+        val ref = FirebaseStorage.getInstance()
+            .reference.child("spaces/$spaceId/main.jpg")
+
+        ref.putFile(uri).await()
+        val raw = ref.downloadUrl.await().toString()
+        // cache-busting para evitar que la miniatura se quede cacheada
+        return if (raw.contains("?")) "$raw&ts=${System.currentTimeMillis()}"
+        else "$raw?ts=${System.currentTimeMillis()}"
+    }
+
+    private suspend fun ensureFirebaseSession() {
+        val auth = FirebaseAuth.getInstance()
+        if (auth.currentUser == null) {
+            // Si ya haces signInWithCustomToken en login, esto normalmente no se ejecuta.
+            auth.signInAnonymously().await()
+        }
+    }
+
+
 
 }
 @HiltViewModel
@@ -194,6 +263,8 @@ class PublishDetailsViewModel @Inject constructor(
             }
         }
     }
+
+
 
 
 
