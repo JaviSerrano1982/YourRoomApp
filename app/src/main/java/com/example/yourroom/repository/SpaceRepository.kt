@@ -10,6 +10,7 @@ import javax.inject.Inject
 class SpaceRepository @Inject constructor(
     private val api: SpaceApiService
 ) {
+    suspend fun createDraft(): SpaceResponse = api.createDraft()
     suspend fun createSpace(body: SpaceBasicsRequest): SpaceResponse = api.createSpace(body)
     suspend fun updateBasics(id: Long, body: SpaceBasicsRequest): SpaceResponse = api.updateBasics(id, body)
     suspend fun updateDetails(id: Long, body: SpaceDetailsRequest): SpaceResponse = api.updateDetails(id, body)

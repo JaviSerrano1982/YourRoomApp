@@ -3,6 +3,7 @@ package com.example.yourroom.di
 import android.content.Context
 import com.example.yourroom.datastore.UserPreferences
 import com.example.yourroom.network.AuthInterceptor
+import com.example.yourroom.network.PhotoApiService
 import com.example.yourroom.network.SpaceApiService
 import com.example.yourroom.network.UserApiService
 import dagger.Module
@@ -128,4 +129,9 @@ object NetworkModule {
     @Singleton
     fun provideSpaceApi(retrofit: Retrofit): SpaceApiService =
         retrofit.create(SpaceApiService::class.java)
+
+    @Provides
+    fun providePhotoApiService(retrofit: Retrofit): PhotoApiService =
+        retrofit.create(PhotoApiService::class.java)
+
 }
