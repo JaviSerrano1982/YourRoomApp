@@ -13,9 +13,9 @@ import androidx.compose.ui.graphics.Color
 val YourRoomGradient = Brush.verticalGradient(
     colorStops = arrayOf(
         0.0f to Color(0xFFFFFFFF), // 0%   → Blanco
-        0.2f to Color(0xFFFFFFFF), // 20%  → Blanco (mantiene claridad en la parte alta)
-        0.6f to Color(0xFF2FE2EC), // 60%  → Celeste YourRoom
-        1.0f to Color(0xFF0A1D37)  // 100% → Azul oscuro de marca
+        0.3f to Color(0xFFFFFFFF), // 20%  → Blanco (mantiene claridad en la parte alta)
+        1f to Color(0xFF2FE2EC), // 60%  → Celeste YourRoom
+        //1.0f to Color(0xFF0A1D37)  // 100% → Azul oscuro de marca
     )
 )
 

@@ -1,5 +1,7 @@
 package com.example.yourroom.ui.theme.screens.publish
 
+import android.R.attr.contentDescription
+import android.net.http.SslCertificate.restoreState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -10,6 +12,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -17,13 +21,19 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.yourroom.viewmodel.PublishDetailsViewModel
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.Image
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
+import com.example.yourroom.R
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PublishDetailsScreen(
     navController: NavController,
     spaceId: Long,
-    viewModel: PublishDetailsViewModel = hiltViewModel() // <- tu VM inyectado con Hilt
+    viewModel: PublishDetailsViewModel = hiltViewModel()
 ) {
     val ui = viewModel.uiState
     val scope = rememberCoroutineScope()
@@ -31,9 +41,15 @@ fun PublishDetailsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Detalles") },
-                actions = {
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        text = "Detalles",
+                        fontSize = 18.sp,
+                        textAlign = TextAlign.Center
+                    )
+                },
+                navigationIcon = {
                     IconButton(onClick = { showCancelDialog = true }) {
                         Icon(
                             imageVector = Icons.Default.Close,
@@ -42,6 +58,7 @@ fun PublishDetailsScreen(
                     }
                 }
             )
+
         },
         bottomBar = {
             Row(
@@ -58,13 +75,11 @@ fun PublishDetailsScreen(
                 }
                 Button(
                     onClick = {
-                        // Guardar detalles y avanzar SOLO si se guarda OK
                         scope.launch {
                             val ok = viewModel.saveDetailsAwait()
                             if (ok) {
                                 navController.navigate(PublishRoutes.photos(spaceId))
                             }
-                            // Si no ok, ui.error ya queda seteado y NO navega
                         }
                     },
                     enabled = !ui.isSaving
@@ -78,7 +93,6 @@ fun PublishDetailsScreen(
                         Text("Siguiente")
                     }
                 }
-
             }
         }
     ) { padding ->
@@ -88,9 +102,27 @@ fun PublishDetailsScreen(
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // Mensaje de error si lo hubiera
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.icono_detalles),
+                    contentDescription = "Ilustración de detalles",
+                    modifier = Modifier.size(130.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+            // =============================================================
+
+            // Mensaje de error
             ui.error?.let { msg ->
                 Text(
                     text = msg,
@@ -99,7 +131,6 @@ fun PublishDetailsScreen(
                 )
             }
 
-            // sizeM2
             OutlinedTextField(
                 value = ui.sizeM2Text,
                 onValueChange = viewModel::onSize,
@@ -110,7 +141,6 @@ fun PublishDetailsScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // availability
             OutlinedTextField(
                 value = ui.availability,
                 onValueChange = viewModel::onAvailability,
@@ -121,7 +151,6 @@ fun PublishDetailsScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // services
             OutlinedTextField(
                 value = ui.services,
                 onValueChange = viewModel::onServices,
@@ -132,7 +161,6 @@ fun PublishDetailsScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // description
             OutlinedTextField(
                 value = ui.description,
                 onValueChange = viewModel::onDescription,
@@ -144,6 +172,10 @@ fun PublishDetailsScreen(
             )
         }
     }
+
+
+
+
 
     if (showCancelDialog) {
         AlertDialog(

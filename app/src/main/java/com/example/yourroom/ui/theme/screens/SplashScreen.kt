@@ -113,7 +113,7 @@ fun SplashScreenContent() {
                             colors = listOf(
                                 Color(0xFFBDF8FB).copy(alpha = 0f), // arriba
                                 Color.Transparent,                  // centro
-                                Color(0xFF0A2942).copy(alpha = 1f)  // abajo
+                                Color(0xFFBDF8FB).copy(alpha = 0f)  // abajo
                             )
                         )
                     )
@@ -157,7 +157,7 @@ fun SplashScreenContent() {
                 // Texto slogan
                 Text(
                     text = "Alquila. Usa. Libera.",
-                    color = Color.White,
+                    color = Color(0xFF0A1D37),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Normal,
                     modifier = Modifier
