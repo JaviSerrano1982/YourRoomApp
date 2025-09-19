@@ -277,7 +277,7 @@ fun LoginScreenContent(
                     onClick = onRegisterClick,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color.White
+                        contentColor = Color(0xFF0A1D37)
                     ),
                     border = BorderStroke(1.dp, Color.White),
                     shape = RoundedCornerShape(

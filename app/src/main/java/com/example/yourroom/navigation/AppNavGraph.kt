@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import com.example.yourroom.ui.theme.screens.*
@@ -19,6 +20,7 @@ import com.example.yourroom.ui.theme.screens.succes.SuccessScreen
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.yourroom.ui.theme.screens.publish.PublishRoutes
+import com.google.firebase.BuildConfig
 
 // ---------------------------------------------------------------------
 // NAVEGACIÓN PRINCIPAL DE LA APP (NavGraph)
@@ -36,6 +38,7 @@ import com.example.yourroom.ui.theme.screens.publish.PublishRoutes
  * @param userId identificador del usuario (0L si aún no existe).
  */
 
+
 @Composable
 fun AppNavGraph(
     navController: NavHostController,
@@ -49,6 +52,7 @@ fun AppNavGraph(
     LaunchedEffect(userId) {
         println("USER ID EN PROFILE: $userId")
     }
+
 
     // Estructura principal de la app
     Scaffold(
@@ -66,8 +70,9 @@ fun AppNavGraph(
             // -----------------------------
             // Por defecto: splash → login → home
             // Bypass para pruebas: cambiar a "home"
-            startDestination = if (isLoggedIn && userId != 0L) "home" else "splash",
-             //startDestination = "home", // <- Bypass (solo pruebas)
+            //startDestination = if (isLoggedIn && userId != 0L) "home" else "splash",
+
+            startDestination = "home", // <- Bypass (solo pruebas)
 
             modifier = Modifier.padding(innerPadding)
         ) {

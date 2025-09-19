@@ -1,5 +1,7 @@
 package com.example.yourroom.navigation
 
+import android.net.http.SslCertificate.restoreState
+import android.net.http.SslCertificate.saveState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -89,6 +91,7 @@ fun BottomNavigationBar(navController: NavHostController) {
                 NavigationBarItem(
                     selected = isSelected,
                     onClick = {
+                        //cambiar item.route por "publish/0/details",SOLO MODO PRUEBAS
                         navController.navigate(item.route) {
                             popUpTo(navController.graph.startDestinationId) { saveState = true }
                             launchSingleTop = true
