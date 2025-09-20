@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import com.example.yourroom.ui.theme.screens.*
@@ -20,7 +19,9 @@ import com.example.yourroom.ui.theme.screens.succes.SuccessScreen
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.yourroom.ui.theme.screens.publish.PublishRoutes
-import com.google.firebase.BuildConfig
+import com.example.yourroom.ui.theme.screens.publish.PublishRoutes.photos
+import okhttp3.internal.platform.android.AndroidLogHandler.publish
+
 
 // ---------------------------------------------------------------------
 // NAVEGACIÓN PRINCIPAL DE LA APP (NavGraph)
@@ -48,6 +49,7 @@ fun AppNavGraph(
     // Estado para mostrar u ocultar la BottomNavigationBar
     val showBottomBar = remember { mutableStateOf(false) }
 
+
     // Debug temporal: mostrar userId cargado en consola
     LaunchedEffect(userId) {
         println("USER ID EN PROFILE: $userId")
@@ -70,12 +72,13 @@ fun AppNavGraph(
             // -----------------------------
             // Por defecto: splash → login → home
             // Bypass para pruebas: cambiar a "home"
-            //startDestination = if (isLoggedIn && userId != 0L) "home" else "splash",
+            startDestination = if (isLoggedIn && userId != 0L) "home" else "splash",
 
-            startDestination = "home", // <- Bypass (solo pruebas)
+            //startDestination = "home", // <- Bypass (solo pruebas)
 
             modifier = Modifier.padding(innerPadding)
         ) {
+
             // -----------------------------
             // RUTAS PÚBLICAS (sin BottomBar)
             // -----------------------------
@@ -146,6 +149,8 @@ fun AppNavGraph(
                     val spaceId = backStackEntry.arguments?.getLong("spaceId") ?: 0L
                     PublishPhotosScreen(navController, spaceId)
                 }
+
+
             }
 
 
