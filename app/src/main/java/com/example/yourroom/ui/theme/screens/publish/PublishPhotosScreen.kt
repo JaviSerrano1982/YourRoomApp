@@ -188,9 +188,9 @@ private fun PublishPhotosContent(
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.icono_publicar_sala),
+                    painter = painterResource(id = R.drawable.icono_photos),
                     contentDescription = "Ilustración de publicación",
-                    modifier = Modifier.size(100.dp),
+                    modifier = Modifier.size(130.dp),
                     contentScale = ContentScale.Fit
                 )
             }
@@ -214,6 +214,7 @@ private fun PublishPhotosContent(
                                 .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(14.dp))
                                 .clickable { onClickAdd() },
                             contentAlignment = Alignment.Center
+
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Icon(Icons.Default.Add, contentDescription = null)
