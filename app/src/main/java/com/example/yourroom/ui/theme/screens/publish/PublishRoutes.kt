@@ -6,6 +6,8 @@ object PublishRoutes {
     const val Photos = "publish/{spaceId}/photos"
 
 
+
+
     fun details(spaceId: Long) = "publish/$spaceId/details"
     fun photos(spaceId: Long) = "publish/$spaceId/photos"
     const val Home = "home"

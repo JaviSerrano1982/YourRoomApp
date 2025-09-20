@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -47,7 +48,7 @@ fun PublishPhotosScreen(
     var showCancelDialog by remember { mutableStateOf(false) }
     var replaceIndex by remember { mutableStateOf<Int?>(null) }
 
-    // Pickers
+    // Launchers (idénticos a los tuyos)
     val addPhotosLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(10)
     ) { uris: List<Uri> -> vm.addPhotos(uris) }
@@ -60,140 +61,41 @@ fun PublishPhotosScreen(
         replaceIndex = null
     }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text("¡Sube las fotos de tu sala!", fontSize = 18.sp, textAlign = TextAlign.Center)
-                },
-                navigationIcon = {
-                    IconButton(onClick = { showCancelDialog = true }) {
-                        Icon(Icons.Default.Close, contentDescription = "Cancelar y borrar borrador")
-                    }
-                }
+    // ⬇️ Reutilizamos el Content para que los cambios de UI afecten a la app y al Preview
+    PublishPhotosContent(
+        thumbnails = ui.selected,            // List<Uri>
+        isSaving = ui.isSaving,
+        error = ui.error,
+        onClickAdd = {
+            addPhotosLauncher.launch(
+                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
             )
         },
-        bottomBar = {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                OutlinedButton(onClick = { navController.popBackStack() }, enabled = !ui.isSaving) {
-                    Text("Atrás")
-                }
-                Button(
-                    onClick = {
-                        scope.launch {
-                            val ok = vm.saveAllAwait()
-                            if (ok) {
-                                navController.navigate(PublishRoutes.home()) {
-                                    popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
-                                    launchSingleTop = true
-                                    restoreState = false
-                                }
-                            }
-                        }
-                    },
-                    enabled = !ui.isSaving
-                ) {
-                    if (ui.isSaving) {
-                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                    } else {
-                        Text("Finalizar")
+        onClickBack = { navController.popBackStack() },
+        onClickFinish = {
+            scope.launch {
+                val ok = vm.saveAllAwait()
+                if (ok) {
+                    navController.navigate(PublishRoutes.home()) {
+                        popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
+                        launchSingleTop = true
+                        restoreState = false
                     }
                 }
             }
-        }
-    ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
-            // Ilustración superior (igual que Basics/Details)
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.icono_publicar_sala),
-                    contentDescription = "Ilustración de publicación",
-                    modifier = Modifier.size(100.dp),
-                    contentScale = ContentScale.Fit
-                )
-            }
+        },
+        onClickCancel = { showCancelDialog = true },
+        onClickRemoveAt = vm::removeAt,
+        onClickReplaceAt = { idx ->
+            replaceIndex = idx
+            replacePhotoLauncher.launch(
+                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+            )
+        },
+        isEnabledFinish = ui.selected.isNotEmpty() && !ui.isSaving
+    )
 
-            Spacer(Modifier.height(8.dp))
-
-            // Cuadrícula
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(3),
-                modifier = Modifier.weight(1f).padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                // Tarjeta "Subir fotos"
-                if (ui.selected.size < 10) {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .aspectRatio(1f)
-                                .clip(RoundedCornerShape(14.dp))
-                                .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(14.dp))
-                                .clickable {
-                                    addPhotosLauncher.launch(
-                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                    )
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(Icons.Default.Add, contentDescription = null)
-                                Text("Subir fotos", style = MaterialTheme.typography.bodyMedium)
-                                Text("Hasta 10", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-                            }
-                        }
-                    }
-                }
-
-                // Miniaturas con X (eliminar) y tap (reemplazar)
-                itemsIndexed(ui.selected) { index, uri ->
-                    Box(
-                        modifier = Modifier
-                            .aspectRatio(1f)
-                            .clip(RoundedCornerShape(14.dp))
-                            .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(14.dp))
-                            .clickable {
-                                replaceIndex = index
-                                replacePhotoLauncher.launch(
-                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                )
-                            }
-                    ) {
-                        AsyncImage(
-                            model = uri,
-                            contentDescription = "Foto $index",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                        IconButton(
-                            onClick = { vm.removeAt(index) },
-                            modifier = Modifier.align(Alignment.TopEnd).padding(4.dp).size(28.dp)
-                        ) {
-                            Icon(Icons.Default.Close, contentDescription = "Quitar", tint = Color.Black)
-                        }
-                    }
-                }
-            }
-
-            // Error inline
-            ui.error?.let { msg ->
-                Text(
-                    text = msg,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)
-                )
-            }
-        }
-    }
-
-    // Diálogo de cancelar (igual que Basics/Details)
+    // Diálogo de cancelar (igual que tenías)
     if (showCancelDialog) {
         AlertDialog(
             onDismissRequest = { showCancelDialog = false },
@@ -216,4 +118,169 @@ fun PublishPhotosScreen(
             }
         )
     }
+}
+
+
+
+
+// ============================================================
+// UI STATELESS + PREVIEW (TOP-LEVEL)
+// ============================================================
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PublishPhotosContent(
+    thumbnails: List<Any>,   // runtime: List<Uri> ; preview: @DrawableRes Int
+    isSaving: Boolean,
+    error: String?,
+    onClickAdd: () -> Unit,
+    onClickBack: () -> Unit,
+    onClickFinish: () -> Unit,
+    onClickCancel: () -> Unit,
+    onClickRemoveAt: (Int) -> Unit,
+    onClickReplaceAt: (Int) -> Unit,
+    isEnabledFinish: Boolean
+) {
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    // 🟢 Mismas fuentes y estilos que tu pantalla real
+                    Text("Sube las fotos de tu sala", fontSize = 18.sp, textAlign = TextAlign.Center)
+                },
+                navigationIcon = {
+                    IconButton(onClick = onClickCancel) {
+                        Icon(Icons.Default.Close, contentDescription = "Cancelar y borrar borrador")
+                    }
+                }
+            )
+        },
+        bottomBar = {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                OutlinedButton(onClick = onClickBack, enabled = !isSaving) {
+                    Text("Atrás")
+                }
+                Button(
+                    onClick = onClickFinish,
+                    enabled = !isSaving,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isEnabledFinish) Color(0xFF4CAF50) else Color.Gray,
+                        contentColor = Color.White
+                    )
+                ) {
+                    if (isSaving) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text("Finalizar")
+                    }
+                }
+            }
+        }
+    ) { padding ->
+        Column(Modifier.fillMaxSize().padding(padding)) {
+            // Ilustración superior (igual que Basics/Details)
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.icono_publicar_sala),
+                    contentDescription = "Ilustración de publicación",
+                    modifier = Modifier.size(100.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
+
+            Spacer(Modifier.height(40.dp))
+
+            // Cuadrícula
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(3),
+                modifier = Modifier.weight(1f).padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                // Tarjeta "Subir fotos"
+                if (thumbnails.size < 10) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .aspectRatio(1f)
+                                .clip(RoundedCornerShape(14.dp))
+                                .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(14.dp))
+                                .clickable { onClickAdd() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(Icons.Default.Add, contentDescription = null)
+                                Text("Subir fotos", style = MaterialTheme.typography.bodyMedium)
+                                Text("Máximo 10", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                            }
+                        }
+                    }
+                }
+
+                // Miniaturas con X (eliminar) y tap (reemplazar)
+                itemsIndexed(thumbnails) { index, model ->
+                    Box(
+                        modifier = Modifier
+                            .aspectRatio(1f)
+                            .clip(RoundedCornerShape(14.dp))
+                            .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(14.dp))
+                            .clickable { onClickReplaceAt(index) }
+                    ) {
+                        AsyncImage(
+                            model = model, // Uri o @DrawableRes Int en preview
+                            contentDescription = "Foto $index",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                        IconButton(
+                            onClick = { onClickRemoveAt(index) },
+                            modifier = Modifier.align(Alignment.TopEnd).padding(4.dp).size(28.dp)
+                        ) {
+                            Icon(Icons.Default.Close, contentDescription = "Quitar", tint = Color.Black)
+                        }
+                    }
+                }
+            }
+
+            // Error inline
+            error?.let { msg ->
+                Text(
+                    text = msg,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)
+                )
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PublishPhotosPreview() {
+    // Drawables de ejemplo para ver miniaturas en el Preview
+    val samples = listOf(
+        R.drawable.icono_publicar_sala,
+        R.drawable.icono_publicar_sala,
+        R.drawable.icono_publicar_sala
+    )
+    PublishPhotosContent(
+        thumbnails = samples,
+        isSaving = false,
+        error = null,
+        onClickAdd = {},
+        onClickBack = {},
+        onClickFinish = {},
+        onClickCancel = {},
+        onClickRemoveAt = {},
+        onClickReplaceAt = {},
+        isEnabledFinish = true
+
+    )
 }

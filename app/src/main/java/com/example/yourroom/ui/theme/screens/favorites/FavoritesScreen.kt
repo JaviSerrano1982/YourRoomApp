@@ -5,5 +5,5 @@ import com.example.yourroom.ui.theme.components.CenteredText
 
 @Composable
 fun FavoritesScreen() {
-    CenteredText(text = "Tus Favoritos")
+    CenteredText(text = "Mis Favoritos")
 }
