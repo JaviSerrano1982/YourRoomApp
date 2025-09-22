@@ -133,7 +133,7 @@ fun PublishBasicsScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.icono_publicar_sala),
+                    painter = painterResource(id = R.drawable.icono_basicos),
                     contentDescription = "Ilustración de publicación",
                     modifier = Modifier.size(100.dp), // 56–64dp funciona muy bien
                     contentScale = ContentScale.Fit
