@@ -1,6 +1,8 @@
 package com.example.yourroom.ui.theme.screens.publish
 
 import android.R.attr.contentDescription
+import android.R.attr.maxLines
+import android.R.attr.minLines
 import android.net.http.SslCertificate.restoreState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -25,8 +27,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.yourroom.R
-
+import com.example.yourroom.ui.theme.components.transparentTextFieldColors
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,9 +37,9 @@ import com.example.yourroom.R
 fun PublishDetailsScreen(
     navController: NavController,
     spaceId: Long,
-    viewModel: PublishDetailsViewModel = hiltViewModel()
+    vm: PublishDetailsViewModel = hiltViewModel()
 ) {
-    val ui = viewModel.uiState
+    val ui = vm.uiState
     val scope = rememberCoroutineScope()
     var showCancelDialog by remember { mutableStateOf(false) }
     val isNextEnabled = remember(ui) {
@@ -84,7 +87,7 @@ fun PublishDetailsScreen(
                 Button(
                     onClick = {
                         scope.launch {
-                            val ok = viewModel.saveDetailsAwait()
+                            val ok = vm.saveDetailsAwait()
                             if (ok) {
                                 navController.navigate(PublishRoutes.photos(spaceId))
                             }
@@ -132,7 +135,7 @@ fun PublishDetailsScreen(
             }
 
             Spacer(Modifier.height(8.dp))
-            // =============================================================
+
 
             // Mensaje de error
             ui.error?.let { msg ->
@@ -143,44 +146,105 @@ fun PublishDetailsScreen(
                 )
             }
 
-            OutlinedTextField(
+            TextField(
                 value = ui.sizeM2Text,
-                onValueChange = viewModel::onSize,
+                onValueChange = vm::onSize,
                 label = { Text("Superficie (m²)") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 enabled = !ui.isSaving,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = transparentTextFieldColors(),
+                trailingIcon = {
+                    if (ui.sizeM2Text.isNotEmpty()) {
+                        IconButton(
+                            onClick = { vm.onSize("") },
+                            modifier = Modifier.size(20.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Borrar",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
             )
 
-            OutlinedTextField(
+            TextField(
                 value = ui.availability,
-                onValueChange = viewModel::onAvailability,
+                onValueChange = vm::onAvailability,
                 label = { Text("Disponibilidad (ej.: L–V 8:00–22:00)") },
                 minLines = 1,
                 maxLines = 3,
                 enabled = !ui.isSaving,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = transparentTextFieldColors(),
+                trailingIcon = {
+                    if (ui.availability.isNotEmpty()) {
+                        IconButton(
+                            onClick = { vm.onAvailability("") },
+                            modifier = Modifier.size(20.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Borrar",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
             )
 
-            OutlinedTextField(
+            TextField(
                 value = ui.services,
-                onValueChange = viewModel::onServices,
+                onValueChange = vm::onServices,
                 label = { Text("Servicios (ej.: duchas, vestuarios, wifi)") },
-                minLines = 2,
+                minLines = 1,
                 maxLines = 5,
                 enabled = !ui.isSaving,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = transparentTextFieldColors(),
+                trailingIcon = {
+                    if (ui.services.isNotEmpty()) {
+                        IconButton(
+                            onClick = { vm.onServices("") },
+                            modifier = Modifier.size(20.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Borrar",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
             )
+            Spacer(Modifier.height(8.dp))
 
             OutlinedTextField(
                 value = ui.description,
-                onValueChange = viewModel::onDescription,
+                onValueChange = vm::onDescription,
                 label = { Text("Descripción") },
                 minLines = 4,
                 maxLines = 8,
                 enabled = !ui.isSaving,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = transparentTextFieldColors(),
+                trailingIcon = {
+                    if (ui.description.isNotEmpty()) {
+                        IconButton(
+                            onClick = { vm.onDescription("") },
+                            modifier = Modifier.size(20.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Borrar",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
             )
         }
     }
@@ -197,7 +261,7 @@ fun PublishDetailsScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showCancelDialog = false
-                    viewModel.cancelAndDelete {
+                    vm.cancelAndDelete {
                         // Limpia toda la pila y navega a Home
                         navController.navigate(PublishRoutes.home()) {
                             // Sube hasta el startDestination y lo borra borra también

@@ -53,6 +53,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.window.PopupProperties
 import com.example.yourroom.location.MunicipiosRepository
+import com.example.yourroom.ui.components.LocationAutocompleteField
+import com.example.yourroom.ui.theme.components.transparentTextFieldColors
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import java.time.Instant
@@ -100,6 +102,7 @@ fun UserProfileScreen(
     val coroutineScope = rememberCoroutineScope()
     var showLeaveDialog by remember { mutableStateOf(false) }
     val isEditingLocation = rememberSaveable { mutableStateOf(false) }
+    val isEditingBirthDate = rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
 
     // Lanzador del picker de imágenes (galería)
@@ -302,6 +305,7 @@ fun UserProfileContent(
         isEditingEmail.value = false
         isEditingPhone.value = false
         isEditingLocation.value = false
+        isEditingBirthDate.value = false
     }
 
     Box(modifier = Modifier.fillMaxSize().then(modifier)) {
@@ -445,7 +449,8 @@ fun UserProfileContent(
                 onDateSelected = { newDate -> onUpdateField { copy(birthDate = newDate) } },
                 isSaving = isSaving,
                 isError = fieldErrors.birthDate,
-                errorMessage = if (fieldErrors.birthDate) "Campo obligatorio" else null
+                errorMessage = if (fieldErrors.birthDate) "Campo obligatorio" else null,
+                isEditing = isEditingBirthDate
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -487,15 +492,31 @@ fun UserProfileContent(
                 } else null
             )
 
-            LocationAutocompleteField(
-                value = profile.location.orEmpty(),
-                label = "Ubicación",
-                onValueChange = { onUpdateField { copy(location = it) } },
-                isEditing = isEditingLocation, // controla apertura/cierre
-                isSaving = isSaving,
-                isError = fieldErrors.location,
-                errorMessage = "Campo obligatorio"
-            )
+            Surface(
+                color = Color.Transparent,
+                tonalElevation = 0.dp,
+                shadowElevation = 0.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 4.dp)
+                    .clickable(enabled = !isSaving && !isEditingLocation.value) {
+                        isEditingLocation.value = true
+                    }
+            ) {
+                LocationAutocompleteField(
+                    value = profile.location.orEmpty(),
+                    label = "Ubicación",
+                    onValueChange = { onUpdateField { copy(location = it) } },
+                    onSuggestionPicked = { picked -> onUpdateField { copy(location = picked) } },
+                    isSaving = isSaving,
+                    isError = fieldErrors.location,
+                    errorMessage = "Campo obligatorio",
+                    colors = transparentTextFieldColors(),
+                    enabled = isEditingLocation.value, // ahora sí se activará
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
 
             Spacer(modifier = Modifier.height(70.dp))
         }
@@ -567,6 +588,9 @@ fun EditableTextField(
     }
 
     Surface(
+        color = Color.Transparent,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp, vertical = 4.dp)
@@ -590,7 +614,7 @@ fun EditableTextField(
             modifier = Modifier
                 .fillMaxWidth()
                 .focusRequester(focusRequester),
-            colors = textFieldColors(),
+            colors = transparentTextFieldColors(),
             trailingIcon = {
                 if (value.isNotEmpty()) {
                     IconButton(
@@ -614,134 +638,8 @@ fun EditableTextField(
  * - Filtra sobre la lista local de municipios (repositorio local).
  * - Usa un pequeño debounce (120ms) para mejorar la UX al escribir.
  */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun LocationAutocompleteField(
-    value: String,
-    label: String = "Ubicación",
-    onValueChange: (String) -> Unit,
-    isEditing: MutableState<Boolean>, // compat con tu flujo actual
-    isSaving: Boolean,
-    isError: Boolean,
-    errorMessage: String?
-) {
-    val ctx = LocalContext.current
-    val all = remember { MunicipiosRepository.getUiList(ctx) }
-    val scope = rememberCoroutineScope()
-    var searchJob by remember { mutableStateOf<Job?>(null) }
 
-    val focusRequester = remember { FocusRequester() }
-    var hasFocus by remember { mutableStateOf(false) }
-    var expanded by remember { mutableStateOf(false) }
-    var suggestions by remember {
-        mutableStateOf(emptyList<MunicipiosRepository.MunicipioUi>())
-    }
 
-    fun recompute(query: String) {
-        val q = query.trim()
-        suggestions = if (q.length >= 2) {
-            MunicipiosRepository.filter(all, q)
-        } else emptyList()
-        expanded = hasFocus && suggestions.isNotEmpty()
-    }
-
-    LaunchedEffect(isSaving) { if (isSaving) expanded = false }
-    LaunchedEffect(all) { recompute(value) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 4.dp)
-    ) {
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { wantOpen ->
-                expanded = wantOpen && hasFocus && suggestions.isNotEmpty()
-            }
-        ) {
-            TextField(
-                value = value,
-                onValueChange = { newVal ->
-                    val clean = newVal.replace(Regex("\\s+"), " ")
-                    onValueChange(clean)
-                    searchJob?.cancel()
-                    searchJob = scope.launch {
-                        delay(120)      // Debounce
-                        recompute(clean)
-                    }
-                },
-                label = { Text(label) },
-                singleLine = true,
-                isError = isError,
-                enabled = !isSaving,
-                modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth()
-                    .focusRequester(focusRequester)
-                    .onFocusChanged { f ->
-                        hasFocus = f.isFocused
-                        expanded = f.isFocused && suggestions.isNotEmpty()
-                    },
-                colors = textFieldColors(),
-                trailingIcon = {
-                    if (value.isNotEmpty()) {
-                        IconButton(
-                            onClick = {
-                                onValueChange("")
-                                recompute("")           // cierra menú
-                                focusRequester.requestFocus()
-                            },
-                            modifier = Modifier.size(20.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Close,
-                                contentDescription = "Borrar"
-                            )
-                        }
-                    }
-                }
-            )
-
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-                properties = PopupProperties(focusable = false)
-            ) {
-                suggestions.forEach { s ->
-                    DropdownMenuItem(
-                        text = { Text(s.label) },
-                        onClick = {
-                            onValueChange(s.label)
-                            expanded = false
-                            focusRequester.requestFocus()
-                        }
-                    )
-                }
-            }
-        }
-
-        if (isError && !errorMessage.isNullOrBlank()) {
-            Text(
-                text = errorMessage!!,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(start = 16.dp, top = 2.dp)
-            )
-        }
-    }
-}
-
-/** Paleta de colores consistente para todos los TextField. */
-@Composable
-fun textFieldColors() = TextFieldDefaults.colors(
-    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-    unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-    disabledIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-    cursorColor = MaterialTheme.colorScheme.primary,
-    focusedContainerColor = Color.White,
-    unfocusedContainerColor = Color.White,
-    disabledContainerColor = Color.White
-)
 
 /**
  * Selector de fecha (dd/MM/yyyy) usando Material3 DatePicker.
@@ -757,16 +655,15 @@ fun BirthDateField(
     isSaving: Boolean,
     isError: Boolean,
     errorMessage: String?,
+    isEditing: MutableState<Boolean>,              // ← NUEVO
     modifier: Modifier = Modifier
 ) {
-    // --- Utilidades de fecha ---
+    // ---- Utilidades de fecha (dd/MM/yyyy)
     val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-
     fun parseToEpochMillis(dateStr: String): Long? = try {
         val ld = LocalDate.parse(dateStr, dateFormatter)
         ld.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
     } catch (_: Exception) { null }
-
     fun formatFromEpoch(millis: Long): String {
         val ld = Instant.ofEpochMilli(millis)
             .atZone(ZoneId.systemDefault())
@@ -774,7 +671,6 @@ fun BirthDateField(
         return ld.format(dateFormatter)
     }
 
-    // Estado del diálogo y fecha inicial
     var showPicker by remember { mutableStateOf(false) }
     val today = remember { LocalDate.now() }
     val fallback = remember { today.minusYears(18) }
@@ -783,19 +679,21 @@ fun BirthDateField(
             ?: fallback.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
     }
     val yearRange = 1900..today.year
-
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = initialMillis,
         initialDisplayedMonthMillis = initialMillis,
         yearRange = yearRange
     )
 
-    // Campo readOnly con icono de calendario
+    // Surface clickable: entra en modo edición como los demás campos
     Surface(
+        color = Color.Transparent,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp, vertical = 4.dp)
-            .clickable(enabled = !isSaving) { showPicker = true }
+            .clickable(enabled = !isSaving && !isEditing.value) { isEditing.value = true }
     ) {
         Column {
             TextField(
@@ -803,18 +701,20 @@ fun BirthDateField(
                 onValueChange = { /* readOnly */ },
                 label = { Text(label) },
                 readOnly = true,
-                enabled = !isSaving,
+                enabled = isEditing.value && !isSaving,     // ← gris cuando no editas
                 isError = isError,
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Filled.CalendarMonth,
                         contentDescription = "Elegir fecha",
-                        modifier = Modifier.clickable(enabled = !isSaving) { showPicker = true }
+                        modifier = Modifier
+                            .clickable(enabled = isEditing.value && !isSaving) { showPicker = true }
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),
-                colors = textFieldColors()
+                colors = transparentTextFieldColors()
             )
+
             if (isError && !errorMessage.isNullOrBlank()) {
                 Text(
                     text = errorMessage,
@@ -828,7 +728,10 @@ fun BirthDateField(
 
     if (showPicker) {
         DatePickerDialog(
-            onDismissRequest = { showPicker = false },
+            onDismissRequest = {
+                showPicker = false
+                isEditing.value = false             // ← salir de edición al cancelar
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -836,11 +739,17 @@ fun BirthDateField(
                             onDateSelected(formatFromEpoch(it))
                         }
                         showPicker = false
+                        isEditing.value = false         // ← salir de edición al confirmar
                     },
                     enabled = datePickerState.selectedDateMillis != null
                 ) { Text("OK") }
             },
-            dismissButton = { TextButton(onClick = { showPicker = false }) { Text("Cancelar") } }
+            dismissButton = {
+                TextButton(onClick = {
+                    showPicker = false
+                    isEditing.value = false
+                }) { Text("Cancelar") }
+            }
         ) {
             DatePicker(state = datePickerState)
         }
