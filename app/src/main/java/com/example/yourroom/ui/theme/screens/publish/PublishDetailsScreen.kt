@@ -22,6 +22,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.yourroom.viewmodel.PublishDetailsViewModel
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import com.example.yourroom.R
@@ -38,6 +39,13 @@ fun PublishDetailsScreen(
     val ui = viewModel.uiState
     val scope = rememberCoroutineScope()
     var showCancelDialog by remember { mutableStateOf(false) }
+    val isNextEnabled = remember(ui) {
+        ui.sizeM2Text.toIntOrNull()?.let { it > 0 } == true &&
+                ui.availability.isNotBlank() &&
+                ui.services.isNotBlank() &&
+                ui.description.isNotBlank()
+    }
+
 
     Scaffold(
         topBar = {
@@ -82,7 +90,11 @@ fun PublishDetailsScreen(
                             }
                         }
                     },
-                    enabled = !ui.isSaving
+                    enabled = isNextEnabled && !ui.isSaving,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isNextEnabled && !ui.isSaving) Color(0xFF4CAF50) else Color.Gray,
+                        contentColor = Color.White
+                    )
                 ) {
                     if (ui.isSaving) {
                         CircularProgressIndicator(

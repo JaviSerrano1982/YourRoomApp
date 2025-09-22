@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,6 +18,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
+import androidx.compose.material3.ListItemDefaults.containerColor
+import androidx.compose.material3.ListItemDefaults.contentColor
+import androidx.compose.material3.SnackbarDefaults.contentColor
+import androidx.compose.material3.TabRowDefaults.contentColor
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -190,7 +195,7 @@ private fun PublishPhotosContent(
                 Image(
                     painter = painterResource(id = R.drawable.icono_photos),
                     contentDescription = "Ilustración de publicación",
-                    modifier = Modifier.size(130.dp),
+                    modifier = Modifier.size(100.dp),
                     contentScale = ContentScale.Fit
                 )
             }
@@ -211,9 +216,12 @@ private fun PublishPhotosContent(
                             modifier = Modifier
                                 .aspectRatio(1f)
                                 .clip(RoundedCornerShape(14.dp))
+                                .background(Color(0xFFE8F0FA))
                                 .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(14.dp))
                                 .clickable { onClickAdd() },
-                            contentAlignment = Alignment.Center
+
+                            contentAlignment = Alignment.Center,
+
 
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -267,9 +275,9 @@ private fun PublishPhotosContent(
 private fun PublishPhotosPreview() {
     // Drawables de ejemplo para ver miniaturas en el Preview
     val samples = listOf(
-        R.drawable.icono_publicar_sala,
-        R.drawable.icono_publicar_sala,
-        R.drawable.icono_publicar_sala
+        R.drawable.icono_basicos,
+        R.drawable.icono_basicos,
+        R.drawable.icono_basicos,
     )
     PublishPhotosContent(
         thumbnails = samples,
