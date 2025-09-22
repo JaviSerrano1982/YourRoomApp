@@ -28,10 +28,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import coil.compose.AsyncImage
 import com.example.yourroom.R
+import com.example.yourroom.ui.components.LocationAutocompleteField
+import com.example.yourroom.ui.theme.components.transparentTextFieldColors
 import com.example.yourroom.viewmodel.PublishSpaceViewModel
 
 
@@ -135,14 +138,14 @@ fun PublishBasicsScreen(
                 Image(
                     painter = painterResource(id = R.drawable.icono_basicos),
                     contentDescription = "Ilustración de publicación",
-                    modifier = Modifier.size(100.dp), // 56–64dp funciona muy bien
+                    modifier = Modifier.size(120.dp), // 56–64dp funciona muy bien
                     contentScale = ContentScale.Fit
 
 
                 )
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(15.dp))
 
             // Formulario ocupa el resto de la pantalla; si falta espacio, hace scroll
             Column(
@@ -155,37 +158,71 @@ fun PublishBasicsScreen(
                 ui.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
 
                 // Título
-                OutlinedTextField(
-                    value = ui.title,
-                    onValueChange = vm::onTitleChange,
-                    label = { Text("Título de la sala") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+               TextField(
+                   value = ui.title,
+                   onValueChange = vm::onTitleChange,
+                   label = { Text("Título de la sala") },
+                   singleLine = true,
+                   modifier = Modifier.fillMaxWidth(),
+                   keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                   colors = transparentTextFieldColors(),
+
+                   trailingIcon = {
+                           if (ui.title.isNotEmpty()) {
+                           IconButton(
+                               onClick = { vm.onTitleChange("") },
+                               modifier = Modifier.size(20.dp)
+                           ) {
+                               Icon(
+                                   imageVector = Icons.Default.Close,
+                                   contentDescription = "Borrar",
+                                   tint = MaterialTheme.colorScheme.onSurfaceVariant
+                               )
+                           }
+                       }
+                   }
+
                 )
 
                 // Ubicación
-                OutlinedTextField(
+                LocationAutocompleteField(
                     value = ui.location,
-                    onValueChange = vm::onLocationChange,
-                    label = { Text("Ubicación (ciudad o zona)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
-                )
+                    label = "Ubicación",
+                    onValueChange = { vm.onLocationTyping(it) },
+                    onSuggestionPicked = { picked -> vm.onLocationPicked(picked) },
+                    isSaving = ui.isLoading,
+                    isError = ui.error?.contains("ubicación", ignoreCase = true) == true && ui.location.isBlank(),
+                    errorMessage = if (ui.location.isBlank()) "Campo obligatorio" else null,
+                    colors = transparentTextFieldColors(),
+                    enabled = true                )
 
                 // Dirección
-                OutlinedTextField(
+                TextField(
                     value = ui.address,
                     onValueChange = vm::onAddressChange,
                     label = { Text("Dirección") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+                    colors = transparentTextFieldColors(),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    trailingIcon = {
+                        if (ui.address.isNotEmpty()) {
+                            IconButton(
+                                onClick = { vm.onAddressChange("") },
+                                modifier = Modifier.size(20.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Borrar",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
                 )
 
                 // Capacidad
-                OutlinedTextField(
+                TextField(
                     value = ui.capacity,
                     onValueChange = { input ->
                         if (input.isEmpty() || input.all { it.isDigit() }) vm.onCapacityChange(input)
@@ -193,14 +230,29 @@ fun PublishBasicsScreen(
                     label = { Text("Capacidad (personas)") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
+                    colors = transparentTextFieldColors(),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next
-                    )
+                    ),
+                    trailingIcon = {
+                        if (ui.capacity.isNotEmpty()) {
+                            IconButton(
+                                onClick = { vm.onCapacityChange("") },
+                                modifier = Modifier.size(20.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Borrar",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
                 )
 
                 // Precio
-                OutlinedTextField(
+                TextField(
                     value = ui.price,
                     onValueChange = { input ->
                         val sanitized = input.replace(',', '.')
@@ -212,12 +264,28 @@ fun PublishBasicsScreen(
                     singleLine = true,
                     prefix = { Text("€ ") },
                     modifier = Modifier.fillMaxWidth(),
+                    colors = transparentTextFieldColors(),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Decimal,
                         imeAction = ImeAction.Done
-                    )
+                    ),
+                    trailingIcon = {
+                        if (ui.price.isNotEmpty()) {
+                            IconButton(
+                                onClick = { vm.onPriceChange("") },
+                                modifier = Modifier.size(20.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Borrar",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
                 )
 
+                Spacer(Modifier.height(15.dp))
 
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Row(

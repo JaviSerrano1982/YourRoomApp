@@ -22,6 +22,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
+import kotlinx.coroutines.flow.update
+
 import kotlin.getOrElse
 
 @HiltViewModel
@@ -195,6 +197,19 @@ class PublishSpaceViewModel @Inject constructor(
     }
 
 
+    private fun cleanSpaces(s: String) = s.replace(Regex("\\s+"), " ").trim()
+
+    fun onLocationTyping(v: String) {
+        _ui.update { it.copy(location = cleanSpaces(v)) }
+    }
+
+    fun onLocationPicked(label: String) {
+        // Cuando eliges una sugerencia del dropdown
+        _ui.update { it.copy(location = label) }
+    }
+
+
+
 
 }
 @HiltViewModel
@@ -263,6 +278,7 @@ class PublishDetailsViewModel @Inject constructor(
             }
         }
     }
+
 
 
 
