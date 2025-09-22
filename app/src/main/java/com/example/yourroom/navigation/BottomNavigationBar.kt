@@ -1,7 +1,6 @@
 package com.example.yourroom.navigation
 
-import android.net.http.SslCertificate.restoreState
-import android.net.http.SslCertificate.saveState
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,58 +8,43 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.yourroom.R   // <-- asegúrate de importar TU R (no android.R)
 
 // ---------------------------------------------------------------------
 // DEFINICIÓN DE ITEMS DE NAVEGACIÓN INFERIOR
 // ---------------------------------------------------------------------
 
-/**
- * Clase sellada que define los elementos de la barra de navegación inferior.
- *
- * Cada item tiene:
- * - Una ruta de navegación (route).
- * - Un icono (ImageVector).
- * - Un texto (label).
- *
- * Los objetos definidos representan las secciones principales de la app.
- */
 sealed class BottomNavItem(
     val route: String,
-    val icon: ImageVector,
-    val label: String
+    val label: String,
+    val imageVector: ImageVector? = null,  // para Material Icons
+    @DrawableRes val iconResId: Int? = null // para SVG/VectorDrawable importado
 ) {
-    object Home : BottomNavItem("home", Icons.Default.Home, "Inicio")
-    object Search : BottomNavItem("search", Icons.Default.Search, "Buscar")
-    object Publish : BottomNavItem("publish", Icons.Default.Add, "Publicar")
-    object Favorites : BottomNavItem("favorites", Icons.Default.Favorite, "Favoritos")
-    object Profile : BottomNavItem("profile", Icons.Default.Person, "Mi Perfil")
+    object Home : BottomNavItem("home", "Inicio", imageVector = Icons.Default.Home)
+
+    // Usa tu recurso importado en drawable (p.ej. ic_door_open.xml)
+    object Search : BottomNavItem("search", "Mis salas", iconResId = R.drawable.door_open)
+
+    object Publish : BottomNavItem("publish", "Publicar", imageVector = Icons.Default.Add)
+    object Favorites : BottomNavItem("favorites", "Favoritos", imageVector = Icons.Default.Favorite)
+    object Profile : BottomNavItem("profile", "Mi Perfil", imageVector = Icons.Default.Person)
 }
 
 // ---------------------------------------------------------------------
 // COMPONENTE: BARRA DE NAVEGACIÓN INFERIOR
 // ---------------------------------------------------------------------
 
-/**
- * Barra de navegación inferior (BottomNavigationBar).
- *
- * - Muestra los items definidos en [BottomNavItem].
- * - Resalta el item seleccionado con un color distinto.
- * - Permite navegar entre las rutas principales de la app.
- *
- * Comportamiento especial:
- * - El item "Publicar" se dibuja como un botón circular con gradiente.
- */
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
     val items = listOf(
@@ -71,7 +55,6 @@ fun BottomNavigationBar(navController: NavHostController) {
         BottomNavItem.Profile
     )
 
-    // Ruta actual para saber qué item está seleccionado
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
     NavigationBar(
@@ -84,14 +67,10 @@ fun BottomNavigationBar(navController: NavHostController) {
         items.forEach { item ->
             val isSelected = currentRoute == item.route
 
-            // -----------------------------
-            // Caso especial: botón "Publicar"
-            // -----------------------------
             if (item == BottomNavItem.Publish) {
                 NavigationBarItem(
                     selected = isSelected,
                     onClick = {
-                        //cambiar item.route por "publish/0/details",SOLO MODO PRUEBAS
                         navController.navigate(item.route) {
                             popUpTo(navController.graph.startDestinationId) { saveState = true }
                             launchSingleTop = true
@@ -105,16 +84,14 @@ fun BottomNavigationBar(navController: NavHostController) {
                                 .clip(RoundedCornerShape(50.dp))
                                 .background(
                                     Brush.linearGradient(
-                                        colors = listOf(
-                                            Color.White,
-                                            Color(0xFF6750A4)
-                                        )
+                                        colors = listOf(Color.White, Color(0xFF6750A4))
                                     )
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
+                            // Aquí es Material Icon (ImageVector)
                             Icon(
-                                imageVector = item.icon,
+                                imageVector = item.imageVector!!,
                                 contentDescription = "Publicar",
                                 tint = Color(0xFF381E72)
                             )
@@ -125,9 +102,6 @@ fun BottomNavigationBar(navController: NavHostController) {
                     )
                 )
             } else {
-                // -----------------------------
-                // Items normales: Inicio, Buscar, Favoritos, Perfil
-                // -----------------------------
                 NavigationBarItem(
                     selected = isSelected,
                     onClick = {
@@ -142,12 +116,22 @@ fun BottomNavigationBar(navController: NavHostController) {
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
                         ) {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = item.label,
-                                modifier = Modifier.size(28.dp),
-                                tint = if (isSelected) Color(0xFF2FE2EC) else Color.White
-                            )
+                            // Dibuja según el tipo disponible
+                            if (item.iconResId != null) {
+                                Icon(
+                                    painter = painterResource(item.iconResId),
+                                    contentDescription = item.label,
+                                    modifier = Modifier.size(30.dp),
+                                    tint = if (isSelected) Color(0xFF2FE2EC) else Color.White
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = item.imageVector!!,
+                                    contentDescription = item.label,
+                                    modifier = Modifier.size(28.dp),
+                                    tint = if (isSelected) Color(0xFF2FE2EC) else Color.White
+                                )
+                            }
                             Text(
                                 text = item.label,
                                 fontSize = 10.sp,
