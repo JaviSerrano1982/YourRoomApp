@@ -108,14 +108,14 @@ fun SplashScreenContent() {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0xFFBDF8FB).copy(alpha = 0f), // arriba
-                                Color.Transparent,                  // centro
-                                Color(0xFFBDF8FB).copy(alpha = 0f)  // abajo
-                            )
-                        )
+                    .background(Color.White
+//                        Brush.verticalGradient(
+//                            colors = listOf(
+//                                Color(0xFFBDF8FB).copy(alpha = 0f), // arriba
+//                                Color.Transparent,                  // centro
+//                                Color(0xFFBDF8FB).copy(alpha = 0f)  // abajo
+//                            )
+//                        )
                     )
             )
 
