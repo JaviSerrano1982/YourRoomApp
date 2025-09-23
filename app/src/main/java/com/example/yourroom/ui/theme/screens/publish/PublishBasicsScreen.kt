@@ -1,12 +1,16 @@
 package com.example.yourroom.ui.theme.screens.publish
 
 
+
+import androidx.compose.ui.text.font.FontStyle
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -65,6 +69,16 @@ fun PublishBasicsScreen(
                 ui.photoUri != null
     }
 
+    val addressIS = remember { MutableInteractionSource() }
+    val addressFocused by addressIS.collectIsFocusedAsState()
+    val capacityIS = remember { MutableInteractionSource() }
+    val capacityFocused by capacityIS.collectIsFocusedAsState()
+    val priceIS = remember { MutableInteractionSource() }
+    val priceFocused by priceIS.collectIsFocusedAsState()
+    val titleIS = remember { MutableInteractionSource() }
+    val titleFocused by titleIS.collectIsFocusedAsState()
+
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -106,7 +120,7 @@ fun PublishBasicsScreen(
                     },
                     enabled = isNextEnabled && !ui.isLoading,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isNextEnabled && !ui.isLoading) Color(0xFF4CAF50) else Color.Gray,
+                        containerColor = if (isNextEnabled && !ui.isLoading) Color(0xFFA5C6E2) else Color.Gray,
                         contentColor = Color.White
                     )
 
@@ -145,7 +159,7 @@ fun PublishBasicsScreen(
                 )
             }
 
-            Spacer(Modifier.height(15.dp))
+
 
             // Formulario ocupa el resto de la pantalla; si falta espacio, hace scroll
             Column(
@@ -153,41 +167,59 @@ fun PublishBasicsScreen(
                     .weight(1f, fill = true)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+
             ) {
                 ui.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
 
                 // Título
-               TextField(
-                   value = ui.title,
-                   onValueChange = vm::onTitleChange,
-                   label = { Text("Título de la sala") },
-                   singleLine = true,
-                   modifier = Modifier.fillMaxWidth(),
-                   keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                   colors = transparentTextFieldColors(),
-
-                   trailingIcon = {
-                           if (ui.title.isNotEmpty()) {
-                           IconButton(
-                               onClick = { vm.onTitleChange("") },
-                               modifier = Modifier.size(20.dp)
-                           ) {
-                               Icon(
-                                   imageVector = Icons.Default.Close,
-                                   contentDescription = "Borrar",
-                                   tint = MaterialTheme.colorScheme.onSurfaceVariant
-                               )
-                           }
-                       }
-                   }
-
+                TextField(
+                    value = ui.title,
+                    onValueChange = vm::onTitleChange,
+                    label = {
+                        if (!titleFocused && ui.title.isEmpty()) {
+                            Column {
+                                Text(
+                                    "Título de la sala",
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    "Ej.: Sala polivalente con espejos",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontStyle = FontStyle.Italic
+                                )
+                            }
+                        } else {
+                            Text("Título de la sala")
+                        }
+                    },
+                    interactionSource = titleIS,
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    colors = transparentTextFieldColors(),
+                    trailingIcon = {
+                        if (ui.title.isNotEmpty()) {
+                            IconButton(
+                                onClick = { vm.onTitleChange("") },
+                                modifier = Modifier.size(20.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Borrar",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
                 )
 
                 // Ubicación
                 LocationAutocompleteField(
                     value = ui.location,
                     label = "Ubicación",
+                    example = "Ciudad, población, etc",
                     onValueChange = { vm.onLocationTyping(it) },
                     onSuggestionPicked = { picked -> vm.onLocationPicked(picked) },
                     isSaving = ui.isLoading,
@@ -200,7 +232,26 @@ fun PublishBasicsScreen(
                 TextField(
                     value = ui.address,
                     onValueChange = vm::onAddressChange,
-                    label = { Text("Dirección") },
+                    label = {
+                        if (!addressFocused && ui.address.isEmpty()) {
+                            Column {
+                                Text(
+                                    "Dirección",
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    "Ej.: Calle Mayor 123, Madrid",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontStyle = FontStyle.Italic
+                                )
+                            }
+                        } else {
+                            Text("Dirección")
+                        }
+                    },
+                    interactionSource = addressIS,
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     colors = transparentTextFieldColors(),
@@ -225,9 +276,30 @@ fun PublishBasicsScreen(
                 TextField(
                     value = ui.capacity,
                     onValueChange = { input ->
-                        if (input.isEmpty() || input.all { it.isDigit() }) vm.onCapacityChange(input)
+                        if (input.isEmpty() || input.all { it.isDigit() }) {
+                            vm.onCapacityChange(input)
+                        }
                     },
-                    label = { Text("Capacidad (personas)") },
+                    label = {
+                        if (!capacityFocused && ui.capacity.isEmpty()) {
+                            Column {
+                                Text(
+                                    "Capacidad",
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    "Nº de personas",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontStyle = FontStyle.Italic
+                                )
+                            }
+                        } else {
+                            Text("Capacidad ")
+                        }
+                    },
+                    interactionSource = capacityIS,
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     colors = transparentTextFieldColors(),
@@ -252,6 +324,8 @@ fun PublishBasicsScreen(
                 )
 
                 // Precio
+
+
                 TextField(
                     value = ui.price,
                     onValueChange = { input ->
@@ -260,7 +334,26 @@ fun PublishBasicsScreen(
                             vm.onPriceChange(sanitized)
                         }
                     },
-                    label = { Text("Precio alquiler (€ / hora)") },
+                    label = {
+                        if (!priceFocused && ui.price.isEmpty()) {
+                            Column {
+                                Text(
+                                    "Precio alquiler",
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    "€ / hora, dia, mes, etc",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontStyle = FontStyle.Italic
+                                )
+                            }
+                        } else {
+                            Text("Precio alquiler")
+                        }
+                    },
+                    interactionSource = priceIS,
                     singleLine = true,
                     prefix = { Text("€ ") },
                     modifier = Modifier.fillMaxWidth(),
@@ -284,8 +377,8 @@ fun PublishBasicsScreen(
                         }
                     }
                 )
+                Spacer(Modifier.height(18.dp))
 
-                Spacer(Modifier.height(15.dp))
 
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Row(

@@ -30,7 +30,7 @@ import com.example.yourroom.R
 import com.example.yourroom.datastore.UserPreferences
 import com.example.yourroom.model.AuthRequest
 import com.example.yourroom.network.RetrofitClient
-import com.example.yourroom.ui.theme.YourRoomGradient
+import com.example.yourroom.ui.theme.components.YourRoomGradient
 import com.example.yourroom.viewmodel.UserProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch

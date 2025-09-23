@@ -167,7 +167,7 @@ fun SplashScreenContent() {
 
                 // Indicador de progreso
                 CircularProgressIndicator(
-                    color = Color.White,
+                    color = Color(0xFF0A1D37),
                     strokeWidth = 4.dp,
                     modifier = Modifier
                         .size(48.dp)
