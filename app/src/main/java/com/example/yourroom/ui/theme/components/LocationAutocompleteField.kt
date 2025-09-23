@@ -1,7 +1,9 @@
 package com.example.yourroom.ui.components
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -12,6 +14,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.example.yourroom.location.MunicipiosRepository
@@ -31,7 +34,8 @@ fun LocationAutocompleteField(
     errorMessage: String?,
     colors: TextFieldColors,
     enabled: Boolean = true,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    example: String? = null
 ) {
     val ctx = LocalContext.current
     val all = remember { MunicipiosRepository.getUiList(ctx) }
@@ -73,7 +77,25 @@ fun LocationAutocompleteField(
                         recompute(clean)
                     }
                 },
-                label = { Text(label) },
+                label = {
+                    if (!hasFocus && value.isEmpty() && !example.isNullOrBlank()) {
+                        Column {
+                            Text(
+                                label,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                example!!,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontStyle = FontStyle.Italic,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    } else {
+                        Text(label)
+                    }
+                },
                 singleLine = true,
                 isError = isError,
                 enabled = enabled && !isSaving,   // ✅ respeta "enabled"

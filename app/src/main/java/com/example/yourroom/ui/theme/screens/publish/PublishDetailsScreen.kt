@@ -24,7 +24,11 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.yourroom.viewmodel.PublishDetailsViewModel
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -48,6 +52,13 @@ fun PublishDetailsScreen(
                 ui.services.isNotBlank() &&
                 ui.description.isNotBlank()
     }
+    val availabilityIS = remember { MutableInteractionSource() }
+    val availabilityFocused by availabilityIS.collectIsFocusedAsState()
+    val servicesIS = remember { MutableInteractionSource() }
+    val servicesFocused by servicesIS.collectIsFocusedAsState()
+    val descriptionIS = remember { MutableInteractionSource() }
+    val descriptionFocused by descriptionIS.collectIsFocusedAsState()
+
 
 
     Scaffold(
@@ -95,7 +106,7 @@ fun PublishDetailsScreen(
                     },
                     enabled = isNextEnabled && !ui.isSaving,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isNextEnabled && !ui.isSaving) Color(0xFF4CAF50) else Color.Gray,
+                        containerColor = if (isNextEnabled && !ui.isSaving) Color(0xFFA5C6E2) else Color.Gray,
                         contentColor = Color.White
                     )
                 ) {
@@ -110,7 +121,7 @@ fun PublishDetailsScreen(
                 }
             }
         }
-    ) { padding ->
+    ) { padding ->45
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -149,7 +160,10 @@ fun PublishDetailsScreen(
             TextField(
                 value = ui.sizeM2Text,
                 onValueChange = vm::onSize,
-                label = { Text("Superficie (m²)") },
+                label = { Text(
+                    "Superficie (m²)",
+                    color = MaterialTheme.colorScheme.onSurface
+                ) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 enabled = !ui.isSaving,
@@ -171,10 +185,34 @@ fun PublishDetailsScreen(
                 }
             )
 
+
+
             TextField(
                 value = ui.availability,
                 onValueChange = vm::onAvailability,
-                label = { Text("Disponibilidad (ej.: L–V 8:00–22:00)") },
+
+                label = {
+                    if (!availabilityFocused && ui.availability.isEmpty()) {
+                        Column {
+                            Text(
+                                "Disponibilidad",
+                                color = MaterialTheme.colorScheme.onSurface
+
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                "Ej.: Lunes de 8:00–22:00",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontStyle = FontStyle.Italic
+                            )
+                        }
+                    } else {
+                        Text("Disponibilidad")
+                    }
+                },
+
+                interactionSource = availabilityIS,
                 minLines = 1,
                 maxLines = 3,
                 enabled = !ui.isSaving,
@@ -182,24 +220,38 @@ fun PublishDetailsScreen(
                 colors = transparentTextFieldColors(),
                 trailingIcon = {
                     if (ui.availability.isNotEmpty()) {
-                        IconButton(
-                            onClick = { vm.onAvailability("") },
-                            modifier = Modifier.size(20.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Borrar",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                        IconButton(onClick = { vm.onAvailability("") }, modifier = Modifier.size(20.dp)) {
+                            Icon(imageVector = Icons.Default.Close, contentDescription = "Borrar",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
             )
 
+
             TextField(
                 value = ui.services,
                 onValueChange = vm::onServices,
-                label = { Text("Servicios (ej.: duchas, vestuarios, wifi)") },
+                label = {
+                    if (!servicesFocused && ui.services.isEmpty()) {
+                        Column {
+                            Text(
+                                "Servicios",
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                "Ej.: duchas, vestuarios, wifi, equipo de sonido",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontStyle = FontStyle.Italic
+                            )
+                        }
+                    } else {
+                        Text("Servicios")
+                    }
+                },
+                interactionSource = servicesIS,
                 minLines = 1,
                 maxLines = 5,
                 enabled = !ui.isSaving,
@@ -207,15 +259,9 @@ fun PublishDetailsScreen(
                 colors = transparentTextFieldColors(),
                 trailingIcon = {
                     if (ui.services.isNotEmpty()) {
-                        IconButton(
-                            onClick = { vm.onServices("") },
-                            modifier = Modifier.size(20.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Borrar",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                        IconButton(onClick = { vm.onServices("") }, modifier = Modifier.size(20.dp)) {
+                            Icon(imageVector = Icons.Default.Close, contentDescription = "Borrar",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -225,7 +271,28 @@ fun PublishDetailsScreen(
             OutlinedTextField(
                 value = ui.description,
                 onValueChange = vm::onDescription,
-                label = { Text("Descripción") },
+                label = {
+                    if (!descriptionFocused && ui.description.isEmpty()) {
+                        Column {
+                            Text(
+                                "Descripción",
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                "Ej.: detalla instalaciones, ambiente, reglas, etc.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontStyle = FontStyle.Italic,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant // más suave
+                            )
+                        }
+                    } else {
+                        Text(
+                            "Descripción"
+                        )
+                    }
+                },
+                interactionSource = descriptionIS,
                 minLines = 4,
                 maxLines = 8,
                 enabled = !ui.isSaving,
@@ -233,10 +300,7 @@ fun PublishDetailsScreen(
                 colors = transparentTextFieldColors(),
                 trailingIcon = {
                     if (ui.description.isNotEmpty()) {
-                        IconButton(
-                            onClick = { vm.onDescription("") },
-                            modifier = Modifier.size(20.dp)
-                        ) {
+                        IconButton(onClick = { vm.onDescription("") }, modifier = Modifier.size(20.dp)) {
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Borrar",

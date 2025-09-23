@@ -173,7 +173,7 @@ private fun PublishPhotosContent(
                     onClick = onClickFinish,
                     enabled = !isSaving,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isEnabledFinish) Color(0xFF4CAF50) else Color.Gray,
+                        containerColor = if (isEnabledFinish) Color(0xFFA5C6E2) else Color.Gray,
                         contentColor = Color.White
                     )
                 ) {

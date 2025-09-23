@@ -1,4 +1,4 @@
-package com.example.yourroom.ui.theme
+package com.example.yourroom.ui.theme.components
 
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
