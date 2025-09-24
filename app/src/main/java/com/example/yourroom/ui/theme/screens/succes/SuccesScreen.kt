@@ -16,7 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 
 // ---------------------------------------------------------------------
-// PANTALLA DE ÉXITO (POST-REGISTRO)
+// PANTALLA DE ÉXITO (POST-REGISTRO y PUBLICACIÓN DE SALA)
 // ---------------------------------------------------------------------
 
 /**
@@ -25,64 +25,67 @@ import androidx.compose.ui.text.style.TextAlign
  * Flujo:
  * - Carga y reproduce la animación Lottie (R.raw.success).
  * - Muestra título "¡Registro exitoso!".
- * - Botón "Iniciar sesión" que invoca [onNavigateToLogin].
+ * -
  */
 @Composable
-fun SuccessScreen(onNavigateToLogin: () -> Unit) {
-    // Cargamos la composición Lottie desde recursos y animamos su progreso.
+fun SuccessScreen(
+    title: String,              // Texto principal que se mostrará en la pantalla (ej. "¡Registro exitoso!" o "¡Sala publicada!")
+    primaryText: String,        // Texto del botón principal (ej. "Iniciar sesión" o "Ir al inicio")
+    onPrimaryClick: () -> Unit  // Acción a ejecutar al pulsar el botón (se recibe desde el NavHost)
+) {
+    // Cargamos la animación Lottie desde los recursos (R.raw.success)
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.success))
+
+    // Animamos la composición para que se ejecute automáticamente
     val progress by animateLottieCompositionAsState(composition)
 
+    // Contenedor principal: ocupa toda la pantalla, con fondo blanco y padding
     Box(
         modifier = Modifier
             .fillMaxSize()
-            //.background(SuccesGradient)
-            .background(color = Color.White)
+            .background(Color.White)
             .padding(32.dp),
         contentAlignment = Alignment.Center
     ) {
+        // Colocamos los elementos en columna y centrados horizontalmente
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
-            // -----------------------------------------------------------------
-            // ANIMACIÓN LOTTIE
-            // -----------------------------------------------------------------
+            // Animación Lottie (icono de éxito)
             LottieAnimation(
                 composition = composition,
                 progress = { progress },
                 modifier = Modifier.size(200.dp)
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(Modifier.height(24.dp))
 
-            // -----------------------------------------------------------------
-            // MENSAJE DE ÉXITO
-            // -----------------------------------------------------------------
+            // Texto principal (título parametrizable)
             Text(
-                text = "¡Registro exitoso!",
+                text = title,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF0A1D37),
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(Modifier.height(32.dp))
 
-            // -----------------------------------------------------------------
-            // BOTÓN PRINCIPAL (llamada a la acción): VOLVER A INICIAR SESIÓN
-            // -----------------------------------------------------------------
+            // Botón principal con estilo y acción parametrizable
             Button(
-                onClick = onNavigateToLogin,
+                onClick = onPrimaryClick,
                 shape = MaterialTheme.shapes.extraLarge,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF0A1D37),
                     contentColor = Color.White
                 )
             ) {
-                Text("Iniciar sesión")
+                // Texto del botón (parametrizable)
+                Text(primaryText)
             }
         }
     }
 }
+
 
 // ---------------------------------------------------------------------
 // PREVIEW
@@ -94,5 +97,8 @@ fun SuccessScreen(onNavigateToLogin: () -> Unit) {
 @Preview(showSystemUi = true, showBackground = true)
 @Composable
 fun SuccessScreenPreview() {
-    SuccessScreen(onNavigateToLogin = {})
+    SuccessScreen(
+        onPrimaryClick = {},
+        primaryText = "",
+        title = "")
 }

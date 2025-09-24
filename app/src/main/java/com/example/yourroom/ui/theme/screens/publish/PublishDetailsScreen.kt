@@ -1,9 +1,5 @@
 package com.example.yourroom.ui.theme.screens.publish
 
-import android.R.attr.contentDescription
-import android.R.attr.maxLines
-import android.R.attr.minLines
-import android.net.http.SslCertificate.restoreState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -28,10 +24,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.yourroom.R
 import com.example.yourroom.ui.theme.components.transparentTextFieldColors
 
@@ -58,6 +52,8 @@ fun PublishDetailsScreen(
     val servicesFocused by servicesIS.collectIsFocusedAsState()
     val descriptionIS = remember { MutableInteractionSource() }
     val descriptionFocused by descriptionIS.collectIsFocusedAsState()
+    val sizeIS = remember { MutableInteractionSource() }
+    val sizeFocused by sizeIS.collectIsFocusedAsState()
 
 
 
@@ -160,15 +156,38 @@ fun PublishDetailsScreen(
             TextField(
                 value = ui.sizeM2Text,
                 onValueChange = vm::onSize,
-                label = { Text(
-                    "Superficie (m²)",
-                    color = MaterialTheme.colorScheme.onSurface
-                ) },
+
+                label = {
+                    // Cuando NO está enfocado y está vacío → mostrar 2 líneas (título + ejemplo)
+                    if (!sizeFocused && ui.sizeM2Text.isEmpty()) {
+                        Column {
+                            Text(
+                                "Superficie",
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                "En metros cuadrados (m²)",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontStyle = FontStyle.Italic
+                            )
+                        }
+                    } else {
+                        // Si está enfocado o tiene texto → solo el título
+                        Text("Superficie")
+                    }
+                },
+
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 enabled = !ui.isSaving,
                 modifier = Modifier.fillMaxWidth(),
                 colors = transparentTextFieldColors(),
+
+                // Fuente de interacción para detectar foco
+                interactionSource = sizeIS,
+
                 trailingIcon = {
                     if (ui.sizeM2Text.isNotEmpty()) {
                         IconButton(
