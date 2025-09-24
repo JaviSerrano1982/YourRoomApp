@@ -92,15 +92,33 @@ fun AppNavGraph(
             composable("register") {
                 RegisterScreen(navController)
             }
-            composable("success") {
+            // Éxito tras REGISTRO
+            composable(route = "success_register") {
                 SuccessScreen(
-                    onNavigateToLogin = {
+                    title = "¡Registro exitoso!",
+                    primaryText = "Iniciar sesión",
+                    onPrimaryClick = {
                         navController.navigate("login") {
-                            popUpTo("success") { inclusive = true }
+                            popUpTo("success_register") { inclusive = true }
                         }
                     }
                 )
             }
+
+            // Éxito tras PUBLICAR SALA
+            composable(route = "success_publish") {
+                SuccessScreen(
+                    title = "¡Sala publicada con éxito!",
+                    primaryText = "Ir al inicio",
+                    onPrimaryClick = {
+                        navController.navigate("home") {
+                            popUpTo("success_publish") { inclusive = true } // limpia la pantalla de éxito
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
+
 
             // -----------------------------
             // RUTAS PRIVADAS (con BottomBar)

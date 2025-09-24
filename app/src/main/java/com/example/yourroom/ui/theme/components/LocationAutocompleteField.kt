@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
@@ -115,9 +116,10 @@ fun LocationAutocompleteField(
                                 onValueChange("")
                                 recompute("")
                                 focusRequester.requestFocus()
-                            }
+                            },
+                            modifier = Modifier.size(20.dp)
                         ) {
-                            Icon(Icons.Filled.Close, contentDescription = "Borrar")
+                            Icon(Icons.Default.Close, contentDescription = "Borrar")
                         }
                     }
                 }

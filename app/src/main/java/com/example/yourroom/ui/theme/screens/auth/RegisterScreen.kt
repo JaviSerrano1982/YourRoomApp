@@ -91,7 +91,7 @@ fun RegisterScreen(navController: NavHostController) {
                         withContext(Dispatchers.Main) {
                             if (response.isSuccessful) {
                                 // Éxito → navegar a SuccessScreen
-                                navController.navigate("success") {
+                                navController.navigate("success_register") {
                                     popUpTo("register") { inclusive = true }
                                 }
                             } else {

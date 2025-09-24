@@ -81,7 +81,7 @@ fun PublishPhotosScreen(
             scope.launch {
                 val ok = vm.saveAllAwait()
                 if (ok) {
-                    navController.navigate(PublishRoutes.home()) {
+                    navController.navigate("success_publish") {
                         popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
                         launchSingleTop = true
                         restoreState = false
