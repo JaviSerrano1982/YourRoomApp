@@ -53,7 +53,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.window.PopupProperties
 import com.example.yourroom.location.MunicipiosRepository
-import com.example.yourroom.ui.components.LocationAutocompleteField
+import com.example.yourroom.ui.theme.components.LocationAutocompleteField
 import com.example.yourroom.ui.theme.components.transparentTextFieldColors
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

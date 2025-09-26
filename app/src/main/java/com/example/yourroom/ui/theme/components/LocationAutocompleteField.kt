@@ -1,4 +1,4 @@
-package com.example.yourroom.ui.components
+package com.example.yourroom.ui.theme.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -23,6 +23,32 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+// ------------------------------
+// COMPONENT: LocationAutocompleteField
+// ------------------------------
+
+/**
+ * Campo de texto con autocompletado para introducir ubicaciones
+ * (municipios en este caso). Incluye:
+ *
+ * - Entrada de texto con `TextField`.
+ * - Lista desplegable de sugerencias filtradas en tiempo real.
+ * - Ejemplo en el label si el campo está vacío y sin foco.
+ * - Botón para borrar el contenido.
+ * - Soporte para mostrar mensajes de error.
+ *
+ * @param value              Texto actual del campo.
+ * @param label              Etiqueta del campo.
+ * @param onValueChange      Callback cuando cambia el texto.
+ * @param onSuggestionPicked Callback al seleccionar una sugerencia.
+ * @param isSaving           Indica si se está guardando (bloquea campo).
+ * @param isError            Indica si hay error en el campo.
+ * @param errorMessage       Mensaje de error a mostrar.
+ * @param colors             Colores personalizados del `TextField`.
+ * @param enabled            Controla si está habilitado.
+ * @param modifier           Modifier externo para personalización.
+ * @param example            Texto de ejemplo mostrado bajo la etiqueta.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LocationAutocompleteField(
@@ -39,7 +65,7 @@ fun LocationAutocompleteField(
     example: String? = null
 ) {
     val ctx = LocalContext.current
-    val all = remember { MunicipiosRepository.getUiList(ctx) }
+    val all = remember { MunicipiosRepository.getUiList(ctx) } // Lista completa de municipios
     val scope = rememberCoroutineScope()
     var searchJob by remember { mutableStateOf<Job?>(null) }
 
@@ -48,17 +74,23 @@ fun LocationAutocompleteField(
     var expanded by remember { mutableStateOf(false) }
     var suggestions by remember { mutableStateOf(emptyList<MunicipiosRepository.MunicipioUi>()) }
 
+    /**
+     * Recalcula las sugerencias según el texto introducido.
+     * Solo busca cuando hay 2 o más caracteres.
+     */
     fun recompute(query: String) {
         val q = query.trim()
         suggestions = if (q.length >= 2) MunicipiosRepository.filter(all, q) else emptyList()
         expanded = hasFocus && suggestions.isNotEmpty()
     }
 
+    // Cierra el menú al guardar
     LaunchedEffect(isSaving) { if (isSaving) expanded = false }
+    // Recalcula sugerencias cuando carga la lista de municipios
     LaunchedEffect(all) { recompute(value) }
 
     Column(
-        modifier = modifier.fillMaxWidth() // ✅ usa el modifier que recibes
+        modifier = modifier.fillMaxWidth()
     ) {
         ExposedDropdownMenuBox(
             expanded = expanded,
@@ -72,6 +104,7 @@ fun LocationAutocompleteField(
                 onValueChange = { newVal ->
                     val clean = newVal.replace(Regex("\\s+"), " ")
                     onValueChange(clean)
+                    // retrasa la búsqueda para no ejecutar en cada tecla
                     searchJob?.cancel()
                     searchJob = scope.launch {
                         delay(120)
@@ -79,6 +112,7 @@ fun LocationAutocompleteField(
                     }
                 },
                 label = {
+                    // Si no hay foco ni texto → muestra ejemplo debajo del label
                     if (!hasFocus && value.isEmpty() && !example.isNullOrBlank()) {
                         Column {
                             Text(
@@ -99,7 +133,7 @@ fun LocationAutocompleteField(
                 },
                 singleLine = true,
                 isError = isError,
-                enabled = enabled && !isSaving,   // ✅ respeta "enabled"
+                enabled = enabled && !isSaving,   // respeta "enabled"
                 modifier = Modifier
                     .menuAnchor(type = MenuAnchorType.PrimaryNotEditable, enabled = true)
                     .fillMaxWidth()
@@ -108,8 +142,9 @@ fun LocationAutocompleteField(
                         hasFocus = f.isFocused
                         expanded = f.isFocused && suggestions.isNotEmpty()
                     },
-                colors = colors,                   // ✅ aplica los colores que pasas
+                colors = colors,
                 trailingIcon = {
+                    // Icono de borrar cuando hay texto
                     if (value.isNotEmpty()) {
                         IconButton(
                             onClick = {
@@ -125,6 +160,7 @@ fun LocationAutocompleteField(
                 }
             )
 
+            // Menú desplegable de sugerencias
             DropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
@@ -143,6 +179,7 @@ fun LocationAutocompleteField(
             }
         }
 
+        // Mensaje de error bajo el campo
         if (isError && !errorMessage.isNullOrBlank()) {
             Text(
                 text = errorMessage!!,

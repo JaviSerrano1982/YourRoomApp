@@ -18,6 +18,20 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
+// ------------------------------
+// VIEWMODEL: PublishPhotosViewModel
+// ------------------------------
+
+/**
+ * ViewModel encargado de gestionar la selección,
+ * subida y persistencia de fotos en una sala durante
+ * el proceso de publicación.
+ *
+ * - Gestiona el estado de la UI con las fotos seleccionadas.
+ * - Sube imágenes a Firebase Storage.
+ * - Crea registros de fotos en el backend a través de PhotoRepository.
+ * - Permite cancelar la publicación eliminando el borrador de la sala.
+ */
 @HiltViewModel
 class PublishPhotosViewModel @Inject constructor(
     private val photoRepo: PhotoRepository,
@@ -25,8 +39,16 @@ class PublishPhotosViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
+    // Id de la sala actual, recibido desde navegación (SafeArgs)
     val spaceId: Long = checkNotNull(savedStateHandle["spaceId"])
 
+    /**
+     * Estado interno de la pantalla de gestión de fotos.
+     *
+     * @param selected  Lista de URIs de fotos seleccionadas en la UI.
+     * @param isSaving  Indica si se está procesando una acción (guardar/borrar).
+     * @param error     Mensaje de error en caso de fallo.
+     */
     data class UiState(
         val selected: List<Uri> = emptyList(),
         val isSaving: Boolean = false,
@@ -35,7 +57,14 @@ class PublishPhotosViewModel @Inject constructor(
     var ui by mutableStateOf(UiState())
         private set
 
-    // Añadir (máx. 10, evitando duplicados)
+    // ------------------------------
+    // Gestión de selección de fotos
+    // ------------------------------
+
+    /**
+     * Añade nuevas fotos seleccionadas.
+     * Máximo 10 elementos, evitando duplicados.
+     */
     fun addPhotos(uris: List<Uri>) {
         if (uris.isEmpty()) return
         val current = ui.selected.toMutableList()
@@ -46,6 +75,9 @@ class PublishPhotosViewModel @Inject constructor(
         ui = ui.copy(selected = current)
     }
 
+    /**
+     * Elimina la foto en el índice indicado.
+     */
     fun removeAt(index: Int) {
         if (index !in ui.selected.indices) return
         val list = ui.selected.toMutableList()
@@ -53,6 +85,9 @@ class PublishPhotosViewModel @Inject constructor(
         ui = ui.copy(selected = list)
     }
 
+    /**
+     * Reemplaza la foto en el índice indicado con otra URI.
+     */
     fun replaceAt(index: Int, uri: Uri) {
         if (index !in ui.selected.indices) return
         val list = ui.selected.toMutableList()
@@ -60,7 +95,16 @@ class PublishPhotosViewModel @Inject constructor(
         ui = ui.copy(selected = list)
     }
 
-    // Sube todas las fotos seleccionadas y crea los registros (primary=false)
+    // ------------------------------
+    // Guardado y subida de fotos
+    // ------------------------------
+
+    /**
+     * Sube todas las fotos seleccionadas a Firebase y
+     * registra cada una en el backend (primary = false).
+     *
+     * @return true si todo fue correcto, false si hubo error.
+     */
     suspend fun saveAllAwait(): Boolean {
         if (ui.selected.isEmpty()) return true
         ui = ui.copy(isSaving = true, error = null)
@@ -78,7 +122,14 @@ class PublishPhotosViewModel @Inject constructor(
         }
     }
 
-    // Cancelar publicación (borra el borrador completo)
+    // ------------------------------
+    // Cancelar publicación
+    // ------------------------------
+
+    /**
+     * Cancela la publicación de la sala borrador,
+     * eliminándola completamente del backend.
+     */
     fun cancelAndDelete(onDone: () -> Unit) {
         viewModelScope.launch {
             try {
@@ -92,6 +143,14 @@ class PublishPhotosViewModel @Inject constructor(
         }
     }
 
+    // ------------------------------
+    // Firebase helpers
+    // ------------------------------
+
+    /**
+     * Asegura que exista una sesión de Firebase.
+     * Si no hay usuario actual, inicia sesión anónima.
+     */
     private suspend fun ensureFirebaseSession() {
         val auth = FirebaseAuth.getInstance()
         if (auth.currentUser == null) {
@@ -99,6 +158,10 @@ class PublishPhotosViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Sube un archivo a Firebase Storage y devuelve la URL pública.
+     * Se añade un timestamp para evitar caché.
+     */
     private suspend fun uploadExtraToFirebase(spaceId: Long, uri: Uri, index: Int): String {
         val ref = FirebaseStorage.getInstance()
             .reference.child("spaces/$spaceId/photos/photo_${System.currentTimeMillis()}_$index.jpg")

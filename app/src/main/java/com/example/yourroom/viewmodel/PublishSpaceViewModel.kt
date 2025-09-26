@@ -22,21 +22,42 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
-import kotlinx.coroutines.flow.update
 
-import kotlin.getOrElse
+// ------------------------------
+// VIEWMODEL: PublishSpaceViewModel
+// ------------------------------
 
+/**
+ * ViewModel para la pantalla de publicación de sala (datos básicos).
+ *
+ * - Gestiona el estado de los campos de la UI.
+ * - Valida la información antes de enviar.
+ * - Crea o actualiza la sala en el backend.
+ * - Maneja la foto principal de la sala subiéndola a Firebase y registrándola en el backend.
+ */
 @HiltViewModel
 class PublishSpaceViewModel @Inject constructor(
     private val repo: SpaceRepository,
     private val photoRepo: PhotoRepository,
 ) : ViewModel() {
 
+    /**
+     * Estado de la UI durante la publicación de la sala.
+     *
+     * @param isLoading Indica si se está procesando una acción.
+     * @param error     Mensaje de error actual.
+     * @param spaceId   Identificador de la sala en backend.
+     * @param title     Título de la sala.
+     * @param location  Ciudad/ubicación.
+     * @param address   Dirección exacta.
+     * @param capacity  Capacidad máxima (texto numérico).
+     * @param price     Precio por hora (texto numérico).
+     * @param photoUri  Foto principal seleccionada.
+     */
     data class UiState(
         val isLoading: Boolean = false,
         val error: String? = null,
         val spaceId: Long? = null,
-        // Campos de tu UI
         val title: String = "",
         val location: String = "",
         val address: String = "",
@@ -48,13 +69,20 @@ class PublishSpaceViewModel @Inject constructor(
     private val _ui = MutableStateFlow(UiState())
     val ui: StateFlow<UiState> = _ui
 
-    // Setters (con los nombres de tu pantalla)
+    // ------------------------------
+    // Setters de los campos de la UI
+    // ------------------------------
+
     fun onTitleChange(v: String)      { _ui.update { it.copy(title = v) } }
     fun onLocationChange(v: String)   { _ui.update { it.copy(location = v) } }
     fun onAddressChange(v: String)    { _ui.update { it.copy(address = v) } }
     fun onCapacityChange(v: String)   { _ui.update { it.copy(capacity = v) } }
     fun onPriceChange(v: String)      { _ui.update { it.copy(price = v) } }
     fun setPhotoUri(uri: Uri?)        { _ui.update { it.copy(photoUri = uri) } }
+
+    // ------------------------------
+    // Validación de campos
+    // ------------------------------
 
     private fun validateBasics(): String? {
         val s = _ui.value
@@ -69,9 +97,13 @@ class PublishSpaceViewModel @Inject constructor(
         return null
     }
 
+    // ------------------------------
+    // Creación y actualización de sala
+    // ------------------------------
+
     /**
-     * Crea o actualiza los básicos.
-     * Al terminar, entrega el id al callback para navegar.
+     * Envía los datos básicos al backend.
+     * Si no hay id crea una nueva sala, si ya existe la actualiza.
      */
     fun submitBasics(onSuccess: (Long) -> Unit) {
         val validation = validateBasics()
@@ -86,7 +118,6 @@ class PublishSpaceViewModel @Inject constructor(
                 _ui.update { it.copy(isLoading = true, error = null) }
 
                 val body = SpaceBasicsRequest(
-                    // ownerId: si tu backend ya lo infiere del JWT, quítalo del DTO
                     title = s.title.trim(),
                     location = s.location.trim(),
                     addressLine = s.address.trim(),
@@ -105,11 +136,14 @@ class PublishSpaceViewModel @Inject constructor(
             }
         }
     }
+
+    /**
+     * Cancela la publicación eliminando el borrador de sala.
+     */
     fun cancelAndDelete(onSuccess: () -> Unit) {
         viewModelScope.launch {
             val id = _ui.value.spaceId ?: run {
-                // No hay borrador creado aún: vuelve a Home sin llamar al backend
-                onSuccess()
+                onSuccess() // si no hay borrador creado aún
                 return@launch
             }
 
@@ -134,6 +168,10 @@ class PublishSpaceViewModel @Inject constructor(
             }
         }
     }
+
+    /**
+     * Asegura que exista un id de sala. Si no lo hay, crea un borrador.
+     */
     private suspend fun ensureSpaceId(): Long {
         _ui.value.spaceId?.let { return it }
         return try {
@@ -149,14 +187,15 @@ class PublishSpaceViewModel @Inject constructor(
         }
     }
 
-
-
+    // ------------------------------
+    // Foto principal
+    // ------------------------------
 
     fun onAddMainPhotoClicked(openPicker: () -> Unit) {
         viewModelScope.launch {
             try {
                 _ui.update { it.copy(isLoading = true, error = null) }
-                ensureSpaceId()                   // 👈 crea el draft automáticamente
+                ensureSpaceId() // crea draft si no existe
                 openPicker()
             } finally {
                 _ui.update { it.copy(isLoading = false) }
@@ -176,6 +215,7 @@ class PublishSpaceViewModel @Inject constructor(
             }
         }
     }
+
     private suspend fun uploadToFirebase(spaceId: Long, uri: Uri): String {
         ensureFirebaseSession()
         val ref = FirebaseStorage.getInstance()
@@ -183,7 +223,6 @@ class PublishSpaceViewModel @Inject constructor(
 
         ref.putFile(uri).await()
         val raw = ref.downloadUrl.await().toString()
-        // cache-busting para evitar que la miniatura se quede cacheada
         return if (raw.contains("?")) "$raw&ts=${System.currentTimeMillis()}"
         else "$raw?ts=${System.currentTimeMillis()}"
     }
@@ -191,11 +230,13 @@ class PublishSpaceViewModel @Inject constructor(
     private suspend fun ensureFirebaseSession() {
         val auth = FirebaseAuth.getInstance()
         if (auth.currentUser == null) {
-            // Si ya haces signInWithCustomToken en login, esto normalmente no se ejecuta.
             auth.signInAnonymously().await()
         }
     }
 
+    // ------------------------------
+    // Helpers de texto
+    // ------------------------------
 
     private fun cleanSpaces(s: String) = s.replace(Regex("\\s+"), " ").trim()
 
@@ -204,14 +245,21 @@ class PublishSpaceViewModel @Inject constructor(
     }
 
     fun onLocationPicked(label: String) {
-        // Cuando eliges una sugerencia del dropdown
         _ui.update { it.copy(location = label) }
     }
-
-
-
-
 }
+
+// ------------------------------
+// VIEWMODEL: PublishDetailsViewModel
+// ------------------------------
+
+/**
+ * ViewModel para la pantalla de publicación de sala (detalles).
+ *
+ * - Gestiona campos de tamaño, disponibilidad, servicios y descripción.
+ * - Construye el request para actualizar detalles.
+ * - Permite cancelar la publicación eliminando la sala borrador.
+ */
 @HiltViewModel
 class PublishDetailsViewModel @Inject constructor(
     private val repo: SpaceRepository,
@@ -220,6 +268,9 @@ class PublishDetailsViewModel @Inject constructor(
 
     val spaceId: Long = checkNotNull(savedStateHandle["spaceId"])
 
+    /**
+     * Estado de la UI durante la edición de detalles.
+     */
     data class UiState(
         val sizeM2Text: String = "",
         val availability: String = "",
@@ -231,10 +282,18 @@ class PublishDetailsViewModel @Inject constructor(
     var uiState by mutableStateOf(UiState())
         private set
 
+    // ------------------------------
+    // Setters de campos de detalles
+    // ------------------------------
+
     fun onSize(v: String) { uiState = uiState.copy(sizeM2Text = v.filter { it.isDigit() }) }
     fun onAvailability(v: String) { uiState = uiState.copy(availability = v) }
     fun onServices(v: String) { uiState = uiState.copy(services = v) }
     fun onDescription(v: String) { uiState = uiState.copy(description = v) }
+
+    // ------------------------------
+    // Construcción del request
+    // ------------------------------
 
     private fun buildRequest(): SpaceDetailsRequest {
         val size = uiState.sizeM2Text.takeIf { it.isNotBlank() }?.toInt()
@@ -246,7 +305,15 @@ class PublishDetailsViewModel @Inject constructor(
         )
     }
 
-    /** Guarda y devuelve true/false. Úsalo desde la UI para decidir navegar. */
+    // ------------------------------
+    // Guardado de detalles
+    // ------------------------------
+
+    /**
+     * Envía los detalles de la sala al backend.
+     *
+     * @return true si se guardó con éxito, false si hubo error.
+     */
     suspend fun saveDetailsAwait(): Boolean {
         val req = buildRequest()
         uiState = uiState.copy(isSaving = true, error = null)
@@ -259,6 +326,11 @@ class PublishDetailsViewModel @Inject constructor(
             false
         }
     }
+
+    // ------------------------------
+    // Cancelar publicación
+    // ------------------------------
+
     fun cancelAndDelete(onSuccess: () -> Unit) {
         uiState = uiState.copy(isSaving = true, error = null)
         viewModelScope.launch {
@@ -278,13 +350,4 @@ class PublishDetailsViewModel @Inject constructor(
             }
         }
     }
-
-
-
-
-
-
-
 }
-
-

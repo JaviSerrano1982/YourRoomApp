@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.yourroom.R   // <-- asegúrate de importar TU R (no android.R)
+import com.example.yourroom.R
 
 // ---------------------------------------------------------------------
 // DEFINICIÓN DE ITEMS DE NAVEGACIÓN INFERIOR
@@ -32,10 +32,7 @@ sealed class BottomNavItem(
     @DrawableRes val iconResId: Int? = null // para SVG/VectorDrawable importado
 ) {
     object Home : BottomNavItem("home", "Inicio", imageVector = Icons.Default.Home)
-
-    // Usa tu recurso importado en drawable (p.ej. ic_door_open.xml)
     object Search : BottomNavItem("search", "Mis salas", iconResId = R.drawable.door_open)
-
     object Publish : BottomNavItem("publish", "Publicar", imageVector = Icons.Default.Add)
     object Favorites : BottomNavItem("favorites", "Favoritos", imageVector = Icons.Default.Favorite)
     object Profile : BottomNavItem("profile", "Mi Perfil", imageVector = Icons.Default.Person)
@@ -89,7 +86,7 @@ fun BottomNavigationBar(navController: NavHostController) {
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
-                            // Aquí es Material Icon (ImageVector)
+
                             Icon(
                                 imageVector = item.imageVector!!,
                                 contentDescription = "Publicar",

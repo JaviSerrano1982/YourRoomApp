@@ -37,7 +37,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import coil.compose.AsyncImage
 import com.example.yourroom.R
-import com.example.yourroom.ui.components.LocationAutocompleteField
+import com.example.yourroom.ui.theme.components.LocationAutocompleteField
 import com.example.yourroom.ui.theme.components.transparentTextFieldColors
 import com.example.yourroom.viewmodel.PublishSpaceViewModel
 
