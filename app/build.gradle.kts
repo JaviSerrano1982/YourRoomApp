@@ -7,6 +7,8 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.kotlin.kapt)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.kotlin.serialization)
+
 
 
 }
@@ -107,6 +109,9 @@ dependencies {
     implementation(libs.kotlinx.coroutines.play.services)
 
     implementation(libs.androidx.compose.ui.text)
+
+    implementation(libs.kotlinx.serialization.json)
+
 
 
 
