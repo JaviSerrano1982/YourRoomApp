@@ -114,19 +114,27 @@ class UserProfileViewModel @Inject constructor(
     /** Controla si debemos “enseñar” errores en caliente. */
     private var showErrors: Boolean = false
 
+
+
+    val canPublish: StateFlow<Boolean> =
+        profile
+            .map { p -> isFormComplete(p) }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+
     // ---------------------------------------------------------------------
     // UTILIDADES DE VALIDACIÓN
     // ---------------------------------------------------------------------
 
     /** Comprueba que todos los campos obligatorios estén completos (no vacíos). */
     private fun isFormComplete(p: UserProfileDto): Boolean {
-        return p.firstName.isNullOrBlank() &&
-                p.lastName.isNullOrBlank() &&
-                p.birthDate.isNullOrBlank() &&
-                p.gender.isNullOrBlank() &&
-                p.email.isNullOrBlank() &&
-                p.phone.isNullOrBlank() &&
-                p.location.isNullOrBlank()
+        return !p.firstName.isNullOrBlank() &&
+                !p.lastName.isNullOrBlank() &&
+                !p.birthDate.isNullOrBlank() &&
+                !p.gender.isNullOrBlank() &&
+                !p.email.isNullOrBlank() &&
+                !p.phone.isNullOrBlank() &&
+                !p.location.isNullOrBlank()
     }
 
     /** Valida el formulario y, si `showErrors = true`, actualiza errores por campo. */

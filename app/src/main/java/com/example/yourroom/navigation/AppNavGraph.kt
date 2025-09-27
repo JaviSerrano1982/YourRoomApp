@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import com.example.yourroom.ui.theme.screens.*
@@ -20,6 +21,7 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.yourroom.ui.theme.screens.publish.PublishRoutes
 import com.example.yourroom.ui.theme.screens.publish.PublishRoutes.photos
+import com.example.yourroom.viewmodel.UserProfileViewModel
 import okhttp3.internal.platform.android.AndroidLogHandler.publish
 
 
@@ -49,6 +51,8 @@ fun AppNavGraph(
     // Estado para mostrar u ocultar la BottomNavigationBar
     val showBottomBar = remember { mutableStateOf(false) }
 
+    val userProfileVM: UserProfileViewModel = hiltViewModel()
+
 
     // Debug temporal: mostrar userId cargado en consola
     LaunchedEffect(userId) {
@@ -60,7 +64,7 @@ fun AppNavGraph(
     Scaffold(
         bottomBar = {
             if (showBottomBar.value) {
-                BottomNavigationBar(navController)
+                BottomNavigationBar(navController, userProfileVM)
             }
         }
     ) { innerPadding ->
@@ -137,7 +141,7 @@ fun AppNavGraph(
             }
             composable("profile") {
                 showBottomBar.value = false
-                UserProfileScreen(navController)
+                UserProfileScreen(navController,userProfileVM)
             }
 
             // navigation(...)

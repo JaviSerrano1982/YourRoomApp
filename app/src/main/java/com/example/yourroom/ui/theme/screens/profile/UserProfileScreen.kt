@@ -82,7 +82,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun UserProfileScreen(
     navController: NavHostController,
-    viewModel: UserProfileViewModel = hiltViewModel()
+    viewModel: UserProfileViewModel
 ) {
     // --- StateFlows del VieModel a estados Compose ---
     val profile by viewModel.profile.collectAsState()

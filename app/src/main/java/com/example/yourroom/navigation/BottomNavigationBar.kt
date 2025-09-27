@@ -1,5 +1,6 @@
 package com.example.yourroom.navigation
 
+import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -8,18 +9,23 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.yourroom.R
+import com.example.yourroom.viewmodel.UserProfileViewModel
 
 // ---------------------------------------------------------------------
 // DEFINICIÓN DE ITEMS DE NAVEGACIÓN INFERIOR
@@ -43,7 +49,13 @@ sealed class BottomNavItem(
 // ---------------------------------------------------------------------
 
 @Composable
-fun BottomNavigationBar(navController: NavHostController) {
+fun BottomNavigationBar(
+    navController: NavHostController,
+    vm: UserProfileViewModel
+    ) {
+    val context = LocalContext.current
+    val canPublish by vm.canPublish.collectAsStateWithLifecycle()
+
     val items = listOf(
         BottomNavItem.Home,
         BottomNavItem.Search,
@@ -68,10 +80,18 @@ fun BottomNavigationBar(navController: NavHostController) {
                 NavigationBarItem(
                     selected = isSelected,
                     onClick = {
-                        navController.navigate(item.route) {
-                            popUpTo(navController.graph.startDestinationId) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
+                        if (canPublish) {
+                            navController.navigate(item.route) {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        } else {
+                            Toast.makeText(
+                                context,
+                                "Debes completar tu perfil antes de publicar una sala",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     },
                     icon = {
