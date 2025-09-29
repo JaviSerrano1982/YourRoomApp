@@ -492,4 +492,21 @@ class UserProfileViewModel @Inject constructor(
     fun clearError() {
         _errorMessage.value = null
     }
+    // ---------------------------------------------------------------------
+    // SESIÓN: limpiar estado al hacer logout o cambiar de usuario
+    // ---------------------------------------------------------------------
+    fun clearSessionState() {
+        _userId.value = 0L
+        _profile.value = UserProfileDto()
+        initialProfile = null
+        _localImageUri.value = null
+        _isImageChanged.value = false
+        _hasUnsavedEdits.value = false
+        _hasChanges.value = false
+        _fieldErrors.value = FieldErrors()
+        _emailErrorMessage.value = null
+        _errorMessage.value = null
+    }
+
+
 }
