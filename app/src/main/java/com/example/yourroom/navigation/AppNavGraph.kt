@@ -54,9 +54,11 @@ fun AppNavGraph(
     val userProfileVM: UserProfileViewModel = hiltViewModel()
 
 
-    // Debug temporal: mostrar userId cargado en consola
-    LaunchedEffect(userId) {
-        println("USER ID EN PROFILE: $userId")
+    // Carga de perfil en cuanto tenemos userId
+    LaunchedEffect(isLoggedIn, userId) {
+        if (isLoggedIn && userId > 0L) {
+            userProfileVM.loadProfile(userId)
+        }
     }
 
 
