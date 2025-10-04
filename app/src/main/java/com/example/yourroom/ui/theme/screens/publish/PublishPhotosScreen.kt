@@ -79,12 +79,10 @@ fun PublishPhotosScreen(
         onClickBack = { navController.popBackStack() },
         onClickFinish = {
             scope.launch {
-                val ok = vm.saveAllAwait()
+                val ok = vm.saveAllAwaitAndPublish()
                 if (ok) {
                     navController.navigate("success_publish") {
-                        popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
-                        launchSingleTop = true
-                        restoreState = false
+                        popUpTo("home") { inclusive = false }
                     }
                 }
             }

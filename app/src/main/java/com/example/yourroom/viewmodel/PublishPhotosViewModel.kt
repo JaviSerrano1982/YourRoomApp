@@ -121,6 +121,13 @@ class PublishPhotosViewModel @Inject constructor(
             false
         }
     }
+    suspend fun saveAllAwaitAndPublish(): Boolean {
+        val ok = saveAllAwait()
+        if (!ok) return false
+        // Publicar ahora
+        spaceRepo.publish(spaceId)
+        return true
+    }
 
     // ------------------------------
     // Cancelar publicación
