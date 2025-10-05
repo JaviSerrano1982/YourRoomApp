@@ -1,4 +1,4 @@
-package com.example.yourroom.ui.theme.screens.publish
+package com.example.yourroom.ui.screens.publish
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -27,7 +27,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import com.example.yourroom.R
-import com.example.yourroom.ui.theme.components.transparentTextFieldColors
+import com.example.yourroom.ui.components.transparentTextFieldColors
 
 
 @OptIn(ExperimentalMaterial3Api::class)

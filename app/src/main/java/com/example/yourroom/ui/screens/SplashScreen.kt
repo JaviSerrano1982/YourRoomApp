@@ -1,4 +1,4 @@
-package com.example.yourroom.ui.theme.screens
+package com.example.yourroom.ui.screens
 
 import android.annotation.SuppressLint
 import androidx.compose.animation.core.FastOutSlowInEasing

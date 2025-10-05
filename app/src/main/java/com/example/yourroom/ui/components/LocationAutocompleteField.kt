@@ -1,4 +1,4 @@
-package com.example.yourroom.ui.theme.components
+package com.example.yourroom.ui.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer

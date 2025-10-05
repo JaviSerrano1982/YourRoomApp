@@ -1,4 +1,4 @@
-package com.example.yourroom.ui.theme.screens.publish
+package com.example.yourroom.ui.screens.publish
 
 object PublishRoutes {
     const val Root = "publish" // pantalla de Básicos

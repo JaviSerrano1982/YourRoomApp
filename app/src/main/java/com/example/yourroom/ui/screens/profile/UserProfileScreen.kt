@@ -1,4 +1,4 @@
-package com.example.yourroom.ui.theme.screens.profile
+package com.example.yourroom.ui.screens.profile
 
 import android.net.Uri
 import androidx.activity.compose.BackHandler
@@ -35,7 +35,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -48,15 +47,9 @@ import com.example.yourroom.viewmodel.FieldErrors
 import kotlinx.coroutines.launch
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.window.PopupProperties
-import com.example.yourroom.location.MunicipiosRepository
-import com.example.yourroom.ui.theme.components.LocationAutocompleteField
-import com.example.yourroom.ui.theme.components.transparentTextFieldColors
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import com.example.yourroom.ui.components.LocationAutocompleteField
+import com.example.yourroom.ui.components.transparentTextFieldColors
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId

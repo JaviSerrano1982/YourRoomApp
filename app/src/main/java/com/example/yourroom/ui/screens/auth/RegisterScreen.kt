@@ -1,4 +1,4 @@
-package com.example.yourroom.ui.theme.screens.auth
+package com.example.yourroom.ui.screens.auth
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -22,7 +22,7 @@ import androidx.navigation.NavHostController
 import com.example.yourroom.R
 import com.example.yourroom.model.User
 import com.example.yourroom.network.RetrofitClient
-import com.example.yourroom.ui.theme.components.YourRoomGradient
+import com.example.yourroom.ui.components.YourRoomGradient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

@@ -1,5 +1,5 @@
 // PublishPhotosScreen.kt
-package com.example.yourroom.ui.theme.screens.publish
+package com.example.yourroom.ui.screens.publish
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -18,10 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
-import androidx.compose.material3.ListItemDefaults.containerColor
-import androidx.compose.material3.ListItemDefaults.contentColor
-import androidx.compose.material3.SnackbarDefaults.contentColor
-import androidx.compose.material3.TabRowDefaults.contentColor
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier

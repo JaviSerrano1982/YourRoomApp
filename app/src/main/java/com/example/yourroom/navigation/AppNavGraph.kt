@@ -7,22 +7,21 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
-import com.example.yourroom.ui.theme.screens.*
-import com.example.yourroom.ui.theme.screens.profile.UserProfileScreen
-import com.example.yourroom.ui.theme.screens.auth.LoginScreen
-import com.example.yourroom.ui.theme.screens.auth.RegisterScreen
-import com.example.yourroom.ui.theme.screens.favorites.FavoritesScreen
-import com.example.yourroom.ui.theme.screens.home.HomeScreen
-import com.example.yourroom.ui.theme.screens.publish.PublishBasicsScreen
-import com.example.yourroom.ui.theme.screens.publish.PublishDetailsScreen
-import com.example.yourroom.ui.theme.screens.publish.PublishPhotosScreen
-import com.example.yourroom.ui.theme.screens.succes.SuccessScreen
+import com.example.yourroom.ui.screens.profile.UserProfileScreen
+import com.example.yourroom.ui.screens.auth.LoginScreen
+import com.example.yourroom.ui.screens.auth.RegisterScreen
+import com.example.yourroom.ui.screens.favorites.FavoritesScreen
+import com.example.yourroom.ui.screens.home.HomeScreen
+import com.example.yourroom.ui.screens.publish.PublishBasicsScreen
+import com.example.yourroom.ui.screens.publish.PublishDetailsScreen
+import com.example.yourroom.ui.screens.publish.PublishPhotosScreen
+import com.example.yourroom.ui.screens.succes.SuccessScreen
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import com.example.yourroom.ui.theme.screens.publish.PublishRoutes
-import com.example.yourroom.ui.theme.screens.publish.PublishRoutes.photos
+import com.example.yourroom.ui.screens.SearchScreen
+import com.example.yourroom.ui.screens.SplashScreen
+import com.example.yourroom.ui.screens.publish.PublishRoutes
 import com.example.yourroom.viewmodel.UserProfileViewModel
-import okhttp3.internal.platform.android.AndroidLogHandler.publish
 
 
 // ---------------------------------------------------------------------

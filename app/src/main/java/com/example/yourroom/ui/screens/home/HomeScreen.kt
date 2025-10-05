@@ -1,4 +1,4 @@
-package com.example.yourroom.ui.theme.screens.home
+package com.example.yourroom.ui.screens.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
