@@ -1,4 +1,4 @@
-package com.example.yourroom.ui.screens
+package com.example.yourroom.ui.screens.myRooms
 
 
 
@@ -7,6 +7,6 @@ import com.example.yourroom.ui.components.CenteredText
 
 @Composable
 fun SearchScreen() {
-    CenteredText(text = "Pantalla de Búsqueda")
+    CenteredText(text = "Mis salas")
 }
 
