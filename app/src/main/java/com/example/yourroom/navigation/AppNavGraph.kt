@@ -18,7 +18,7 @@ import com.example.yourroom.ui.screens.publish.PublishPhotosScreen
 import com.example.yourroom.ui.screens.succes.SuccessScreen
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import com.example.yourroom.ui.screens.myRooms.SearchScreen
+import com.example.yourroom.ui.screens.myRooms.MyRoomsScreen
 import com.example.yourroom.ui.screens.splash.SplashScreen
 import com.example.yourroom.ui.screens.publish.PublishRoutes
 import com.example.yourroom.viewmodel.UserProfileViewModel
@@ -134,7 +134,7 @@ fun AppNavGraph(
             }
             composable("myRooms") {
                 showBottomBar.value = true
-                SearchScreen()
+                MyRoomsScreen(navController)
             }
             composable("favorites") {
                 showBottomBar.value = true
