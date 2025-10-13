@@ -52,7 +52,7 @@ fun PublishBasicsScreen(
 
     // Photo picker (guardamos la Uri en el VM)
     val pickPhoto = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia()
+        contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         if (uri != null) vm.onMainPhotoSelected(uri)
     }
@@ -399,9 +399,7 @@ fun PublishBasicsScreen(
                             OutlinedButton(
                                 onClick = {
                                     vm.onAddMainPhotoClicked {
-                                        pickPhoto.launch(
-                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                        )
+                                        pickPhoto.launch("image/*")
                                     }
                                 }
                             ) {
@@ -450,7 +448,7 @@ fun PublishBasicsScreen(
                             restoreState = false
                         }
                     }
-                }) { Text("Sí, borrar") }
+                }) { Text("Cancelar") }
             },
             dismissButton = {
                 TextButton(onClick = { showCancelDialog = false }) {
