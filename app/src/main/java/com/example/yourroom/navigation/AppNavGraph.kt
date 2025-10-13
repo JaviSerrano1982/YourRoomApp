@@ -135,7 +135,7 @@ fun AppNavGraph(
                 HomeScreen(navController)
             }
             composable("myRooms") {
-                showBottomBar.value = true
+                showBottomBar.value = false
                 MyRoomsScreen(navController)
             }
             composable("favorites") {

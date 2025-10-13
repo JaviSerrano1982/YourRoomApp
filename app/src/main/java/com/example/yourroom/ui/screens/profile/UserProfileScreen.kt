@@ -221,7 +221,7 @@ fun UserProfileScreen(
             emailErrorMessage = emailErrorMessage,
             isEditingLocation = isEditingLocation,
             isUploadingPhoto = isUploadingPhoto,
-            modifier = Modifier.padding(padding) // evita solape con snackbar
+            modifier = Modifier.padding(padding) // evita que se solape con snackbar
         )
     }
 }
