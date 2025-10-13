@@ -18,6 +18,8 @@ import com.example.yourroom.ui.screens.publish.PublishPhotosScreen
 import com.example.yourroom.ui.screens.succes.SuccessScreen
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import com.example.yourroom.ui.screens.edit.EditRoomRoutes
+import com.example.yourroom.ui.screens.edit.EditRoomScreen
 import com.example.yourroom.ui.screens.myRooms.MyRoomsScreen
 import com.example.yourroom.ui.screens.splash.SplashScreen
 import com.example.yourroom.ui.screens.publish.PublishRoutes
@@ -174,6 +176,16 @@ fun AppNavGraph(
                 }
 
 
+            }
+
+            // RUTA PARA EDITAR SALA PUBLICADA
+            composable(
+                route = EditRoomRoutes.Edit,
+                arguments = listOf(navArgument("spaceId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                showBottomBar.value = false
+                val spaceId = backStackEntry.arguments?.getLong("spaceId") ?: 0L
+                EditRoomScreen(navController, spaceId)
             }
 
 

@@ -16,7 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.example.yourroom.ui.screens.publish.PublishRoutes
+import com.example.yourroom.ui.screens.edit.EditRoomRoutes
+
 import com.example.yourroom.viewmodel.MyRoomsViewModel
 
 @Composable
@@ -25,6 +26,26 @@ fun MyRoomsScreen(
     vm: MyRoomsViewModel = hiltViewModel()
 ) {
     val ui by vm.ui.collectAsState()
+
+    // Obtenemos un StateFlow desde el SavedStateHandle (valor inicial = false)
+    val needsRefreshFlow = remember(navController) {
+        navController.currentBackStackEntry
+            ?.savedStateHandle
+            ?.getStateFlow("needsRefreshMyRooms", false)
+    }
+
+    // Lo coleccionamos como State (sin LiveData)
+    val needsRefresh by needsRefreshFlow?.collectAsState() ?: remember { mutableStateOf(false) }
+
+    // Refresca cuando volvemos de editar y el flag está a true
+    LaunchedEffect(needsRefresh) {
+        if (needsRefresh) {
+            vm.loadMyRooms()
+            navController.currentBackStackEntry
+                ?.savedStateHandle
+                ?.set("needsRefreshMyRooms", false)
+        }
+    }
 
     when {
         ui.isLoading -> {
@@ -61,8 +82,8 @@ fun MyRoomsScreen(
                         capacity = item.space.capacity,
                         photoUrl = item.primaryPhotoUrl,
                         onClick = {
-                            // Por ahora, al tocar vamos a la pantalla de edición de DETALLES
-                            navController.navigate(PublishRoutes.details(item.space.id))
+
+                            navController.navigate(EditRoomRoutes.edit(item.space.id))
                         }
                     )
                 }
