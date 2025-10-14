@@ -648,7 +648,7 @@ fun BirthDateField(
     isSaving: Boolean,
     isError: Boolean,
     errorMessage: String?,
-    isEditing: MutableState<Boolean>,              // ← NUEVO
+    isEditing: MutableState<Boolean>,
     modifier: Modifier = Modifier
 ) {
     // ---- Utilidades de fecha (dd/MM/yyyy)

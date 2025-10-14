@@ -88,7 +88,7 @@ fun MyRoomsScreen(
                 text = "Mis salas",
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
+                fontSize = 16.sp,
                 modifier = Modifier.align(Alignment.Center)
             )
         }
