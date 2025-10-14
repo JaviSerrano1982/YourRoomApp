@@ -94,7 +94,7 @@ fun EditRoomScreen(
         OutlinedTextField(
             value = ui.availability,
             onValueChange = { vm.onChange(availability = it) },
-            label = { Text("Disponibilidad (texto)") },
+            label = { Text("Disponibilidad") },
             modifier = Modifier.fillMaxWidth(),
             minLines = 2
         )
@@ -102,7 +102,7 @@ fun EditRoomScreen(
         OutlinedTextField(
             value = ui.services,
             onValueChange = { vm.onChange(services = it) },
-            label = { Text("Servicios (lista/comas)") },
+            label = { Text("Servicios") },
             modifier = Modifier.fillMaxWidth(),
             minLines = 2
         )

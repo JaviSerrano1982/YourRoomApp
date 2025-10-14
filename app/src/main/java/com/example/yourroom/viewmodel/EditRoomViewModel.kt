@@ -96,12 +96,35 @@ class EditRoomViewModel @Inject constructor(
     }
 
     private fun EditRoomUi.recomputeEnabled(): EditRoomUi {
-        val ok = title.isNotBlank() &&
-                location.isNotBlank() &&
-                capacity.toIntOrNull()?.let { it > 0 } == true &&
-                hourlyPrice.toBigDecimalOrNull()?.let { it >= BigDecimal.ZERO } == true
+        val ok =
+                    title.isNotBlank() &&
+                    location.isNotBlank() &&
+                    addressLine.isNotBlank() &&
+                    capacity.toIntOrNull()?.let { it > 0 } == true &&
+                    hourlyPrice.toBigDecimalOrNull()?.let { it > BigDecimal.ZERO } == true &&
+                    sizeM2.toIntOrNull()?.let { it > 0 } == true &&
+                    availability.isNotBlank() &&
+                    services.isNotBlank() &&
+                    description.isNotBlank()&&
+                     // Solo habilita si hay cambios respecto a lo cargado:
+                    isDirty()
+
         return copy(isSaveEnabled = ok)
     }
+
+    private fun EditRoomUi.isDirty(): Boolean {
+        val sp = space ?: return false
+        return title != sp.title.orEmpty() ||
+                location != sp.location.orEmpty() ||
+                addressLine != sp.addressLine.orEmpty() ||
+                capacity != sp.capacity?.toString().orEmpty() ||
+                hourlyPrice != sp.hourlyPrice?.toPlainString().orEmpty() ||
+                sizeM2 != sp.sizeM2?.toString().orEmpty() ||
+                availability != sp.availability.orEmpty() ||
+                services != sp.services.orEmpty() ||
+                description != sp.description.orEmpty()
+    }
+
 
     fun save(onSuccess: () -> Unit) {
         val s = _ui.value
@@ -120,7 +143,7 @@ class EditRoomViewModel @Inject constructor(
                         location = s.location,
                         addressLine = s.addressLine,
                         capacity = s.capacity.toInt(),
-                        hourlyPrice = s.hourlyPrice.toDoubleOrNull()
+                        hourlyPrice = s.hourlyPrice.toDouble()
 
                     )
                 )
@@ -128,7 +151,7 @@ class EditRoomViewModel @Inject constructor(
                 repo.updateDetails(
                     spaceId,
                     SpaceDetailsRequest(
-                        sizeM2 = s.sizeM2.toIntOrNull(),
+                        sizeM2 = s.sizeM2.toInt(),
                         availability = s.availability.ifBlank { null },
                         services = s.services.ifBlank { null },
                         description = s.description.ifBlank { null }
