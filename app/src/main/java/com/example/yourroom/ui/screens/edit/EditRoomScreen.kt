@@ -477,7 +477,7 @@ private fun PhotoManagementSection(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                TextButton(onClick = onEditPrimary) { Text("Editar") }
+
             }
         }
 
@@ -523,7 +523,7 @@ private fun PhotoManagementSection(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                TextButton(onClick = onEditSecondaries) { Text("Editar") }
+
             }
         }
     }
