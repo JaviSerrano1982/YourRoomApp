@@ -1,26 +1,41 @@
 package com.example.yourroom.ui.screens.edit
 
+import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Collections
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.yourroom.ui.components.LocationAutocompleteField
 import com.example.yourroom.ui.components.transparentTextFieldColors
 import com.example.yourroom.viewmodel.EditRoomViewModel
-
+import kotlin.collections.isNotEmpty
 
 
 @Composable
@@ -32,7 +47,7 @@ fun EditRoomScreen(
     LaunchedEffect(spaceId) { vm.init(spaceId) }
     val ui by vm.ui.collectAsState()
 
-    // === Cálculo local de "hay cambios sin guardar" (mismo criterio que isDirty del VM) ===
+    //  Cálculo local de "hay cambios sin guardar" (mismo criterio que isDirty del VM)
     val hasUnsavedChanges by remember(ui) {
         mutableStateOf(
             ui.space != null && (
@@ -47,6 +62,28 @@ fun EditRoomScreen(
                             ui.description != ui.space?.description.orEmpty()
                     )
         )
+    }
+    val context = LocalContext.current
+
+    // --- Launchers del Photo Picker ---
+    // Foto principal (una sola imagen)
+    val pickSingleMedia = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            vm.onPrimaryPhotoSelected(uri)
+        }
+    }
+
+    // Fotos secundarias (múltiples imágenes)
+    val pickMultipleMedia = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickMultipleVisualMedia()
+    ) { uris: List<Uri> ->
+        if (uris.isNotEmpty()) {
+            // Llama a tu lógica para añadir/actualizar las fotos secundarias
+            vm.addSecondaryPhotos(uris)
+
+        }
     }
 
     var showExitConfirm by remember { mutableStateOf(false) }
@@ -299,6 +336,21 @@ fun EditRoomScreen(
                         }
                     }
                 )
+                PhotoManagementSection(
+                    mainPhoto = ui.mainPhotoLocal,
+                    onEditPrimary = {
+                        // Abrir Photo Picker para 1 imagen
+                        pickSingleMedia.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
+                    onEditSecondaries = {
+                        // Abrir Photo Picker para varias imágenes
+                        pickMultipleMedia.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    }
+                )
             }
 
                 Spacer(Modifier.height(12.dp))
@@ -355,3 +407,122 @@ fun EditRoomScreen(
         }
     }
 
+@Composable
+private fun PhotoManagementSection(
+    onEditPrimary: () -> Unit,
+    onEditSecondaries: () -> Unit,
+    mainPhoto: Uri?,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+
+        // Tarjeta: Foto principal
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onEditPrimary() },
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // --- Aquí sustituimos el Icon por la imagen seleccionada ---
+                if (mainPhoto != null) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(mainPhoto)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = "Foto seleccionada",
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    // Si aún no hay foto seleccionada, mostramos un contorno gris o icono opcional
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Image,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("Foto principal", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        if (mainPhoto != null)
+                            "Foto nueva seleccionada (pendiente de guardar)"
+                        else
+                            "Cambia la imagen destacada de la sala.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                TextButton(onClick = onEditPrimary) { Text("Editar") }
+            }
+        }
+
+
+        // Tarjeta: Fotos secundarias
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onEditSecondaries() },
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant,
+                            shape = RoundedCornerShape(8.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Collections,
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("Fotos secundarias", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        "Añade, elimina o reordena fotos adicionales.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                TextButton(onClick = onEditSecondaries) { Text("Editar") }
+            }
+        }
+    }
+}
