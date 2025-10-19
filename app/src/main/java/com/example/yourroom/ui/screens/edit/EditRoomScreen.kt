@@ -59,7 +59,9 @@ fun EditRoomScreen(
                             ui.sizeM2 != ui.space?.sizeM2?.toString().orEmpty() ||
                             ui.availability != ui.space?.availability.orEmpty() ||
                             ui.services != ui.space?.services.orEmpty() ||
-                            ui.description != ui.space?.description.orEmpty()
+                            ui.description != ui.space?.description.orEmpty() ||
+                            ui.mainPhotoLocal != null ||
+                            ui.pendingSecondaryCount > 0
                     )
         )
     }

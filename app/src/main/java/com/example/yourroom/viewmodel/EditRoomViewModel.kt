@@ -36,7 +36,8 @@ data class EditRoomUi(
     val services: String = "",
     val description: String = "",
     val isSaveEnabled: Boolean = false,
-    val mainPhotoLocal: Uri? = null
+    val mainPhotoLocal: Uri? = null,
+    val pendingSecondaryCount: Int = 0
 
 )
 
@@ -212,7 +213,12 @@ class EditRoomViewModel @Inject constructor(
                     pendingSecondaryUris = emptyList()
                 }
 
-                _ui.value = _ui.value.copy(saving = false).recomputeEnabled()
+                _ui.value = _ui.value.copy(
+                    saving = false,
+                    mainPhotoLocal = null,           // limpiamos preview local
+                    pendingSecondaryCount = 0        // limpiamos secundarias pendientes
+                ).recomputeEnabled()
+
                 onSuccess()
             } catch (e: Exception) {
                 _ui.value = _ui.value.copy(saving = false, error = e.message ?: "Error al guardar")
@@ -255,7 +261,11 @@ class EditRoomViewModel @Inject constructor(
     fun addSecondaryPhotos(uris: List<Uri>) {
         if (uris.isEmpty()) return
         pendingSecondaryUris = uris
-        _ui.value = _ui.value.copy(error = null).recomputeEnabled()
+        _ui.value = _ui.value.copy(
+            pendingSecondaryCount = uris.size,
+            error = null
+        ).recomputeEnabled()
     }
+
 
 }
