@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
@@ -21,6 +22,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
@@ -58,15 +60,40 @@ fun EditSecondaryPhotosScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Editar fotos de la sala", fontSize = 18.sp) },
-                navigationIcon = {
-                    IconButton(
-                        enabled = !ui.isSaving,
-                        onClick = { navController.popBackStack() }
-                    ) { Icon(Icons.Default.Close, contentDescription = "Cerrar") }
-                },
-            )
+
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .height(60.dp)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            listOf(Color(0xFF7F00FF), Color(0xFF00BFFF))
+                        )
+                    )
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+
+            ) {
+                IconButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier.align(Alignment.CenterStart)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Atrás",
+                        tint = Color.White
+                    )
+                }
+
+                Text(
+                    text = "Editar fotos de la sala",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+
         },
         bottomBar = {
             Row(

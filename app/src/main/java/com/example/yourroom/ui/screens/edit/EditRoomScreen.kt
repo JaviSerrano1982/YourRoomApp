@@ -138,7 +138,7 @@ fun EditRoomScreen(
 
     Box(Modifier.fillMaxSize()) {
 
-        // === Top Bar con el mismo estilo que MyRooms ===
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -169,7 +169,7 @@ fun EditRoomScreen(
                 )
             }
             Text(
-                text = "Editar sala",
+                text = "Editar información de la sala",
                 color = Color.White,
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.align(Alignment.Center)
