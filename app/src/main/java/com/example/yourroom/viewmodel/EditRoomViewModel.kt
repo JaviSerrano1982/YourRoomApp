@@ -55,6 +55,8 @@ class EditRoomViewModel @Inject constructor(
     private var pendingPrimaryUri: Uri? = null
     private var pendingSecondaryUris: List<Uri> = emptyList()
 
+    private var pendingSecondaryDeletes: List<Long> = emptyList()
+
 
     private var spaceId: Long = 0L
 
@@ -114,7 +116,9 @@ class EditRoomViewModel @Inject constructor(
     }
 
     private fun EditRoomUi.recomputeEnabled(): EditRoomUi {
-        val photosPending = (pendingPrimaryUri != null) || pendingSecondaryUris.isNotEmpty()
+        val photosPending = (pendingPrimaryUri != null) ||
+                pendingSecondaryUris.isNotEmpty()||
+                pendingSecondaryDeletes.isNotEmpty()
 
         val ok =
             title.isNotBlank() &&
@@ -190,8 +194,15 @@ class EditRoomViewModel @Inject constructor(
                 )
 
                 // 3) FOTOS (subir solo si hay pendientes)
-                if (pendingPrimaryUri != null || pendingSecondaryUris.isNotEmpty()) {
+                if (pendingPrimaryUri != null || pendingSecondaryUris.isNotEmpty() ||
+                    pendingSecondaryDeletes.isNotEmpty()) {
+
                     ensureFirebaseSession()
+
+                    // 3.0) Borrados primero
+                    if (pendingSecondaryDeletes.isNotEmpty()) {
+                        pendingSecondaryDeletes.forEach { id -> photoRepo.deleteOne(id) }
+                    }
 
                     // 3.1) Principal
                     pendingPrimaryUri?.let { uri ->
@@ -211,6 +222,7 @@ class EditRoomViewModel @Inject constructor(
                     // Limpiar pendientes
                     pendingPrimaryUri = null
                     pendingSecondaryUris = emptyList()
+                    pendingSecondaryDeletes = emptyList()
                 }
 
                 _ui.value = _ui.value.copy(
@@ -263,6 +275,14 @@ class EditRoomViewModel @Inject constructor(
         pendingSecondaryUris = uris
         _ui.value = _ui.value.copy(
             pendingSecondaryCount = uris.size,
+            error = null
+        ).recomputeEnabled()
+    }
+    fun applySecondaryDelta(toDeleteIds: List<Long>, newUris: List<Uri>) {
+        pendingSecondaryDeletes = toDeleteIds
+        pendingSecondaryUris = newUris
+        _ui.value = _ui.value.copy(
+            pendingSecondaryCount = newUris.size,
             error = null
         ).recomputeEnabled()
     }

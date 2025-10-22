@@ -47,6 +47,25 @@ fun EditRoomScreen(
     LaunchedEffect(spaceId) { vm.init(spaceId) }
     val ui by vm.ui.collectAsState()
 
+    LaunchedEffect(Unit) {
+        navController.currentBackStackEntry?.savedStateHandle?.let { handle ->
+            val idsArray = handle.get<LongArray>("secondaryPhotosToDelete")
+            val uriStrings = handle.get<ArrayList<String>>("secondaryPhotosNewUris")
+
+            if (idsArray != null || uriStrings != null) {
+                val newUris = uriStrings?.map { Uri.parse(it) } ?: emptyList()
+                vm.applySecondaryDelta(idsArray?.toList() ?: emptyList(), newUris)
+
+                // Limpia los valores para no reusar en recomposiciones
+                handle.remove<LongArray>("secondaryPhotosToDelete")
+                handle.remove<ArrayList<String>>("secondaryPhotosNewUris")
+            }
+        }
+    }
+
+
+
+
     //  Cálculo local de "hay cambios sin guardar" (mismo criterio que isDirty del VM)
     val hasUnsavedChanges by remember(ui) {
         mutableStateOf(

@@ -70,30 +70,25 @@ fun EditSecondaryPhotosScreen(
         },
         bottomBar = {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
                 horizontalArrangement = Arrangement.End
             ) {
                 Button(
                     onClick = {
-                        scope.launch {
-                            val ok = vm.save()
-                            if (ok) {
-                                navController.previousBackStackEntry
-                                    ?.savedStateHandle
-                                    ?.set("secondaryPhotosUpdated", true)
-                                navController.popBackStack()
-                            }
+                        val delta = vm.buildDelta()
+
+                        navController.previousBackStackEntry?.savedStateHandle?.apply {
+                            // IDs a borrar: usa LongArray (Bundle-safe)
+                            set("secondaryPhotosToDelete", delta.toDeleteIds.toLongArray())
+
+                            // Nuevas imágenes: guarda como strings (Bundle-safe)
+                            set("secondaryPhotosNewUris", ArrayList(delta.newUris.map { it.toString() }))
                         }
-                    },
-                    enabled = !ui.isSaving
-                ) {
-                    if (ui.isSaving) {
-                        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                        Spacer(Modifier.width(8.dp))
+
+                        navController.popBackStack()
                     }
-                    Text(if (ui.isSaving) "Guardando..." else "Guardar")
+                ) {
+                    Text("Listo")
                 }
             }
         }

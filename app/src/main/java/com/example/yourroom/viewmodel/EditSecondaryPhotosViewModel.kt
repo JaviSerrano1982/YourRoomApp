@@ -23,6 +23,10 @@ val EditSecondaryPhotosViewModel.PhotoCell.thumbnailModel: Any
         is EditSecondaryPhotosViewModel.PhotoCell.Existing -> url
         is EditSecondaryPhotosViewModel.PhotoCell.New -> uri
     }
+data class SecondaryPhotosDelta(
+    val toDeleteIds: List<Long>,
+    val newUris: List<Uri>
+)
 
 @HiltViewModel
 class EditSecondaryPhotosViewModel @Inject constructor(
@@ -116,33 +120,15 @@ class EditSecondaryPhotosViewModel @Inject constructor(
         ui = ui.copy(cells = list)
     }
 
-    suspend fun save(): Boolean {
-        ui = ui.copy(isSaving = true, error = null)
-        return try {
-            ensureFirebaseSession()
+    fun hasPendingChanges(): Boolean =
+        toDelete.isNotEmpty() || ui.cells.any { it is PhotoCell.New }
 
-            // 1) Borrar fotos existentes marcadas
-            for (id in toDelete) {
-                photoRepo.deleteOne(id)
-            }
-            toDelete.clear()
-
-            // 2) Subir y registrar nuevas
-            ui.cells.forEachIndexed { i, cell ->
-                if (cell is PhotoCell.New) {
-                    val url = uploadExtraToFirebase(spaceId, cell.uri, i)
-                    photoRepo.add(spaceId, PhotoRequest(url = url, primary = false))
-                }
-            }
-
-            // 3) Recargar estado coherente desde backend
-            load()
-            ui = ui.copy(isSaving = false)
-            true
-        } catch (e: Exception) {
-            ui = ui.copy(isSaving = false, error = e.message ?: "Error al guardar")
-            false
-        }
+    fun buildDelta(): SecondaryPhotosDelta {
+        val newUris = ui.cells.mapNotNull { (it as? PhotoCell.New)?.uri }
+        return SecondaryPhotosDelta(
+            toDeleteIds = toDelete.toList(),
+            newUris = newUris
+        )
     }
 
     private suspend fun ensureFirebaseSession() {
