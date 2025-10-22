@@ -4,6 +4,7 @@ import com.example.yourroom.model.PhotoRequest
 import com.example.yourroom.model.PhotoResponse
 import com.example.yourroom.network.PhotoApiService
 import javax.inject.Inject
+import retrofit2.HttpException
 
 // ------------------------------
 // REPOSITORY: PhotoRepository
@@ -43,14 +44,18 @@ class PhotoRepository @Inject constructor(
      *
      * @param spaceId Id de la sala.
      */
-    suspend fun deleteAll(spaceId: Long) =
-        api.deleteAllPhotos(spaceId)
+    suspend fun deleteAll(spaceId: Long) {
+        val res = api.deleteAllPhotos(spaceId)
+        if (!res.isSuccessful) throw HttpException(res)
+    }
 
     /**
      * Elimina una foto concreta por su id.
      *
      * @param photoId Id de la foto a eliminar.
      */
-    suspend fun deleteOne(photoId: Long) =
-        api.deletePhoto(photoId)
+    suspend fun deleteOne(photoId: Long) {
+        val res = api.deletePhoto(photoId)
+        if (!res.isSuccessful) throw HttpException(res)
+    }
 }

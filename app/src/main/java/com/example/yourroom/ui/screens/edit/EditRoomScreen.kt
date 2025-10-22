@@ -347,10 +347,7 @@ fun EditRoomScreen(
                         )
                     },
                     onEditSecondaries = {
-                        // Abrir Photo Picker para varias imágenes
-                        pickMultipleMedia.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                        )
+                        navController.navigate("edit_secondary_photos/$spaceId")
                     }
                 )
             }

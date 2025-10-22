@@ -3,6 +3,8 @@ package com.example.yourroom.network
 import com.example.yourroom.model.PhotoRequest
 import com.example.yourroom.model.PhotoResponse
 import retrofit2.http.*
+import retrofit2.Response
+
 
 // ------------------------------
 // API SERVICE: PhotoApiService
@@ -47,7 +49,7 @@ interface PhotoApiService {
      * @param spaceId Id de la sala.
      */
     @DELETE("api/spaces/{spaceId}/photos")
-    suspend fun deleteAllPhotos(@Path("spaceId") spaceId: Long)
+    suspend fun deleteAllPhotos(@Path("spaceId") spaceId: Long): Response<Unit>
 
     /**
      * Elimina una foto concreta por su id.
@@ -55,5 +57,5 @@ interface PhotoApiService {
      * @param photoId Id de la foto a eliminar.
      */
     @DELETE("api/spaces/photos/{photoId}")
-    suspend fun deletePhoto(@Path("photoId") photoId: Long)
+    suspend fun deletePhoto(@Path("photoId") photoId: Long): Response<Unit>
 }

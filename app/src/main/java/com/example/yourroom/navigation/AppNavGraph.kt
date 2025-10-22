@@ -20,6 +20,7 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.yourroom.ui.screens.edit.EditRoomRoutes
 import com.example.yourroom.ui.screens.edit.EditRoomScreen
+import com.example.yourroom.ui.screens.edit.EditSecondaryPhotosScreen
 import com.example.yourroom.ui.screens.myRooms.MyRoomsScreen
 import com.example.yourroom.ui.screens.splash.SplashScreen
 import com.example.yourroom.ui.screens.publish.PublishRoutes
@@ -125,6 +126,17 @@ fun AppNavGraph(
                     }
                 )
             }
+            composable(
+                route = "edit_secondary_photos/{spaceId}",
+                arguments = listOf(navArgument("spaceId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val spaceId = backStackEntry.arguments!!.getLong("spaceId")
+                EditSecondaryPhotosScreen(
+                    navController = navController,
+                    spaceId = spaceId
+                )
+            }
+
 
 
             // -----------------------------
