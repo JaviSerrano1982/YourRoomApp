@@ -13,10 +13,13 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.CheckboxDefaults.colors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -112,8 +115,14 @@ fun EditSecondaryPhotosScreen(
                             set("secondaryPhotosNewUris", ArrayList(delta.newUris.map { it.toString() }))
                         }
 
+
                         navController.popBackStack()
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor =  Color(0xFFA5C6E2) ,
+                        contentColor = Color.White
+                    )
+
                 ) {
                     Text("Listo")
                 }
@@ -121,6 +130,8 @@ fun EditSecondaryPhotosScreen(
         }
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
+
+            Spacer(Modifier.height(15.dp))
 
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
@@ -180,7 +191,7 @@ fun EditSecondaryPhotosScreen(
                                 .padding(4.dp)
                                 .size(28.dp)
                         ) {
-                            Icon(Icons.Default.Close, contentDescription = "Quitar", tint = Color.Black)
+                            Icon(Icons.Default.DeleteOutline, contentDescription = "Quitar", tint = Color.Red)
                         }
                     }
                 }

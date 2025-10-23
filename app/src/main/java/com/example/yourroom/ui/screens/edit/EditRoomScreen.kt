@@ -176,7 +176,7 @@ fun EditRoomScreen(
             )
         }
 
-        // === Contenido desplazado bajo la top bar ===
+
         Box(
             Modifier
                 .fillMaxSize()
@@ -402,7 +402,7 @@ fun EditRoomScreen(
             }
         }
 
-        // === Diálogo de confirmación al salir con cambios ===
+        // Diálogo de confirmación al salir con cambios
         if (showExitConfirm) {
             AlertDialog(
                 onDismissRequest = { showExitConfirm = false },

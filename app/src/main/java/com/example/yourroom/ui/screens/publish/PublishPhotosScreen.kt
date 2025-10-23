@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -246,7 +247,7 @@ private fun PublishPhotosContent(
                             onClick = { onClickRemoveAt(index) },
                             modifier = Modifier.align(Alignment.TopEnd).padding(4.dp).size(28.dp)
                         ) {
-                            Icon(Icons.Default.Close, contentDescription = "Quitar", tint = Color.Black)
+                            Icon(Icons.Default.DeleteOutline, contentDescription = "Quitar", tint = Color.Red)
                         }
                     }
                 }
