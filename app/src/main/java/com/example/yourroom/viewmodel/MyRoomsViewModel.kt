@@ -57,4 +57,27 @@ class MyRoomsViewModel @Inject constructor(
             }
         }
     }
+    fun deleteRoom(id: Long) {
+        viewModelScope.launch {
+            try {
+                val resp = spaceRepo.deleteSpace(id)
+                if (resp.isSuccessful) {
+                    // Quitamos la sala eliminada de la lista actual
+                    _ui.value = _ui.value.copy(
+                        items = _ui.value.items.filterNot { it.space.id == id },
+                        error = null
+                    )
+                } else {
+                    _ui.value = _ui.value.copy(
+                        error = "No se pudo borrar (HTTP ${resp.code()})"
+                    )
+                }
+            } catch (e: Exception) {
+                _ui.value = _ui.value.copy(
+                    error = e.message ?: "Error al borrar la sala"
+                )
+            }
+        }
+    }
+
 }

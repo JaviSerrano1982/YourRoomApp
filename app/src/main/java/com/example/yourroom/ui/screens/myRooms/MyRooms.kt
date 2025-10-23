@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -151,9 +152,11 @@ fun MyRoomsScreen(
                             price = item.space.hourlyPrice?.toPlainString(),
                             capacity = item.space.capacity,
                             photoUrl = item.primaryPhotoUrl,
-                            onClick = { navController.navigate(EditRoomRoutes.edit(item.space.id)) }
+                            onEditClick = { navController.navigate(EditRoomRoutes.edit(item.space.id)) },
+                            onDeleteConfirmed = { vm.deleteRoom(item.space.id) }
                         )
                     }
+
                 }
             }
         }
@@ -170,13 +173,17 @@ private fun MyRoomCard(
     price: String?,
     capacity: Int?,
     photoUrl: String?,
-    onClick: () -> Unit      // solo para el botón de editar
+    onEditClick: () -> Unit,
+    onDeleteConfirmed: () -> Unit
 ) {
     val formattedPrice = remember(price) {
         price?.toDoubleOrNull()?.let { value ->
             if (value % 1.0 == 0.0) value.toInt().toString() else String.format("%.2f", value)
         }
     }
+
+    var showConfirm by remember { mutableStateOf(false) }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -189,8 +196,7 @@ private fun MyRoomCard(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
-            // Imagen IZQUIERDA con esquinas redondeadas y borde fino
+            // Imagen IZQUIERDA
             Box(
                 modifier = Modifier
                     .size(100.dp)
@@ -216,9 +222,8 @@ private fun MyRoomCard(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(end = 40.dp) // deja espacio para el icono editar
+                    .padding(end = 40.dp) // deja espacio para la columna de iconos
             ) {
-                // Título
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
@@ -227,7 +232,6 @@ private fun MyRoomCard(
                 )
                 Spacer(Modifier.height(4.dp))
 
-                // Ubicación
                 if (location.isNotBlank()) {
                     Text(
                         text = location,
@@ -239,7 +243,6 @@ private fun MyRoomCard(
                     Spacer(Modifier.height(2.dp))
                 }
 
-                // Precio
                 formattedPrice?.let {
                     Text(
                         text = "$it €/h",
@@ -251,7 +254,6 @@ private fun MyRoomCard(
                     Spacer(Modifier.height(2.dp))
                 }
 
-                // Capacidad
                 capacity?.let {
                     Text(
                         text = "$it personas",
@@ -264,23 +266,66 @@ private fun MyRoomCard(
             }
         }
 
-        // Botón EDITAR (lápiz) en esquina superior derecha
-        IconButton(
-            onClick = onClick,
+        // Columna de botones (Editar arriba, Borrar abajo) en esquina superior derecha
+        Column(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(6.dp)
-                .size(34.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.primary,
-                    shape = CircleShape
-                )
+                .padding(6.dp),
+            verticalArrangement = Arrangement.spacedBy(15.dp),
+            horizontalAlignment = Alignment.End
         ) {
-            Icon(
-                imageVector = Icons.Filled.Edit,
-                contentDescription = "Editar sala",
-                tint = Color.White
-            )
+            // EDITAR
+            Box(
+                modifier = Modifier
+                    .size(36.dp) // 🔹 tamaño del círculo
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+                    .clickable { onEditClick() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Edit,
+                    contentDescription = "Editar sala",
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp) // 🔹 tamaño del icono
+                )
+            }
+
+            // BORRAR
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.error)
+                    .clickable { showConfirm = true },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Delete,
+                    contentDescription = "Eliminar sala",
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
+    }
+
+    if (showConfirm) {
+        AlertDialog(
+            onDismissRequest = { showConfirm = false },
+            title = { Text("Eliminar sala") },
+            text = { Text("¿Estás seguro de que quieres eliminar esta sala? Esta acción no se puede deshacer.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showConfirm = false
+                        onDeleteConfirmed()
+                    }
+                ) { Text("Sí, borrar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfirm = false }) { Text("Cancelar") }
+            }
+        )
     }
 }
