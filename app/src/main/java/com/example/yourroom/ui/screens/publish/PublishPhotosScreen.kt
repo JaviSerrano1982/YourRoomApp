@@ -2,6 +2,7 @@
 package com.example.yourroom.ui.screens.publish
 
 import android.net.Uri
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -50,10 +51,24 @@ fun PublishPhotosScreen(
     var showCancelDialog by remember { mutableStateOf(false) }
     var replaceIndex by remember { mutableStateOf<Int?>(null) }
 
-    // Launchers (idénticos a los tuyos)
-    val addPhotosLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(10)
-    ) { uris: List<Uri> -> vm.addPhotos(uris) }
+    val max = 10
+    val remaining = (max - ui.selected.size).coerceAtLeast(0)
+
+    // SINGLE: cuando queda 1 hueco
+    val addOnePhotoLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        if (uri != null) vm.addPhotos(listOf(uri))
+    }
+
+    // MULTIPLE: cuando quedan 2 o más huecos
+    val addMultiplePhotosLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickMultipleVisualMedia(
+            remaining.coerceAtLeast(2)
+        )
+    ) { uris: List<Uri> ->
+        vm.addPhotos(uris)
+    }
 
     val replacePhotoLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -63,16 +78,14 @@ fun PublishPhotosScreen(
         replaceIndex = null
     }
 
-    // ⬇️ Reutilizamos el Content para que los cambios de UI afecten a la app y al Preview
+    // Contenido principal
     PublishPhotosContent(
-        thumbnails = ui.selected,            // List<Uri>
+        thumbnails = ui.selected,
         isSaving = ui.isSaving,
         error = ui.error,
-        onClickAdd = {
-            addPhotosLauncher.launch(
-                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-            )
-        },
+        remaining = remaining,
+        addOnePhotoLauncher = addOnePhotoLauncher,
+        addMultiplePhotosLauncher = addMultiplePhotosLauncher,
         onClickBack = { navController.popBackStack() },
         onClickFinish = {
             scope.launch {
@@ -95,7 +108,7 @@ fun PublishPhotosScreen(
         isEnabledFinish = ui.selected.isNotEmpty() && !ui.isSaving
     )
 
-    // Diálogo de cancelar (igual que tenías)
+    // Diálogo de cancelar publicación
     if (showCancelDialog) {
         AlertDialog(
             onDismissRequest = { showCancelDialog = false },
@@ -114,27 +127,23 @@ fun PublishPhotosScreen(
                 }) { Text("Sí, borrar") }
             },
             dismissButton = {
-                TextButton(onClick = { showCancelDialog = false }) { Text("Seguir editando") }
+                TextButton(onClick = { showCancelDialog = false }) {
+                    Text("Seguir editando")
+                }
             }
         )
     }
 }
 
-
-
-
-// ============================================================
-// UI STATELESS + PREVIEW (TOP-LEVEL)
-// ============================================================
-
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PublishPhotosContent(
-    thumbnails: List<Any>,   // runtime: List<Uri> ; preview: @DrawableRes Int
+    thumbnails: List<Any>,
     isSaving: Boolean,
     error: String?,
-    onClickAdd: () -> Unit,
+    remaining: Int,
+    addOnePhotoLauncher: ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?>,
+    addMultiplePhotosLauncher: ManagedActivityResultLauncher<PickVisualMediaRequest, List<Uri>>,
     onClickBack: () -> Unit,
     onClickFinish: () -> Unit,
     onClickCancel: () -> Unit,
@@ -145,10 +154,7 @@ private fun PublishPhotosContent(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = {
-                    // 🟢 Mismas fuentes y estilos que tu pantalla real
-                    Text("Sube las fotos de tu sala", fontSize = 18.sp, textAlign = TextAlign.Center)
-                },
+                title = { Text("Sube las fotos de tu sala", fontSize = 18.sp, textAlign = TextAlign.Center) },
                 navigationIcon = {
                     IconButton(onClick = onClickCancel) {
                         Icon(Icons.Default.Close, contentDescription = "Cancelar y borrar borrador")
@@ -182,7 +188,7 @@ private fun PublishPhotosContent(
         }
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            // Ilustración superior (igual que Basics/Details)
+
             Box(
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                 contentAlignment = Alignment.Center
@@ -197,14 +203,13 @@ private fun PublishPhotosContent(
 
             Spacer(Modifier.height(40.dp))
 
-            // Cuadrícula
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
                 modifier = Modifier.weight(1f).padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                // Tarjeta "Subir fotos"
+                // Botón "Subir fotos"
                 if (thumbnails.size < 10) {
                     item {
                         Box(
@@ -213,11 +218,19 @@ private fun PublishPhotosContent(
                                 .clip(RoundedCornerShape(14.dp))
                                 .background(Color(0xFFE8F0FA))
                                 .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(14.dp))
-                                .clickable { onClickAdd() },
-
-                            contentAlignment = Alignment.Center,
-
-
+                                .clickable {
+                                    if (remaining <= 0) return@clickable
+                                    if (remaining == 1) {
+                                        addOnePhotoLauncher.launch(
+                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                        )
+                                    } else {
+                                        addMultiplePhotosLauncher.launch(
+                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                        )
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Icon(Icons.Default.Add, contentDescription = null)
@@ -228,7 +241,7 @@ private fun PublishPhotosContent(
                     }
                 }
 
-                // Miniaturas con X (eliminar) y tap (reemplazar)
+                // Miniaturas
                 itemsIndexed(thumbnails) { index, model ->
                     Box(
                         modifier = Modifier
@@ -238,7 +251,7 @@ private fun PublishPhotosContent(
                             .clickable { onClickReplaceAt(index) }
                     ) {
                         AsyncImage(
-                            model = model, // Uri o @DrawableRes Int en preview
+                            model = model,
                             contentDescription = "Foto $index",
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
@@ -253,7 +266,6 @@ private fun PublishPhotosContent(
                 }
             }
 
-            // Error inline
             error?.let { msg ->
                 Text(
                     text = msg,
@@ -263,28 +275,4 @@ private fun PublishPhotosContent(
             }
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun PublishPhotosPreview() {
-    // Drawables de ejemplo para ver miniaturas en el Preview
-    val samples = listOf(
-        R.drawable.icono_basicos,
-        R.drawable.icono_basicos,
-        R.drawable.icono_basicos,
-    )
-    PublishPhotosContent(
-        thumbnails = samples,
-        isSaving = false,
-        error = null,
-        onClickAdd = {},
-        onClickBack = {},
-        onClickFinish = {},
-        onClickCancel = {},
-        onClickRemoveAt = {},
-        onClickReplaceAt = {},
-        isEnabledFinish = true
-
-    )
 }

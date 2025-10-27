@@ -49,9 +49,27 @@ fun EditSecondaryPhotosScreen(
     val scope = rememberCoroutineScope()
     var replaceIndex by remember { mutableStateOf<Int?>(null) }
 
-    val addPhotosLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(10)
-    ) { uris: List<Uri> -> vm.addPhotos(uris) }
+    val max = 10
+    val remaining = (max - ui.cells.size).coerceAtLeast(0)
+
+
+    // Queda 1 hueco -> single
+    val addOnePhotoLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        if (uri != null) vm.addPhotos(listOf(uri))
+    }
+
+// Quedan 2 o más -> multiple (¡nunca 0 ni 1!)
+    val addMultiplePhotosLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickMultipleVisualMedia(
+            remaining.coerceAtLeast(2)
+        )
+    ) { uris: List<Uri> ->
+        vm.addPhotos(uris)
+    }
+
+
 
     val replacePhotoLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -150,10 +168,19 @@ fun EditSecondaryPhotosScreen(
                                 .background(Color(0xFFE8F0FA))
                                 .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(14.dp))
                                 .clickable {
-                                    addPhotosLauncher.launch(
-                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                    )
-                                },
+                                    if (remaining <= 0) return@clickable
+                                    if (remaining == 1) {
+                                        addOnePhotoLauncher.launch(
+                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                        )
+                                    } else {
+                                        addMultiplePhotosLauncher.launch(
+                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                        )
+                                    }
+                                }
+
+                            ,
                             contentAlignment = Alignment.Center
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
