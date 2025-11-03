@@ -30,3 +30,6 @@ captures/
 
 # === OS-specific ===
 Thumbs.db
+
+# Firebase / Google config
+google-services.json
