@@ -1,4 +1,4 @@
-package com.example.yourroom.ui.theme.components
+package com.example.yourroom.ui.components
 
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable

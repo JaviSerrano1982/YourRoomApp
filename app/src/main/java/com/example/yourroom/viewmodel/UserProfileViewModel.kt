@@ -198,7 +198,7 @@ class UserProfileViewModel @Inject constructor(
         _profile.value = p
         initialProfile = p.copy()
         _isImageChanged.value = false
-        _localImageUri.value = if (p.photoUrl.isNullOrBlank()) Uri.parse(p.photoUrl) else null
+        _localImageUri.value = if (!p.photoUrl.isNullOrBlank()) Uri.parse(p.photoUrl) else null
         _fieldErrors.value = FieldErrors()
         _errorMessage.value = null
         showErrors = false
@@ -241,6 +241,8 @@ class UserProfileViewModel @Inject constructor(
     fun loadProfile(userId: Long) {
         viewModelScope.launch {
             if (userId <= 0) return@launch
+
+            _userId.value = userId
 
             _isSaving.value = true
             try {
@@ -490,4 +492,21 @@ class UserProfileViewModel @Inject constructor(
     fun clearError() {
         _errorMessage.value = null
     }
+    // ---------------------------------------------------------------------
+    // SESIÓN: limpiar estado al hacer logout o cambiar de usuario
+    // ---------------------------------------------------------------------
+    fun clearSessionState() {
+        _userId.value = 0L
+        _profile.value = UserProfileDto()
+        initialProfile = null
+        _localImageUri.value = null
+        _isImageChanged.value = false
+        _hasUnsavedEdits.value = false
+        _hasChanges.value = false
+        _fieldErrors.value = FieldErrors()
+        _emailErrorMessage.value = null
+        _errorMessage.value = null
+    }
+
+
 }

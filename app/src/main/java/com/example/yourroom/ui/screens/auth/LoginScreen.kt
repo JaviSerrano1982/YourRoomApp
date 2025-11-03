@@ -1,4 +1,4 @@
-package com.example.yourroom.ui.theme.screens.auth
+package com.example.yourroom.ui.screens.auth
 
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
@@ -30,7 +30,7 @@ import com.example.yourroom.R
 import com.example.yourroom.datastore.UserPreferences
 import com.example.yourroom.model.AuthRequest
 import com.example.yourroom.network.RetrofitClient
-import com.example.yourroom.ui.theme.components.YourRoomGradient
+import com.example.yourroom.ui.components.YourRoomGradient
 import com.example.yourroom.viewmodel.UserProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch

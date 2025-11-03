@@ -1,4 +1,4 @@
-package com.example.yourroom.ui.theme.screens.publish
+package com.example.yourroom.ui.screens.publish
 
 
 
@@ -32,13 +32,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import coil.compose.AsyncImage
 import com.example.yourroom.R
-import com.example.yourroom.ui.theme.components.LocationAutocompleteField
-import com.example.yourroom.ui.theme.components.transparentTextFieldColors
+import com.example.yourroom.ui.components.LocationAutocompleteField
+import com.example.yourroom.ui.components.transparentTextFieldColors
 import com.example.yourroom.viewmodel.PublishSpaceViewModel
 
 
@@ -53,7 +52,7 @@ fun PublishBasicsScreen(
 
     // Photo picker (guardamos la Uri en el VM)
     val pickPhoto = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia()
+        contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         if (uri != null) vm.onMainPhotoSelected(uri)
     }
@@ -400,9 +399,7 @@ fun PublishBasicsScreen(
                             OutlinedButton(
                                 onClick = {
                                     vm.onAddMainPhotoClicked {
-                                        pickPhoto.launch(
-                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                        )
+                                        pickPhoto.launch("image/*")
                                     }
                                 }
                             ) {
@@ -451,7 +448,7 @@ fun PublishBasicsScreen(
                             restoreState = false
                         }
                     }
-                }) { Text("Sí, borrar") }
+                }) { Text("Cancelar") }
             },
             dismissButton = {
                 TextButton(onClick = { showCancelDialog = false }) {

@@ -7,22 +7,24 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
-import com.example.yourroom.ui.theme.screens.*
-import com.example.yourroom.ui.theme.screens.profile.UserProfileScreen
-import com.example.yourroom.ui.theme.screens.auth.LoginScreen
-import com.example.yourroom.ui.theme.screens.auth.RegisterScreen
-import com.example.yourroom.ui.theme.screens.favorites.FavoritesScreen
-import com.example.yourroom.ui.theme.screens.home.HomeScreen
-import com.example.yourroom.ui.theme.screens.publish.PublishBasicsScreen
-import com.example.yourroom.ui.theme.screens.publish.PublishDetailsScreen
-import com.example.yourroom.ui.theme.screens.publish.PublishPhotosScreen
-import com.example.yourroom.ui.theme.screens.succes.SuccessScreen
+import com.example.yourroom.ui.screens.profile.UserProfileScreen
+import com.example.yourroom.ui.screens.auth.LoginScreen
+import com.example.yourroom.ui.screens.auth.RegisterScreen
+import com.example.yourroom.ui.screens.favorites.FavoritesScreen
+import com.example.yourroom.ui.screens.home.HomeScreen
+import com.example.yourroom.ui.screens.publish.PublishBasicsScreen
+import com.example.yourroom.ui.screens.publish.PublishDetailsScreen
+import com.example.yourroom.ui.screens.publish.PublishPhotosScreen
+import com.example.yourroom.ui.screens.succes.SuccessScreen
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import com.example.yourroom.ui.theme.screens.publish.PublishRoutes
-import com.example.yourroom.ui.theme.screens.publish.PublishRoutes.photos
+import com.example.yourroom.ui.screens.edit.EditRoomRoutes
+import com.example.yourroom.ui.screens.edit.EditRoomScreen
+import com.example.yourroom.ui.screens.edit.EditSecondaryPhotosScreen
+import com.example.yourroom.ui.screens.myRooms.MyRoomsScreen
+import com.example.yourroom.ui.screens.splash.SplashScreen
+import com.example.yourroom.ui.screens.publish.PublishRoutes
 import com.example.yourroom.viewmodel.UserProfileViewModel
-import okhttp3.internal.platform.android.AndroidLogHandler.publish
 
 
 // ---------------------------------------------------------------------
@@ -54,9 +56,11 @@ fun AppNavGraph(
     val userProfileVM: UserProfileViewModel = hiltViewModel()
 
 
-    // Debug temporal: mostrar userId cargado en consola
-    LaunchedEffect(userId) {
-        println("USER ID EN PROFILE: $userId")
+    // Carga de perfil en cuanto tenemos userId
+    LaunchedEffect(isLoggedIn, userId) {
+        if (isLoggedIn && userId > 0L) {
+            userProfileVM.loadProfile(userId)
+        }
     }
 
 
@@ -122,6 +126,17 @@ fun AppNavGraph(
                     }
                 )
             }
+            composable(
+                route = "edit_secondary_photos/{spaceId}",
+                arguments = listOf(navArgument("spaceId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val spaceId = backStackEntry.arguments!!.getLong("spaceId")
+                EditSecondaryPhotosScreen(
+                    navController = navController,
+                    spaceId = spaceId
+                )
+            }
+
 
 
             // -----------------------------
@@ -131,9 +146,9 @@ fun AppNavGraph(
                 showBottomBar.value = true
                 HomeScreen(navController)
             }
-            composable("search") {
-                showBottomBar.value = true
-                SearchScreen()
+            composable("myRooms") {
+                showBottomBar.value = false
+                MyRoomsScreen(navController)
             }
             composable("favorites") {
                 showBottomBar.value = true
@@ -173,6 +188,16 @@ fun AppNavGraph(
                 }
 
 
+            }
+
+            // RUTA PARA EDITAR SALA PUBLICADA
+            composable(
+                route = EditRoomRoutes.Edit,
+                arguments = listOf(navArgument("spaceId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                showBottomBar.value = false
+                val spaceId = backStackEntry.arguments?.getLong("spaceId") ?: 0L
+                EditRoomScreen(navController, spaceId)
             }
 
 

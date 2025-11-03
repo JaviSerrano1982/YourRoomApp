@@ -1,4 +1,4 @@
-package com.example.yourroom.ui.theme.components
+package com.example.yourroom.ui.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -55,11 +55,11 @@ fun LocationAutocompleteField(
     value: String,
     label: String,
     onValueChange: (String) -> Unit,
-    onSuggestionPicked: (String) -> Unit,
-    isSaving: Boolean,
-    isError: Boolean,
-    errorMessage: String?,
-    colors: TextFieldColors,
+    onSuggestionPicked: (String) -> Unit = {},
+    isSaving: Boolean = false,
+    isError: Boolean = false,
+    errorMessage: String? = null,
+    colors: TextFieldColors = TextFieldDefaults.colors(),
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
     example: String? = null

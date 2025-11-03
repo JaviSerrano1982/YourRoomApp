@@ -82,4 +82,8 @@ class SpaceRepository @Inject constructor(
      */
     suspend fun deleteSpace(id: Long): retrofit2.Response<Unit> =
         api.deleteSpace(id)
+
+    suspend fun publish(id: Long): SpaceResponse = api.publish(id)
+
+    suspend fun getSpace(id: Long) = api.getOne(id)
 }

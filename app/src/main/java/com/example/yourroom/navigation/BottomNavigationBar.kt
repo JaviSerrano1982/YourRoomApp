@@ -41,7 +41,7 @@ sealed class BottomNavItem(
     @DrawableRes val iconResId: Int? = null // para SVG/VectorDrawable importado
 ) {
     object Home : BottomNavItem("home", "Inicio", imageVector = Icons.Default.Home)
-    object Search : BottomNavItem("search", "Mis salas", iconResId = R.drawable.door_open)
+    object Search : BottomNavItem("myRooms", "Mis salas", iconResId = R.drawable.door_open)
     object Publish : BottomNavItem("publish", "Publicar", imageVector = Icons.Default.Add)
     object Favorites : BottomNavItem("favorites", "Favoritos", imageVector = Icons.Default.Favorite)
     object Profile : BottomNavItem("profile", "Mi Perfil", imageVector = Icons.Default.Person)

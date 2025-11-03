@@ -89,4 +89,7 @@ interface SpaceApiService {
      */
     @POST("api/spaces/draft")
     suspend fun createDraft(): SpaceResponse
+
+    @PATCH("api/spaces/{id}/publish")
+    suspend fun publish(@Path("id") id: Long): SpaceResponse
 }

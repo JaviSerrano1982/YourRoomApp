@@ -1,0 +1,238 @@
+
+package com.example.yourroom.ui.screens.edit
+
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.CheckboxDefaults.colors
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import com.example.yourroom.viewmodel.EditSecondaryPhotosViewModel
+import com.example.yourroom.viewmodel.thumbnailModel
+import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditSecondaryPhotosScreen(
+    navController: NavController,
+    spaceId: Long,
+    vm: EditSecondaryPhotosViewModel = hiltViewModel()
+) {
+    LaunchedEffect(spaceId) { vm.init(spaceId) }
+    val ui = vm.ui
+    val scope = rememberCoroutineScope()
+    var replaceIndex by remember { mutableStateOf<Int?>(null) }
+
+    val max = 10
+    val remaining = (max - ui.cells.size).coerceAtLeast(0)
+
+
+    // Queda 1 hueco -> single
+    val addOnePhotoLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        if (uri != null) vm.addPhotos(listOf(uri))
+    }
+
+// Quedan 2 o más -> multiple (¡nunca 0 ni 1!)
+    val addMultiplePhotosLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickMultipleVisualMedia(
+            remaining.coerceAtLeast(2)
+        )
+    ) { uris: List<Uri> ->
+        vm.addPhotos(uris)
+    }
+
+
+
+    val replacePhotoLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        val idx = replaceIndex
+        if (uri != null && idx != null) vm.replaceAt(idx, uri)
+        replaceIndex = null
+    }
+
+    Scaffold(
+        topBar = {
+
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .height(60.dp)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            listOf(Color(0xFF7F00FF), Color(0xFF00BFFF))
+                        )
+                    )
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+
+            ) {
+                IconButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier.align(Alignment.CenterStart)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Atrás",
+                        tint = Color.White
+                    )
+                }
+
+                Text(
+                    text = "Editar fotos de la sala",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+
+        },
+        bottomBar = {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Button(
+                    onClick = {
+                        val delta = vm.buildDelta()
+
+                        navController.previousBackStackEntry?.savedStateHandle?.apply {
+                            // IDs a borrar: usa LongArray (Bundle-safe)
+                            set("secondaryPhotosToDelete", delta.toDeleteIds.toLongArray())
+
+                            // Nuevas imágenes: guarda como strings (Bundle-safe)
+                            set("secondaryPhotosNewUris", ArrayList(delta.newUris.map { it.toString() }))
+                        }
+
+
+                        navController.popBackStack()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor =  Color(0xFFA5C6E2) ,
+                        contentColor = Color.White
+                    )
+
+                ) {
+                    Text("Listo")
+                }
+            }
+        }
+    ) { padding ->
+        Column(Modifier.fillMaxSize().padding(padding)) {
+
+            Spacer(Modifier.height(15.dp))
+
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(3),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                if (ui.cells.size < 10) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .aspectRatio(1f)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(Color(0xFFE8F0FA))
+                                .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(14.dp))
+                                .clickable {
+                                    if (remaining <= 0) return@clickable
+                                    if (remaining == 1) {
+                                        addOnePhotoLauncher.launch(
+                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                        )
+                                    } else {
+                                        addMultiplePhotosLauncher.launch(
+                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                        )
+                                    }
+                                }
+
+                            ,
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(Icons.Default.Add, contentDescription = null)
+                                Text("Añadir fotos", style = MaterialTheme.typography.bodyMedium)
+                                Text("Máximo 10", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                            }
+                        }
+                    }
+                }
+
+                itemsIndexed(ui.cells) { index, cell ->
+                    Box(
+                        modifier = Modifier
+                            .aspectRatio(1f)
+                            .clip(RoundedCornerShape(14.dp))
+                            .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(14.dp))
+                            .clickable {
+                                replaceIndex = index
+                                replacePhotoLauncher.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                )
+                            }
+                    ) {
+                        AsyncImage(
+                            model = cell.thumbnailModel,
+                            contentDescription = "Foto $index",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                        IconButton(
+                            onClick = { vm.removeAt(index) },
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(4.dp)
+                                .size(28.dp)
+                        ) {
+                            Icon(Icons.Default.DeleteOutline, contentDescription = "Quitar", tint = Color.Red)
+                        }
+                    }
+                }
+            }
+
+            ui.error?.let { msg ->
+                Text(
+                    text = msg,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                )
+            }
+        }
+    }
+}

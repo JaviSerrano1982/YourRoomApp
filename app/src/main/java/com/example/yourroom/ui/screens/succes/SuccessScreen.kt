@@ -1,4 +1,4 @@
-package com.example.yourroom.ui.theme.screens.succes
+package com.example.yourroom.ui.screens.succes
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
