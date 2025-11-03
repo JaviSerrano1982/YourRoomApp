@@ -186,6 +186,27 @@ Este frontend consume la API del backend (Spring Boot + MySQL + JWT) y está con
 
 ---
 
+### 🔑 Configuración de Firebase
+
+La aplicación utiliza **Firebase Storage** para subir y gestionar fotos de perfil y de salas.
+
+Por motivos de seguridad, el archivo `google-services.json` (con las credenciales del proyecto Firebase)
+no está incluido en este repositorio.
+
+Si deseas ejecutar la aplicación localmente:
+
+1. Crea un proyecto propio en [Firebase Console](https://console.firebase.google.com/).
+2. Añade una app **Android** con el mismo identificador del paquete: **com.example.yourroom**.
+3. Descarga el archivo `google-services.json` que te proporciona Firebase.
+4. Colócalo en la ruta:  **app/google-services.json**.
+5. Asegúrate de no subir ese archivo al repositorio (ya está en `.gitignore`).
+
+> 💡 Si solo deseas revisar el código, no es necesario configurar Firebase.
+> La app compila correctamente sin el archivo, aunque las funciones de subida de imagen no estarán activas.
+
+
+
+
 ## Compilación y ejecución
 
 - **Debug en emulador**:
