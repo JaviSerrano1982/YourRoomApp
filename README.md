@@ -3,7 +3,7 @@
 Aplicación Android para **YourRoom**, una plataforma pensada para entrenadores personales y usuarios que desean reservar cualquier tipo de sala, gimnasio, local o habitación para realizar actividades saludables y relacionadas con el cuidado y el bienestar de las personas.  
 Este frontend consume la API del backend (Spring Boot + MySQL + JWT) y está construido con **Kotlin**, **Jetpack Compose**, **MVVM** y **Retrofit**.
 
-> 📸 **Screenshots**  
+
 ### 🔐 Pantalla de Login
 <p align="center">
   <img src="docs/images/Login.png" alt="Login" width="250"/>
