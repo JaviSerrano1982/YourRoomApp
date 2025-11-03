@@ -35,5 +35,6 @@ Thumbs.db
 google-services.json
 **/google-services.json
 
-
-
+# Config locales
+keystore.properties
+.env
