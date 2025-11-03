@@ -4,11 +4,33 @@ Aplicación Android para **YourRoom**, una plataforma donde entrenadores persona
 Este frontend consume la API del backend (Spring Boot + MySQL + JWT) y está construido con **Kotlin**, **Jetpack Compose**, **MVVM** y **Retrofit**.
 
 > 📸 **Screenshots**  
-> _(añade tus imágenes aquí cuando quieras)_
->
-> | Inicio | Login | Perfil | Mis salas |
-> |---|---|---|---|
-> | ![s1](docs/images/s1.png) | ![s2](docs/images/s2.png) | ![s3](docs/images/s3.png) | ![s4](docs/images/s4.png) |
+### 🔐 Pantalla de Login
+<p align="center">
+  <img src="docs/images/Login.png" alt="Login" width="250"/>
+</p>
+
+### 📝 Pantalla de Registro
+<p align="center">
+  <img src="docs/images/Register.png" alt="Register" width="250"/>
+</p>
+
+### 🏋️‍♂️ Pantalla de Publicar sala
+<p align="center">
+  <img src="docs/images/publish_1.png" alt="Publish1" width="250"/>
+  <img src="docs/images/publish_2.png" alt="Publish2" width="250"/>
+  <img src="docs/images/publish_3_photos.png" alt="Publish3" width="250"/>
+</p>
+
+### ✅ Pantalla de éxito
+<p align="center">
+  <img src="docs/images/publish_succes.png" alt="Succes" width="250"/>
+</p>
+
+### 🧾 Pantalla Mis Salas
+<p align="center">
+  <img src="docs/images/my_rooms.png" alt="My rooms" width="250"/>
+</p>
+
 
 ---
 
