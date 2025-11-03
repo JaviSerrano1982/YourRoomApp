@@ -1,6 +1,6 @@
-# YourRoom – Frontend Android (Jetpack Compose)
+# YourRoomApp – Frontend Android (Jetpack Compose)
 
-Aplicación Android para **YourRoom**, una plataforma donde entrenadores personales pueden **registrarse y alquilar salas/gimnasios por horas** para entrenamientos.  
+Aplicación Android para **YourRoom**, una plataforma pensada para entrenadores personales y usuarios que desean reservar cualquier tipo de sala, gimnasio, local o habitación para realizar actividades saludables y relacionadas con el cuidado y el bienestar de las personas.  
 Este frontend consume la API del backend (Spring Boot + MySQL + JWT) y está construido con **Kotlin**, **Jetpack Compose**, **MVVM** y **Retrofit**.
 
 > 📸 **Screenshots**  
@@ -13,6 +13,12 @@ Este frontend consume la API del backend (Spring Boot + MySQL + JWT) y está con
 <p align="center">
   <img src="docs/images/Register.png" alt="Register" width="250"/>
 </p>
+
+### 👤 Pantalla de Perfil
+<p align="center">
+  <img src="docs/images/profile.png" alt="Profile" width="250"/>
+</p>
+
 
 ### 🏋️‍♂️ Pantalla de Publicar sala
 <p align="center">
@@ -55,11 +61,14 @@ Este frontend consume la API del backend (Spring Boot + MySQL + JWT) y está con
 
 ## Arquitectura
 
-- **MVVM + Clean-ish**: UI (Compose) → ViewModel → UseCases/Repos → Data Source (Retrofit).
-- **State hoisting** y **unidireccional** para el estado UI.
-- **Navegación** con `Navigation-Compose`.
-- **Persistencia ligera** para sesión/token (DataStore o SharedPreferences).
-- **Módulos** (si aplica): `app` (presentación) y paquetes por feature.
+- **Patrón MVVM**: separación clara entre interfaz (UI), lógica de presentación (ViewModel) y acceso a datos (Repository).
+- **Flujo de datos unidireccional**: la UI observa el estado expuesto por el ViewModel mediante `StateFlow` o `mutableStateOf`.
+- **Comunicación con el backend** a través de **Retrofit** y **OkHttp**, usando DTOs definidos en `model/`.
+- **Persistencia de sesión** con **DataStore**, para guardar token JWT y datos básicos del usuario.
+- **Inyección de dependencias** con **Hilt** (configurada en `di/NetworkModule.kt`).
+- **Navegación** entre pantallas con **Navigation Compose** (`navigation/`).
+- **Un solo módulo `app`**, estructurado por funcionalidad (auth, perfil, salas, etc.), dentro del paquete `com.example.yourroom`.
+
 
 ---
 
@@ -69,25 +78,62 @@ Este frontend consume la API del backend (Spring Boot + MySQL + JWT) y está con
 - **Jetpack Compose** (Material 3)
 - **Navigation-Compose**
 - **Retrofit + OkHttp** (API REST)
-- **Gson/Moshi** (JSON)
+- **Gson** (JSON parser para Retrofit)
 - **Coil** (carga de imágenes)
 - **DataStore** (token/ajustes)
-- **Hilt** (inyección de dependencias) _(opcional, si lo usas)_
-- **JUnit / MockK / Turbine** (tests) _(si aplica)_
+- **Hilt** (inyección de dependencias — en ViewModels principales)
+- **Material3 + Navigation-Compose** para diseño moderno y flujo entre pantallas.
 
 ---
 
 ## Características
 
-- **Onboarding** con fondo degradado y **slider de progreso**.
+- **Onboarding** de bienvenida con fondo degradado y **slider de progreso** (mostrado solo al primer inicio).
 - **Login/Registro** con validación y consumo de API (JWT).
-- **Sesión persistente**: reconoce al usuario tras abrir la app.
 - **Perfil de usuario**: ver/editar datos y **subir imagen** (se envía al backend).
-- **Listado “Mis Salas”**: crear/editar/borrar salas (CRUD contra API).  
+- **Gestión de salas (Mis Salas)**: listado, creación, edición, borrado y subida de fotos (con validaciones).  
 - **Estados de UI**: loading, éxito, error con mensajes claros.
 - **Soporte para distintos entornos** (dev / prod) vía `BuildConfig`.
+- **Persistencia de sesión:** reconocimiento automático si el token JWT sigue activo.
+- **Validaciones de campos:** tanto en login/registro como en formularios de salas y perfil.
 
 > Nota: La disponibilidad exacta de features depende de la rama/versión del proyecto.
+
+---
+
+## Endpoints utilizados (resumen)
+
+**Auth**
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+
+**Perfil**
+- `GET /api/users/me`
+- `PUT /api/users/me`
+- `POST /api/users/me/photo`
+
+**Rooms (Mis Salas)**
+- `GET /api/rooms/mine`
+- `POST /api/rooms`
+- `PUT /api/rooms/{id}`
+- `DELETE /api/rooms/{id}`
+- `POST /api/rooms/{id}/photos`
+
+> Todos los endpoints requieren autenticación mediante  
+> `Authorization: Bearer <JWT>`.
+
+---
+
+## Clases clave
+
+- **`LoginViewModel.kt`** — Controla el flujo de autenticación (login y registro) y gestión de tokens.
+- **`UserProfileViewModel.kt`** — Gestiona los datos del perfil de usuario y la subida de imágenes.
+- **`PublishSpaceViewModel.kt` / `PublishPhotosViewModel.kt`** — Manejan la creación y edición de salas, junto con la subida de fotos.
+- **`UserRepository.kt` / `SpaceRepository.kt`** — Intermediarios entre el ViewModel y las llamadas a Retrofit.
+- **`ApiService.kt`** — Define las interfaces Retrofit para Auth, Perfil y Rooms.
+- **`UserPreferences.kt`** — Maneja la persistencia del token JWT mediante DataStore.
+- **`NetworkModule.kt`** — Proporciona instancias de Retrofit, OkHttp e inyección Hilt.
+- **`YourRoomApp.kt`** — Punto de entrada de la app con `NavHost` y configuración de tema.
 
 ---
 
@@ -104,8 +150,8 @@ Este frontend consume la API del backend (Spring Boot + MySQL + JWT) y está con
 
 1. **Clona el repo**:
    ```bash
-   git clone https://github.com/tu-usuario/yourroom-android.git
-   cd yourroom-android
+   git clone https://github.com/JaviSerrano1982/YourRoomApp.git
+   cd YourRoomApp
    ```
 
 2. **Configura la URL del backend** (baseUrl):
@@ -130,9 +176,6 @@ Este frontend consume la API del backend (Spring Boot + MySQL + JWT) y está con
        ```kotlin
        private const val BASE_URL = BuildConfig.API_BASE_URL
        ```
-   - Opción B – por **resources**:
-     - Añade `res/xml/network_security_config.xml` si necesitas permitir HTTP en debug (emulador).
-     - Añade `res/values/config.xml` con `<string name="api_base_url">...</string>` y léelo desde código.
 
 3. **Permisos/Network Security (solo si usas HTTP en local)**  
    Emulador (Android) para localhost del host: `http://10.0.2.2:8080/`.  
@@ -166,88 +209,49 @@ Este frontend consume la API del backend (Spring Boot + MySQL + JWT) y está con
 ## Estructura de paquetes
 
 ```
-com.yourroom/
-├─ ui/                  # Pantallas Compose y componentes
-│  ├─ theme/            # Colores, tipografía, shapes
-│  ├─ nav/              # Gráfico de navegación
-│  └─ screens/
-│     ├─ onboarding/
-│     ├─ auth/          # Login/Register
-│     ├─ profile/
-│     └─ rooms/         # Mis salas (listado/edición)
-├─ data/
-│  ├─ remote/           # DTOs, Retrofit services
-│  ├─ repository/
-│  └─ local/            # DataStore / cache
-├─ domain/              # Modelos y use cases (si aplica)
-├─ di/                  # Módulos Hilt (si usas Hilt)
-└─ utils/               # Helpers, Result wrappers, etc.
+app/
+├─ manifests/                      — Manifest del módulo: permisos, activities, network security, etc.
+└─ kotlin+java/
+   └─ com.example.yourroom/        — Paquete raíz principal de la app
+      ├─ datastore/                — Persistencia ligera (DataStore) para token JWT y preferencias de usuario
+      ├─ di/                       — Inyección de dependencias con Hilt (módulos de red y repositorios)
+      ├─ location/                 — Lógica de localización (municipios, provincias, etc.)
+      ├─ model/                    — Modelos y DTOs de peticiones/respuestas del backend
+      ├─ navigation/               — Gráfico de navegación, rutas y control del flujo entre pantallas
+      ├─ network/                  — Configuración de Retrofit, OkHttp e interceptores de autenticación
+      ├─ repository/               — Repositorios que gestionan el acceso a datos (API, DataStore, etc.)
+      ├─ ui/
+      │  ├─ components/            — Composables reutilizables (botones, campos, layouts, etc.)
+      │  ├─ screens/               — Pantallas principales (login, registro, perfil, publicar sala, etc.)
+      │  └─ theme/                 — Tema Material 3 (Color.kt, Theme.kt, Type.kt)
+      └─ viewmodel/                — ViewModels MVVM: lógica, validación y estado de cada pantalla
+
 ```
 
 ---
 
+
 ## Gestión de dependencias (Version Catalogs)
 
-Si usas `libs.versions.toml`:
+El proyecto utiliza **Version Catalogs** (`gradle/libs.versions.toml`) para centralizar versiones y dependencias.
 
-**`gradle/libs.versions.toml` (ejemplo mínimo)**
-```toml
-[versions]
-kotlin = "1.9.24"
-agp = "8.5.2"
-compose = "1.7.4"
-material3 = "1.3.0"
-retrofit = "2.11.0"
-okhttp = "4.12.0"
-coil = "2.6.0"
-hilt = "2.51.1"
-navigation = "2.8.3"
+Principales librerías:
+- **Jetpack Compose** (Material 3, Navigation)
+- **Retrofit + OkHttp + Gson** (consumo de API REST)
+- **Hilt** (inyección de dependencias)
+- **Coil** (carga de imágenes)
+- **Kotlin Coroutines/Flow** (asincronía y estado)
 
-[libraries]
-compose-ui = { module = "androidx.compose.ui:ui", version.ref = "compose" }
-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose" }
-compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
-compose-activity = "androidx.activity:activity-compose:1.9.3"
-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation" }
+> Las versiones exactas y módulos pueden consultarse en  
+> `gradle/libs.versions.toml` y `app/build.gradle.kts`.
 
-retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
-retrofit-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }
-okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
-okhttp-logging = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp" }
-
-coil = { module = "io.coil-kt:coil-compose", version.ref = "coil" }
-
-hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
-hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" }
-```
-
-**`app/build.gradle.kts` (uso)**
-```kotlin
-dependencies {
-    implementation(libs.compose.ui)
-    implementation(libs.compose.material3)
-    implementation(libs.compose.activity)
-    implementation(libs.navigation.compose)
-
-    implementation(libs.retrofit)
-    implementation(libs.retrofit.gson)
-    implementation(libs.okhttp)
-    implementation(libs.okhttp.logging)
-
-    implementation(libs.coil)
-
-    // Hilt (si aplica)
-    implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
-}
-```
 
 ---
 
 ## Variables y entornos
 
 - **JWT**: se almacena de forma segura en **DataStore** o similar.
-- **BASE_URL**: cambia por `buildType` (debug/prod) mediante `BuildConfig`.
+- **BASE_URL**: configurada en `BuildConfig` según entorno (`debug` usa `http://10.0.2.2:8080/`, `release` usa dominio remoto).
 - **No subas secretos** al repo. Añade a `.gitignore`:
   ```
   *.keystore
@@ -282,12 +286,15 @@ dependencies {
 
 ## Roadmap
 
-- [ ] Validaciones accesibles y mensajes localizados (i18n).
-- [ ] Estado offline/caché básica.
-- [ ] Tests de UI (Compose UI Test).
-- [ ] Modo oscuro fino y temas dinámicos.
-- [ ] Listado/booking de salas públicas y buscador por mapa.
-- [ ] Notificaciones (recordatorios de reservas).
+- [ ] Internacionalización (i18n) y mensajes localizados (ES/EN).  
+- [ ] Validaciones accesibles y mensajes de error más descriptivos.  
+- [ ] Estado offline y caché básica para perfil y salas.  
+- [ ] Tests de UI (Compose UI Test) y unit tests en ViewModels.  
+- [ ] Modo oscuro completo y temas dinámicos (Material You).  
+- [ ] Búsqueda y filtro avanzado de salas públicas (por ubicación/mapa).  
+- [ ] Sistema de reservas y disponibilidad horaria.  
+- [ ] Notificaciones push (confirmaciones y recordatorios).  
+
 
 ---
 
