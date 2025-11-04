@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -13,15 +14,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.OutlinedButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -48,6 +50,9 @@ import kotlinx.coroutines.launch
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.shadow
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.yourroom.ui.components.LocationAutocompleteField
 import com.example.yourroom.ui.components.transparentTextFieldColors
 import java.time.Instant
@@ -103,7 +108,7 @@ fun UserProfileScreen(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         // Subida directa a Firebase + actualización de estado
-        viewModel.uploadProfileImage(uri)
+        viewModel.onPickLocalImage(uri)
     }
 
     // Feedback al guardar con éxito (snackbar)
@@ -149,6 +154,7 @@ fun UserProfileScreen(
                 TextButton(
                     onClick = {
                         showLeaveDialog = false
+                        viewModel.discardEdits()  //  restaura al snapshot + limpia localImageUri
                         navController.popBackStack()
                     }
                 ) { Text("Salir") }
@@ -221,6 +227,7 @@ fun UserProfileScreen(
             emailErrorMessage = emailErrorMessage,
             isEditingLocation = isEditingLocation,
             isUploadingPhoto = isUploadingPhoto,
+            onRemoveImage = { viewModel.removeSelectedImage() },
             modifier = Modifier.padding(padding) // evita que se solape con snackbar
         )
     }
@@ -249,6 +256,7 @@ fun UserProfileContent(
     onDismissError: () -> Unit,
     emailErrorMessage: String?,
     isUploadingPhoto: Boolean,
+    onRemoveImage: () -> Unit,
     isEditingLocation: MutableState<Boolean>,
     modifier: Modifier = Modifier
 ) {
@@ -390,6 +398,28 @@ fun UserProfileContent(
                                 modifier = Modifier.size(18.dp)
                             )
                         }
+                        // Mostrar botón de eliminar solo si hay una imagen seleccionada o ya guardada
+                        if (localImageUri != null || !profile.photoUrl.isNullOrBlank()) {
+                            IconButton(
+                                onClick = onRemoveImage,
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .offset(x = (-12).dp, y = (25).dp)
+                                    .size(24.dp)
+                                    .background(Color.Transparent)
+
+
+
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Eliminar foto",
+                                    tint = Color.Red,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+
                         if (isUploadingPhoto) {
                             // Overlay de progreso para feedback durante la subida
                             Box(
@@ -853,6 +883,7 @@ fun UserProfileContentPreview() {
         onDismissError = {},
         emailErrorMessage = null,
         isEditingLocation = fakeIsEditingLocation,
-        isUploadingPhoto = false
+        isUploadingPhoto = false,
+        onRemoveImage={}
     )
 }

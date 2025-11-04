@@ -355,23 +355,33 @@ class UserProfileViewModel @Inject constructor(
 
             _isSaving.value = true
             try {
-                val safeProfile = _profile.value
+                // 1) Sube imagen si hay selección local
+                val maybeUrl = persistImageIfNeededAndGetUrlOrNull(userId)
+
+                // 2) Arma el perfil definitivo con la URL (si la hubo)
+                val safeProfile = if (maybeUrl != null) {
+                    _profile.value.copy(photoUrl = maybeUrl)
+                } else {
+                    _profile.value
+                }
+
+                // 3) Persiste perfil (con o sin foto nueva)
                 val result = repository.updateProfile(userId, safeProfile)
 
-                // Sincroniza estado local con la respuesta del servidor
+                // 4) Sincroniza estado local con servidor y limpia flags
                 _profile.value = result
                 initialProfile = result.copy()
-                _isImageChanged.value = false
-                _saveSuccess.value = true
 
-                // Limpia errores y mensajes
+                _localImageUri.value = null
+                _isImageChanged.value = false
+                _hasUnsavedEdits.value = false
+
+                _saveSuccess.value = true
                 _emailErrorMessage.value = null
                 _fieldErrors.value = FieldErrors()
                 _errorMessage.value = null
                 showErrors = false
 
-                // Ya no hay ediciones pendientes
-                _hasUnsavedEdits.value = false
                 recomputeHasChanges()
             } catch (e: Exception) {
                 _errorMessage.value = e.message
@@ -442,19 +452,27 @@ class UserProfileViewModel @Inject constructor(
                         userId = userId,
                         _profile.value.copy(photoUrl = finalUrl)
                     )
+                    // Estado persistido = actualizado por el servidor
                     _profile.value = updated
                     initialProfile = updated.copy()
+
+                    // La foto ya está guardada en backend: NO hay cambios pendientes por la imagen
+                    _localImageUri.value = null
+                    _isImageChanged.value = false
+                    _hasUnsavedEdits.value = false
+                    recomputeHasChanges()
                 } catch (e: Exception) {
                     _errorMessage.value =
                         "Subida OK pero no se pudo guardar la URL en el servidor: ${e.message}"
+                    // Actualiza estado local (aunque haya fallado el guardado en backend)
+                    _profile.value = _profile.value.copy(photoUrl = finalUrl)
+                    _localImageUri.value = uri
+                    _isImageChanged.value = true
+                    _hasUnsavedEdits.value = true
+                    recomputeHasChanges()
                 }
 
-                // Actualiza estado local (aunque haya fallado el guardado en backend)
-                _profile.value = _profile.value.copy(photoUrl = finalUrl)
-                _localImageUri.value = uri
-                _isImageChanged.value = true
-                _hasUnsavedEdits.value = true
-                recomputeHasChanges()
+
             } catch (e: Exception) {
                 _errorMessage.value = "No se pudo subir la imagen: ${e.message}"
             } finally {
@@ -507,6 +525,61 @@ class UserProfileViewModel @Inject constructor(
         _emailErrorMessage.value = null
         _errorMessage.value = null
     }
+    /** El usuario ha elegido una imagen: solo la guardamos como selección local. */
+    fun onPickLocalImage(uri: Uri?) {
+        _localImageUri.value = uri
+        _isImageChanged.value = (uri != null)
+        _hasUnsavedEdits.value = (uri != null)
+        recomputeHasChanges()
+    }
+
+    /** Descarta ediciones locales (para salir sin guardar). */
+    fun discardEdits() {
+        // Vuelve al snapshot inicial
+        _profile.value = initialProfile?.copy() ?: UserProfileDto()
+        _localImageUri.value = null
+        _isImageChanged.value = false
+        _hasUnsavedEdits.value = false
+        _errorMessage.value = null
+        _fieldErrors.value = FieldErrors()
+        recomputeHasChanges()
+    }
+    fun removeSelectedImage() {
+        _localImageUri.value = null
+        _profile.value = _profile.value.copy(photoUrl = null)
+        _isImageChanged.value = true
+        _hasUnsavedEdits.value = true
+        recomputeHasChanges()
+    }
+
+
+    /**
+     * Sube la imagen local si existe y devuelve la URL final (con bust de caché), o null si no hay imagen nueva.
+     * NO toca el estado de UI más allá del spinner; deja que updateProfile sincronice initialProfile y limpie flags.
+     */
+    private suspend fun persistImageIfNeededAndGetUrlOrNull(userId: Long): String? {
+        val uri = _localImageUri.value ?: return null
+
+        _isUploadingPhoto.value = true
+        try {
+            val auth = FirebaseAuth.getInstance()
+            if (auth.currentUser == null) auth.signInAnonymously().await()
+
+            val ref = FirebaseStorage.getInstance()
+                .reference.child("users/$userId/profile.jpg")
+
+            ref.putFile(uri).await()
+            val downloadUrl = ref.downloadUrl.await().toString()
+            return if (downloadUrl.contains("?")) {
+                "$downloadUrl&ts=${System.currentTimeMillis()}"
+            } else {
+                "$downloadUrl?ts=${System.currentTimeMillis()}"
+            }
+        } finally {
+            _isUploadingPhoto.value = false
+        }
+    }
+
 
 
 }
