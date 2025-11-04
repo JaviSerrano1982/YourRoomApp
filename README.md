@@ -323,6 +323,9 @@ Principales librerías:
 
 Proyecto de uso **académico/demostrativo**. Todos los derechos reservados por el autor.
 
+Distribuido bajo la licencia [MIT](./LICENSE).  
+Consulta el archivo LICENSE para más información.
+
 ---
 
 ## Autor
