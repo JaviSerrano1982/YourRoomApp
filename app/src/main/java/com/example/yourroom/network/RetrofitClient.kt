@@ -44,7 +44,7 @@ object RetrofitClient {
      */
     val api: YourRoomApi by lazy {
         Retrofit.Builder()
-            .baseUrl(BASE_URL) // 👈 aquí Retrofit concatena esta base con los endpoints de YourRoomApi
+            .baseUrl(BASE_URL) //  aquí Retrofit concatena esta base con los endpoints de YourRoomApi
             .client(httpClient)
             .addConverterFactory(GsonConverterFactory.create()) // usa Gson para convertir JSON
             .build()

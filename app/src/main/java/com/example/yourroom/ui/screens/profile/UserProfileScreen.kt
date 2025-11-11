@@ -1,5 +1,6 @@
 package com.example.yourroom.ui.screens.profile
 
+import android.R.attr.onClick
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -21,6 +22,7 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -51,14 +53,18 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.shadow
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.example.yourroom.datastore.UserPreferences
 import com.example.yourroom.ui.components.LocationAutocompleteField
 import com.example.yourroom.ui.components.transparentTextFieldColors
+import com.google.firebase.auth.FirebaseAuth
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import androidx.compose.runtime.rememberCoroutineScope
+
 
 /**
  * Pantalla de edición de perfil de usuario.
@@ -94,6 +100,8 @@ fun UserProfileScreen(
     val emailErrorMessage by viewModel.emailErrorMessage.collectAsState()
     val saveSuccess by viewModel.saveSuccess.collectAsState()
     val isUploadingPhoto by viewModel.isUploadingPhoto.collectAsState()
+
+
 
     // --- UI helpers ---
     val snackbarHostState = remember { SnackbarHostState() }
@@ -279,6 +287,12 @@ fun UserProfileContent(
         fallback = painterResource(R.drawable.avatar_default)
     )
 
+    val profileVM: UserProfileViewModel = hiltViewModel()
+    val context = LocalContext.current
+    val userPreferences = remember { UserPreferences(context) }
+    val scope = rememberCoroutineScope()
+
+
     // Flags de edición por campo (persisten en recomposiciones)
     val isEditingFirstName = rememberSaveable { mutableStateOf(false) }
     val isEditingLastName = rememberSaveable { mutableStateOf(false) }
@@ -404,7 +418,7 @@ fun UserProfileContent(
                                 onClick = onRemoveImage,
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)
-                                    .offset(x = (-12).dp, y = (25).dp)
+                                    .offset(x = (-12).dp, y = (10).dp)
                                     .size(24.dp)
                                     .background(Color.Transparent)
 
@@ -412,7 +426,7 @@ fun UserProfileContent(
 
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Delete,
+                                    imageVector = Icons.Default.DeleteOutline,
                                     contentDescription = "Eliminar foto",
                                     tint = Color.Red,
                                     modifier = Modifier.size(24.dp)
@@ -539,9 +553,36 @@ fun UserProfileContent(
                     modifier = Modifier.fillMaxWidth()
                 )
             }
+            Spacer(modifier = Modifier.height(20.dp))
 
+            Text(
+                text = "Cerrar sesión",
+                color = Color.Red,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .padding(top = 16.dp)
+                    .clickable {
+                        scope.launch {
+                            // 1️⃣ Limpia el estado del ViewModel
+                            profileVM.clearSessionState()
 
-            Spacer(modifier = Modifier.height(70.dp))
+                            // 2️⃣ Limpia los datos de sesión guardados (userId, token, etc.)
+                            userPreferences.clearSession()
+
+                            // 3️⃣ Cierra la sesión de Firebase
+                            FirebaseAuth.getInstance().signOut()
+
+                            // 4️⃣ Vuelve a la pantalla de login y limpia el back stack
+                            navController.navigate("login") {
+                                popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }
+
+                    }
+            )
+            Spacer(modifier = Modifier.height(90.dp))
         }
 
         // --- Botón fijo inferior: Guardar cambios ---
