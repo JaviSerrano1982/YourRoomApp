@@ -1,7 +1,9 @@
 package com.example.yourroom.ui.screens.home
 
-import android.R.attr.fontWeight
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,13 +11,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import java.lang.Compiler.disable
 
 
 @Composable
@@ -33,23 +36,22 @@ fun HomeScreen(
 ) {
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
+            .fillMaxSize(),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        // -------- CARD PRINCIPAL ARRIBA DE LA PANTALLA --------
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            backgroundColor = Color(0xFFF3F4FF),
-            elevation = 0.dp,
-
+        // -------- SECCIÓN SUPERIOR A TODO EL ANCHO --------
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFEFF0FC))      // Color completo arriba
+                .padding(horizontal = 16.dp, vertical = 24.dp)
         ) {
             Column(
-                modifier = Modifier.padding(20.dp)
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
                     text = "Encuentra tu espacio",
@@ -58,41 +60,65 @@ fun HomeScreen(
                     color = Color(0xFF0A1D37),
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
-
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+
+                Spacer(modifier = Modifier.height(20.dp))
 
                 Text(
-                    text = "Un lugar pensado para ti\n" +
-                            "y para tus prácticas saludables",
-                    fontSize = 26.sp,
+                    text = "Un lugar pensado para ti\ny para tus prácticas saludables",
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black,
+                    color = Color(0xFF0A1D37),
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
                     lineHeight = 34.sp,
                 )
-                Spacer(modifier = Modifier.height(16.dp))
 
-                SearchBox()
+                Spacer(modifier = Modifier.height(25.dp))
+
+                SearchBox(
+                    onClick = {
+                        navController.navigate("search_spaces")
+                    }
+                )
             }
         }
     }
 }
 
+
 @Composable
-fun SearchBox() {
-    OutlinedTextField(
-        value = "",
-        onValueChange = {},
+fun SearchBox(
+    onClick: () -> Unit
+) {
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp),
-        placeholder = { Text("Empieza a buscar") },
-        leadingIcon = {
-            Icon(Icons.Default.Search, contentDescription = null)
-        },
-        shape = RoundedCornerShape(12.dp),
-        singleLine = true
-    )
+            .height(56.dp)
+            .clickable { onClick() }
+            .background(Color.Transparent),
+        contentAlignment = Alignment.Center
+    ) {
+        OutlinedTextField(
+            value = "",
+            onValueChange = {},
+            modifier = Modifier
+                .fillMaxWidth(),
+            placeholder = { Text("Empieza a buscar") },
+            leadingIcon = {
+                Icon(Icons.Default.Search, contentDescription = null)
+            },
+            shape = RoundedCornerShape(12.dp),
+            singleLine = true,
+            enabled = false,
+            colors = OutlinedTextFieldDefaults.colors(
+                disabledContainerColor = Color.White,
+                disabledBorderColor = Color.Gray,
+                disabledLeadingIconColor = Color.DarkGray,
+                disabledPlaceholderColor = Color.DarkGray
+            )
+
+        )
+    }
 }
+

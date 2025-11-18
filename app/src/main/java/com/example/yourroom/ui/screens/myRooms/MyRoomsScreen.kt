@@ -33,6 +33,22 @@ import com.example.yourroom.ui.screens.edit.EditRoomRoutes
 
 import com.example.yourroom.viewmodel.MyRoomsViewModel
 
+
+// ---------------------------------------------------------------------
+// PANTALLA "MIS SALAS"
+// ---------------------------------------------------------------------
+
+/**
+ * Pantalla que muestra las salas creadas por el usuario:
+ *
+ * Flujo principal:
+ * 1) Recoge el estado expuesto por [MyRoomsViewModel].
+ * 2) Observa un flag en el back stack para refrescar la lista al volver de edición.
+ * 3) Renderiza uno de los 4 estados: cargando, error, vacío o lista.
+ * 4) Cada tarjeta permite editar o borrar la sala.
+ *
+ * El borrado usa un diálogo de confirmación local y luego llama al ViewModel.
+ */
 @Composable
 fun MyRoomsScreen(
     navController: NavController,
@@ -40,6 +56,7 @@ fun MyRoomsScreen(
 ) {
     val ui by vm.ui.collectAsState()
 
+    // Observa un flag enviado desde EditRoomScreen para refrescar la lista
     val needsRefreshFlow = remember(navController) {
         navController.currentBackStackEntry
             ?.savedStateHandle
@@ -47,6 +64,7 @@ fun MyRoomsScreen(
     }
     val needsRefresh by needsRefreshFlow?.collectAsState() ?: remember { mutableStateOf(false) }
 
+    // Trigger de recarga cuando se solicita desde otra pantalla
     LaunchedEffect(needsRefresh) {
         if (needsRefresh) {
             vm.loadMyRooms()
@@ -60,7 +78,7 @@ fun MyRoomsScreen(
 
     Box(Modifier.fillMaxSize()) {
 
-        // TopBar custom como en UserProfileScreen
+        // TopBar personalizada
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -96,7 +114,7 @@ fun MyRoomsScreen(
 
 
 
-        // Contenido desplazado bajo la top bar
+        // CUERPO PRINCIPAL (según estado del ViewModel)
         when {
             ui.isLoading -> {
                 Box(
@@ -164,7 +182,19 @@ fun MyRoomsScreen(
 }
 
 
+// ---------------------------------------------------------------------
+// TARJETA DE SALA (UI CARD)
+// ---------------------------------------------------------------------
 
+/**
+ * Tarjeta que renderiza la información de una sala:
+ *
+ * - Imagen principal
+ * - Título, ubicación, precio, capacidad
+ * - Botones flotantes (editar / borrar)
+ *
+ * Contiene un estado local para el diálogo de confirmación de borrado.
+ */
 @SuppressLint("DefaultLocale")
 @Composable
 private fun MyRoomCard(
@@ -176,12 +206,14 @@ private fun MyRoomCard(
     onEditClick: () -> Unit,
     onDeleteConfirmed: () -> Unit
 ) {
+    // Formateo seguro del precio
     val formattedPrice = remember(price) {
         price?.toDoubleOrNull()?.let { value ->
             if (value % 1.0 == 0.0) value.toInt().toString() else String.format("%.2f", value)
         }
     }
 
+    // Control del diálogo de confirmación
     var showConfirm by remember { mutableStateOf(false) }
 
     Box(
@@ -310,6 +342,7 @@ private fun MyRoomCard(
         }
     }
 
+    //Diálogo de confirmación
     if (showConfirm) {
         AlertDialog(
             onDismissRequest = { showConfirm = false },

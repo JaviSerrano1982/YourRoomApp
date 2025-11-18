@@ -21,6 +21,7 @@ import androidx.navigation.navArgument
 import com.example.yourroom.ui.screens.edit.EditRoomRoutes
 import com.example.yourroom.ui.screens.edit.EditRoomScreen
 import com.example.yourroom.ui.screens.edit.EditSecondaryPhotosScreen
+import com.example.yourroom.ui.screens.home.SearchSpacesScreen
 import com.example.yourroom.ui.screens.myRooms.MyRoomsScreen
 import com.example.yourroom.ui.screens.splash.SplashScreen
 import com.example.yourroom.ui.screens.publish.PublishRoutes
@@ -140,7 +141,7 @@ fun AppNavGraph(
 
 
             // -----------------------------
-            // RUTAS PRIVADAS (con BottomBar)
+            // RUTAS PRIVADAS
             // -----------------------------
             composable("home") {
                 showBottomBar.value = true
@@ -158,6 +159,10 @@ fun AppNavGraph(
                 showBottomBar.value = false
                 UserProfileScreen(navController,userProfileVM)
             }
+            composable("search_spaces") {
+                SearchSpacesScreen(navController)
+            }
+
 
             // navigation(...)
             navigation(
