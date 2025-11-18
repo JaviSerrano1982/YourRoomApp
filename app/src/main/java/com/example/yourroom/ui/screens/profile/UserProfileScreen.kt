@@ -1,11 +1,10 @@
 package com.example.yourroom.ui.screens.profile
 
-import android.R.attr.onClick
+
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,7 +14,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.OutlinedButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -412,27 +410,7 @@ fun UserProfileContent(
                                 modifier = Modifier.size(18.dp)
                             )
                         }
-                        // Mostrar botón de eliminar solo si hay una imagen seleccionada o ya guardada
-                        if (localImageUri != null || !profile.photoUrl.isNullOrBlank()) {
-                            IconButton(
-                                onClick = onRemoveImage,
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .offset(x = (-12).dp, y = (10).dp)
-                                    .size(24.dp)
-                                    .background(Color.Transparent)
 
-
-
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.DeleteOutline,
-                                    contentDescription = "Eliminar foto",
-                                    tint = Color.Red,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                        }
 
                         if (isUploadingPhoto) {
                             // Overlay de progreso para feedback durante la subida
