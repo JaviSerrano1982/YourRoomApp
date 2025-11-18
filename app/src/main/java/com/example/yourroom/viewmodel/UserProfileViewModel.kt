@@ -198,7 +198,7 @@ class UserProfileViewModel @Inject constructor(
         _profile.value = p
         initialProfile = p.copy()
         _isImageChanged.value = false
-        _localImageUri.value = if (!p.photoUrl.isNullOrBlank()) Uri.parse(p.photoUrl) else null
+        _localImageUri.value = null
         _fieldErrors.value = FieldErrors()
         _errorMessage.value = null
         showErrors = false
@@ -290,10 +290,8 @@ class UserProfileViewModel @Inject constructor(
      */
     fun setLocalImage(uri: Uri?) {
         _localImageUri.value = uri
-        uri?.let {
-            _isImageChanged.value = true
-            _profile.value = _profile.value.copy(photoUrl = it.toString())
-        } ?: run { _isImageChanged.value = false }
+        // La foto solo se marca como cambiada si existe URI local.
+        _isImageChanged.value = uri != null
 
         _hasUnsavedEdits.value = true
 
