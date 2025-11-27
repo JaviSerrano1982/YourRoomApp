@@ -2,6 +2,7 @@ package com.example.yourroom.di
 
 import android.content.Context
 import com.example.yourroom.datastore.UserPreferences
+import com.example.yourroom.network.ApiConfig
 import com.example.yourroom.network.AuthInterceptor
 import com.example.yourroom.network.PhotoApiService
 import com.example.yourroom.network.SpaceApiService
@@ -65,7 +66,7 @@ object NetworkModule {
 
         // Instancia de Retrofit con conversor Gson.
         return Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8080/") // ← Emulador Android → localhost del PC
+            .baseUrl(ApiConfig.BASE_URL)
             .client(httpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

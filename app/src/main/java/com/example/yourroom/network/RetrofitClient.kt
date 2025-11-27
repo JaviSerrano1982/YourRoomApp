@@ -26,7 +26,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 object RetrofitClient {
 
     /** Dirección base de la API (host + puerto). */
-    private const val BASE_URL = "http://10.0.2.2:8080" // localhost para emulador Android
+
+    private const val BASE_URL = ApiConfig.BASE_URL
 
     /** Interceptor de logging: muestra en Logcat el detalle de las peticiones/respuestas. */
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
