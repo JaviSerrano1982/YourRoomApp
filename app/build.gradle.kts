@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.compiler)
     implementation(libs.guava)
+    testImplementation(libs.junit)
 
     androidTestImplementation(libs.androidx.junit) {
         exclude(group = "com.google.guava", module = "listenablefuture")
