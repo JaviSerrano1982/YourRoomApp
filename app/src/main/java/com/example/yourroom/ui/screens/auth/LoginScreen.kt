@@ -30,6 +30,7 @@ import com.example.yourroom.R
 import com.example.yourroom.datastore.UserPreferences
 import com.example.yourroom.model.AuthRequest
 import com.example.yourroom.network.RetrofitClient
+import com.example.yourroom.ui.components.AuthTextFieldColors
 import com.example.yourroom.ui.components.YourRoomGradient
 import com.example.yourroom.viewmodel.UserProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
@@ -218,6 +219,7 @@ fun LoginScreenContent(
                 label = { Text("Email") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
+                colors = AuthTextFieldColors(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
 
@@ -229,6 +231,7 @@ fun LoginScreenContent(
                 onValueChange = onPasswordChange,
                 label = { Text("Contraseña") },
                 singleLine = true,
+                colors = AuthTextFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = if (passwordVisible) {
                     VisualTransformation.None

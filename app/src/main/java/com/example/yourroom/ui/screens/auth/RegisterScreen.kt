@@ -30,6 +30,7 @@ import kotlinx.coroutines.withContext
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import com.example.yourroom.ui.components.AuthTextFieldColors
 
 // ---------------------------------------------------------------------
 // PANTALLA DE REGISTRO
@@ -172,7 +173,8 @@ fun RegisterScreenContent(
                 onValueChange = onNameChange,
                 label = { Text("Nombre") },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = AuthTextFieldColors()
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -184,7 +186,8 @@ fun RegisterScreenContent(
                 label = { Text("Email") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = AuthTextFieldColors()
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -195,6 +198,7 @@ fun RegisterScreenContent(
                 onValueChange = onPasswordChange,
                 label = { Text("Contraseña") },
                 singleLine = true,
+                colors = AuthTextFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
@@ -215,6 +219,7 @@ fun RegisterScreenContent(
                 onValueChange = onConfirmPasswordChange,
                 label = { Text("Confirmar contraseña") },
                 singleLine = true,
+                colors = AuthTextFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {

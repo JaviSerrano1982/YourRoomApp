@@ -25,3 +25,14 @@ fun transparentTextFieldColors() = TextFieldDefaults.colors(
     unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
     cursorColor = MaterialTheme.colorScheme.primary
 )
+
+@Composable
+fun AuthTextFieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedTextColor = Color(0xFF0A1D37),
+    unfocusedTextColor = Color(0xFF0A1D37),
+    cursorColor = Color(0xFF0A1D37),
+    focusedBorderColor = Color(0xFF0A1D37),
+    unfocusedBorderColor = Color(0xFF0A1D37),
+    focusedLabelColor = Color(0xFF0A1D37),
+    unfocusedLabelColor = Color(0xFF0A1D37).copy(alpha = 0.7f)
+)
