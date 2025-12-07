@@ -140,13 +140,13 @@ fun PhotoGrid() {
         R.drawable.sala_espejos,
         R.drawable.sala_masajes,
         R.drawable.sala_artes_marciales,
-        R.drawable.salon_multiusos,
+        R.drawable.sala_multiusos,
         R.drawable.sala_fisioterapia,
     )
 
     val titles = listOf(
         "Gimnasio",
-        "Sala de Espejos",
+        "Sala con Espejos",
         "Sala de Masajes",
         "Artes Marciales",
         "Multiusos",
