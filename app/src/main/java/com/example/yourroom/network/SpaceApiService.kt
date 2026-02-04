@@ -73,6 +73,11 @@ interface SpaceApiService {
     @GET("api/spaces/me")
     suspend fun getMine(): List<SpaceResponse>
 
+    @GET("api/spaces/search")
+    suspend fun searchSpaces(@Query("q") q: String): List<SpaceResponse>
+
+
+
     /**
      * Elimina una sala concreta.
      *

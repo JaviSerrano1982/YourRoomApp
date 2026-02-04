@@ -70,5 +70,6 @@ data class SpaceResponse(
     val sizeM2: Int?,
     val availability: String?,
     val services: String?,
-    val description: String?
+    val description: String?,
+    val primaryPhotoUrl: String? = null
 )

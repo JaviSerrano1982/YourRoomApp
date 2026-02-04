@@ -86,4 +86,8 @@ class SpaceRepository @Inject constructor(
     suspend fun publish(id: Long): SpaceResponse = api.publish(id)
 
     suspend fun getSpace(id: Long) = api.getOne(id)
+
+    suspend fun searchSpaces(q: String): List<SpaceResponse> =
+        api.searchSpaces(q)
+
 }
