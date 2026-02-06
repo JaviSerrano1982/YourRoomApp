@@ -1,5 +1,6 @@
 package com.example.yourroom.ui.screens.auth
 
+import android.util.Patterns
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -53,56 +54,88 @@ fun RegisterScreen(navController: NavHostController) {
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var errorText by remember { mutableStateOf<String?>(null) }
+    var emailError by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+    var hasTriedSubmit by remember { mutableStateOf(false) }
+
+
+    fun validateEmail(value: String): String? {
+        if (value.isBlank()) return null // no molestamos mientras está vacío
+        return if (Patterns.EMAIL_ADDRESS.matcher(value).matches()) null
+        else "El formato del email es incorrecto."
+    }
+
 
     RegisterScreenContent(
         name = name,
         onNameChange = { name = it },
         email = email,
-        onEmailChange = { email = it },
+        onEmailChange = {
+            email = it
+            // No validamos mientras escribe. Solo limpiamos el error si estaba visible.
+            if (emailError != null) emailError = null
+        },
         password = password,
         onPasswordChange = { password = it },
         confirmPassword = confirmPassword,
         onConfirmPasswordChange = { confirmPassword = it },
+        emailError = emailError,
+        hasTriedSubmit = hasTriedSubmit,
 
         onRegisterClick = {
             // -----------------------------
-            // Validación mínima en cliente
+            // Validación en cliente
             // -----------------------------
+            hasTriedSubmit = true
+
+            // Recalculamos error de email SOLO al pulsar registrar
+            val currentEmailError = validateEmail(email)
+            emailError = currentEmailError
+
             if (name.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
                 errorText = "Por favor, completa todos los campos."
-            } else if (password != confirmPassword) {
+                return@RegisterScreenContent
+            }
+
+            if (currentEmailError != null) {
+                errorText = null // el error visible es el de debajo del email
+                return@RegisterScreenContent
+            }
+
+            if (password != confirmPassword) {
                 errorText = "Las contraseñas no coinciden."
-            } else {
-                errorText = null
+                return@RegisterScreenContent
+            }
 
-                // -----------------------------
-                // Llamada al backend
-                // -----------------------------
-                CoroutineScope(Dispatchers.IO).launch {
-                    try {
-                        val newUser = User(
-                            name = name,
-                            email = email,
-                            password = password,
-                            role = "USUARIO"
-                        )
+            errorText = null
 
-                        val response = RetrofitClient.api.register(newUser)
+            // -----------------------------
+            // Llamada al backend
+            // -----------------------------
+            scope.launch(Dispatchers.IO) {
+                try {
+                    val newUser = User(
+                        name = name,
+                        email = email,
+                        password = password,
+                        role = "USUARIO"
+                    )
 
-                        withContext(Dispatchers.Main) {
-                            if (response.isSuccessful) {
-                                // Éxito → navegar a SuccessScreen
-                                navController.navigate("success_register") {
-                                    popUpTo("register") { inclusive = true }
-                                }
-                            } else {
-                                errorText = "El correo ya está registrado"
+                    val response = RetrofitClient.api.register(newUser)
+
+                    withContext(Dispatchers.Main) {
+                        if (response.isSuccessful) {
+                            navController.navigate("success_register") {
+                                popUpTo("register") { inclusive = true }
                             }
+                        } else {
+                            // Si tu backend devuelve 409/400 puedes afinar esto luego
+                            errorText = "El correo ya está registrado."
                         }
-                    } catch (e: Exception) {
-                        withContext(Dispatchers.Main) {
-                            errorText = "Error de red: ${e.message}"
-                        }
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        errorText = "Error de red. Inténtalo de nuevo."
                     }
                 }
             }
@@ -141,10 +174,13 @@ fun RegisterScreenContent(
     onConfirmPasswordChange: (String) -> Unit,
     onRegisterClick: () -> Unit,
     onBackToLoginClick: () -> Unit,
-    errorText: String?
+    errorText: String?,
+    emailError: String?,
+    hasTriedSubmit: Boolean,
+
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
-
+    val showEmailError = hasTriedSubmit && emailError != null
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -187,7 +223,16 @@ fun RegisterScreenContent(
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth(),
-                colors = AuthTextFieldColors()
+                colors = AuthTextFieldColors(),
+                isError = showEmailError,
+                supportingText = {
+                    if (showEmailError) {
+                        Text(
+                            text = emailError!!,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -298,7 +343,7 @@ fun RegisterScreenContent(
 
 /**
  * Preview para visualizar la pantalla de registro en Android Studio.
- */
+// */
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun RegisterScreenPreview() {
@@ -313,6 +358,8 @@ fun RegisterScreenPreview() {
         onConfirmPasswordChange = {},
         onRegisterClick = {},
         onBackToLoginClick = {},
-        errorText = null
+        errorText = null,
+        emailError=null,
+        hasTriedSubmit = false
     )
 }
