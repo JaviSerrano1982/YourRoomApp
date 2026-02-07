@@ -129,7 +129,7 @@ fun RegisterScreen(navController: NavHostController) {
                                 popUpTo("register") { inclusive = true }
                             }
                         } else {
-                            // Si tu backend devuelve 409/400 puedes afinar esto luego
+                            //devuelve un 409 Conflict (ese recurso ya existe)
                             errorText = "El correo ya está registrado."
                         }
                     }
@@ -213,7 +213,7 @@ fun RegisterScreenContent(
                 colors = AuthTextFieldColors()
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Campo Email
             OutlinedTextField(
@@ -256,7 +256,7 @@ fun RegisterScreenContent(
                 }
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Campo Confirmar Contraseña
             OutlinedTextField(
