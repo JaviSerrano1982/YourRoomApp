@@ -8,7 +8,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,6 +35,10 @@ import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.yourroom.viewmodel.SearchSpacesViewModel
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.example.yourroom.navigation.BottomNavItem.Favorites.imageVector
 
 
 @Composable
@@ -41,8 +47,9 @@ fun SearchSpacesScreen(
     vm: SearchSpacesViewModel = hiltViewModel()
 ) {
     val state by vm.ui.collectAsState()
-
     val focusRequester = remember { FocusRequester() }
+    var isFavorite by remember { mutableStateOf(false) }
+
 
     Column(Modifier.fillMaxSize()) {
 
@@ -90,7 +97,7 @@ fun SearchSpacesScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(state.filteredSpaces) { space ->
-                // Card simple (puedes tunearlo como en MyRoomsScreen)
+
                 Card {
                     Row(Modifier.fillMaxWidth().padding(12.dp)) {
 
@@ -115,6 +122,23 @@ fun SearchSpacesScreen(
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
+                        IconButton(
+                            onClick = { isFavorite = !isFavorite },
+                            modifier = Modifier.offset(y = 10.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isFavorite)
+                                    Icons.Filled.Favorite
+                                else
+                                    Icons.Outlined.FavoriteBorder,
+                                contentDescription = "Favorito",
+                                tint = if (isFavorite) Color.Red else Color.Black,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+
+
+
                     }
                 }
             }
