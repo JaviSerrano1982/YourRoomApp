@@ -1,6 +1,6 @@
 [versions]
 accompanistSystemuicontroller = "0.36.0"
-agp = "8.13.2"
+agp = "9.0.1"
 coilCompose = "2.7.0"
 coilComposeVersion = "2.6.0"
 converterGson = "2.9.0"
@@ -8,7 +8,7 @@ coreSplashscreen = "1.0.1"
 datastorePreferences = "1.1.7"
 firebaseBom = "33.2.0"
 guava = "33.4.8-jre"
-kotlin = "2.0.21"
+kotlin = "2.2.10"
 coreKtx = "1.10.1"
 junit = "4.13.2"
 junitVersion = "1.1.5"
@@ -29,7 +29,7 @@ ui = "1.8.3"
 compiler = "3.2.0-alpha11"
 retrofit = "2.9.0"
 okhttp = "4.9.3"
-hilt = "2.51"
+hilt = "2.59.1"
 hiltCompiler = "1.2.0"
 kotlinxSerialization = "1.7.3"
 
@@ -83,7 +83,7 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
-kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version = "2.2.10-2.0.2" }
 google-services = { id = "com.google.gms.google-services", version = "4.4.2" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 
