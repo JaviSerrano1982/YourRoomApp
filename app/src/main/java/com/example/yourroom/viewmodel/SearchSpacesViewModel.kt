@@ -9,6 +9,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -19,6 +20,9 @@ class SearchSpacesViewModel @Inject constructor(
 
     private val _ui = MutableStateFlow(SearchSpacesUiState())
     val ui: StateFlow<SearchSpacesUiState> = _ui
+
+    private val _favoriteIds = MutableStateFlow<Set<Long>>(emptySet())
+    val favoriteIds: StateFlow<Set<Long>> = _favoriteIds.asStateFlow()
 
     private var searchJob: Job? = null
 
@@ -54,5 +58,10 @@ class SearchSpacesViewModel @Inject constructor(
                 )
             }
         }
+    }
+    fun toggleFavorite(spaceId: Long) {
+        val current = _favoriteIds.value.toMutableSet()
+        if (current.contains(spaceId)) current.remove(spaceId) else current.add(spaceId)
+        _favoriteIds.value = current
     }
 }

@@ -2,6 +2,8 @@ package com.example.yourroom.ui.screens.home
 
 
 
+import android.R.attr.onClick
+import android.R.attr.y
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -36,6 +38,7 @@ import coil.compose.AsyncImage
 import com.example.yourroom.viewmodel.SearchSpacesViewModel
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.yourroom.navigation.BottomNavItem.Favorites.imageVector
@@ -48,8 +51,7 @@ fun SearchSpacesScreen(
 ) {
     val state by vm.ui.collectAsState()
     val focusRequester = remember { FocusRequester() }
-    var isFavorite by remember { mutableStateOf(false) }
-
+    val favoriteIds by vm.favoriteIds.collectAsState()
 
     Column(Modifier.fillMaxSize()) {
 
@@ -97,6 +99,7 @@ fun SearchSpacesScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(state.filteredSpaces) { space ->
+                val isFavorite = favoriteIds.contains(space.id)
 
                 Card {
                     Row(Modifier.fillMaxWidth().padding(12.dp)) {
@@ -123,8 +126,9 @@ fun SearchSpacesScreen(
                             )
                         }
                         IconButton(
-                            onClick = { isFavorite = !isFavorite },
-                            modifier = Modifier.offset(y = 10.dp)
+                            onClick = { vm.toggleFavorite(space.id) },
+
+                                    modifier = Modifier.offset(y = 10.dp)
                         ) {
                             Icon(
                                 imageVector = if (isFavorite)
