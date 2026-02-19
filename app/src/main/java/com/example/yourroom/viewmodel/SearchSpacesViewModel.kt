@@ -2,6 +2,7 @@ package com.example.yourroom.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.yourroom.datastore.FavoriteSpacesStore
 import com.example.yourroom.repository.SpaceRepository
 import com.example.yourroom.ui.screens.home.SearchSpacesUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -10,12 +11,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class SearchSpacesViewModel @Inject constructor(
-    private val spaceRepo: SpaceRepository
+    private val spaceRepo: SpaceRepository,
+    private val favoriteStore: FavoriteSpacesStore
 ) : ViewModel() {
 
     private val _ui = MutableStateFlow(SearchSpacesUiState())
@@ -27,7 +30,14 @@ class SearchSpacesViewModel @Inject constructor(
     private var searchJob: Job? = null
 
     init {
-        // carga inicial: muestra “lo último publicado” con q = ""
+        // 1) Cargar favoritos persistidos
+        viewModelScope.launch {
+            favoriteStore.favoriteIds.collectLatest { ids ->
+                _favoriteIds.value = ids
+            }
+        }
+
+        // 2) carga inicial
         runSearch("")
     }
 
@@ -60,8 +70,9 @@ class SearchSpacesViewModel @Inject constructor(
         }
     }
     fun toggleFavorite(spaceId: Long) {
-        val current = _favoriteIds.value.toMutableSet()
-        if (current.contains(spaceId)) current.remove(spaceId) else current.add(spaceId)
-        _favoriteIds.value = current
-    }
+        viewModelScope.launch {
+            favoriteStore.toggle(spaceId)
+
+        }
+        }
 }
