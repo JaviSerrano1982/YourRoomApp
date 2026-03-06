@@ -7,6 +7,7 @@ import com.example.yourroom.network.AuthInterceptor
 import com.example.yourroom.network.PhotoApiService
 import com.example.yourroom.network.SpaceApiService
 import com.example.yourroom.network.UserApiService
+import com.example.yourroom.network.FavoriteApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -134,5 +135,11 @@ object NetworkModule {
     @Provides
     fun providePhotoApiService(retrofit: Retrofit): PhotoApiService =
         retrofit.create(PhotoApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideFavoriteApiService(retrofit: Retrofit): FavoriteApiService {
+        return retrofit.create(FavoriteApiService::class.java)
+    }
 
 }
