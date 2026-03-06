@@ -95,7 +95,12 @@ fun FavoritesScreen(
                         SpaceCard(
                             space = space,
                             isFavorite = true,
-                            onFavoriteClick = { vm.removeFavorite(space.id) }
+                            onFavoriteClick = {
+                                vm.removeFavorite(space.id)
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set("refreshFavoritesSearch", true)
+                            }
                         )
                     }
                 }

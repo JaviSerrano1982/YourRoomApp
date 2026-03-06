@@ -32,7 +32,7 @@ class SearchSpacesViewModel @Inject constructor(
         loadFavoriteIds()
         runSearch("")
     }
-    private fun loadFavoriteIds() {
+     fun loadFavoriteIds() {
         viewModelScope.launch {
             try {
                 val ids = favoriteRepo.getFavouriteIds().toSet()
