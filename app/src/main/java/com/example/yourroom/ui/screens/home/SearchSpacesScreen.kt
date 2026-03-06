@@ -2,18 +2,13 @@ package com.example.yourroom.ui.screens.home
 
 
 
-import android.R.attr.onClick
-import android.R.attr.y
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -25,23 +20,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import coil.compose.AsyncImage
 import com.example.yourroom.viewmodel.SearchSpacesViewModel
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.mutableStateSetOf
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.vector.ImageVector
-import com.example.yourroom.navigation.BottomNavItem.Favorites.imageVector
+import com.example.yourroom.ui.components.SpaceCard
 
 
 @Composable
@@ -98,53 +85,14 @@ fun SearchSpacesScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(state.filteredSpaces) { space ->
+            items(state.filteredSpaces, key = { it.id }) { space ->
                 val isFavorite = favoriteIds.contains(space.id)
 
-                Card {
-                    Row(Modifier.fillMaxWidth().padding(12.dp)) {
-
-                        // Imagen (si hay)
-                        if (!space.primaryPhotoUrl.isNullOrBlank()) {
-                            AsyncImage(
-                                model = space.primaryPhotoUrl,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(80.dp)
-                                    .clip(RoundedCornerShape(12.dp)),
-                                contentScale = ContentScale.Crop
-                            )
-                            Spacer(Modifier.width(12.dp))
-                        }
-
-                        Column(Modifier.weight(1f)) {
-                            Text(space.title ?: "Sin título", fontWeight = FontWeight.Bold)
-                            Text(space.location ?: "", color = Color.DarkGray)
-                            Text(
-                                text = space.hourlyPrice?.toPlainString()?.let { "$it €/h" } ?: "",
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                        IconButton(
-                            onClick = { vm.toggleFavorite(space.id) },
-
-                                    modifier = Modifier.offset(y = 10.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (isFavorite)
-                                    Icons.Filled.Favorite
-                                else
-                                    Icons.Outlined.FavoriteBorder,
-                                contentDescription = "Favorito",
-                                tint = if (isFavorite) Color.Red else Color.Black,
-                                modifier = Modifier.size(28.dp)
-                            )
-                        }
-
-
-
-                    }
-                }
+                SpaceCard(
+                    space = space,
+                    isFavorite = isFavorite,
+                    onFavoriteClick = { vm.toggleFavorite(space.id) }
+                )
             }
         }
     }

@@ -29,6 +29,7 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.yourroom.ui.components.GradientTopBar
 import com.example.yourroom.ui.screens.edit.EditRoomRoutes
 
 import com.example.yourroom.viewmodel.MyRoomsViewModel
@@ -78,39 +79,10 @@ fun MyRoomsScreen(
 
     Box(Modifier.fillMaxSize()) {
 
-        // TopBar personalizada
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .height(topBarHeight)
-                .background(
-                    brush = Brush.horizontalGradient(
-                        listOf(Color(0xFF7F00FF), Color(0xFF00BFFF))
-                    )
-                )
-                .padding(horizontal = 16.dp, vertical = 6.dp)
-                .align(Alignment.TopStart)
-                .zIndex(2f)
-        ) {
-            IconButton(
-                onClick = { navController.popBackStack() },
-                modifier = Modifier.align(Alignment.CenterStart)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Atrás",
-                    tint = Color.White
-                )
-            }
-            Text(
-                text = "Mis salas",
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                modifier = Modifier.align(Alignment.Center)
-            )
-        }
+        GradientTopBar(
+            title = "Mis salas",
+            onBackClick = { navController.popBackStack() }
+        )
 
 
 
