@@ -100,7 +100,8 @@ fun FavoritesScreen(
                                 navController.previousBackStackEntry
                                     ?.savedStateHandle
                                     ?.set("refreshFavoritesSearch", true)
-                            }
+                            },
+                            onClick = { navController.navigate("space_detail/${space.id}") }
                         )
                     }
                 }

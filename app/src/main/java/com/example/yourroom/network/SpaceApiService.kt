@@ -56,11 +56,9 @@ interface SpaceApiService {
     ): SpaceResponse
 
     /**
-     * Obtiene una sala concreta por su id.
-     * El backend valida que pertenezca al usuario autenticado.
-     *
-     * @param id Id de la sala.
-     * @return   Objeto SpaceResponse con todos los datos.
+     * Obtiene una sala concreta visible para el usuario autenticado.
+     * Si es owner, puede verla siempre.
+     * Si no es owner, solo si está publicada.
      */
     @GET("api/spaces/{id}")
     suspend fun getOne(@Path("id") id: Long): SpaceResponse

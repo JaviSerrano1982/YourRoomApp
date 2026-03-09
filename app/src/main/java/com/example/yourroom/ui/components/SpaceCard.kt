@@ -33,9 +33,11 @@ fun SpaceCard(
     space: SpaceResponse,
     isFavorite: Boolean,
     onFavoriteClick: () -> Unit,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
+        onClick = onClick,
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp)
     ) {

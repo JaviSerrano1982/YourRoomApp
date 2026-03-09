@@ -91,7 +91,8 @@ fun SearchSpacesScreen(
                 SpaceCard(
                     space = space,
                     isFavorite = isFavorite,
-                    onFavoriteClick = { vm.toggleFavorite(space.id) }
+                    onFavoriteClick = { vm.toggleFavorite(space.id) },
+                    onClick = { navController.navigate("space_detail/${space.id}") }
                 )
             }
         }

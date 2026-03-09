@@ -15,6 +15,7 @@ import com.example.yourroom.ui.screens.home.HomeScreen
 import com.example.yourroom.ui.screens.publish.PublishBasicsScreen
 import com.example.yourroom.ui.screens.publish.PublishDetailsScreen
 import com.example.yourroom.ui.screens.publish.PublishPhotosScreen
+import com.example.yourroom.ui.screens.spaceDetail.SpaceDetailScreen
 import com.example.yourroom.ui.screens.succes.SuccessScreen
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
@@ -203,6 +204,18 @@ fun AppNavGraph(
                 showBottomBar.value = false
                 val spaceId = backStackEntry.arguments?.getLong("spaceId") ?: 0L
                 EditRoomScreen(navController, spaceId)
+            }
+
+            composable(
+                route = "space_detail/{spaceId}",
+                arguments = listOf(navArgument("spaceId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                showBottomBar.value = false
+                val spaceId = backStackEntry.arguments?.getLong("spaceId") ?: 0L
+                SpaceDetailScreen(
+                    navController = navController,
+                    spaceId = spaceId
+                )
             }
 
 
