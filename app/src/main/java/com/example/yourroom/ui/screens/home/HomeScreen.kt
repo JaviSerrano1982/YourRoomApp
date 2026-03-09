@@ -158,36 +158,49 @@ fun PhotoGrid() {
         modifier = Modifier
             .padding(horizontal = 12.dp)
             .height(600.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         userScrollEnabled = true
     ) {
         items(images.size) { index ->
 
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(
-                    top = if (index < 2) 16.dp else 0.dp
-                )
+            Box(
+                modifier = Modifier
+                    .aspectRatio(1f)
+                    .padding(top = if (index < 2) 16.dp else 0.dp)
             ) {
-                Text(
-                    text = titles[index],
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Normal,
-                    modifier = Modifier.padding(bottom = 4.dp),
-
-
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
                 Image(
                     painter = painterResource(id = images[index]),
                     contentDescription = titles[index],
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .aspectRatio(1f)
+                        .fillMaxSize()
                         .clip(RoundedCornerShape(12.dp))
                 )
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .clip(
+                            RoundedCornerShape(
+                                bottomStart = 12.dp,
+                                bottomEnd = 12.dp
+                            )
+                        )
+                        .background(Color.Black.copy(alpha = 0.28f))
+                        .padding(vertical = 8.dp, horizontal = 8.dp)
+
+                ) {
+                    Text(
+                        text = titles[index],
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }
