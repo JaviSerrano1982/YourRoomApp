@@ -49,6 +49,7 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.yourroom.model.PhotoResponse
 import com.example.yourroom.model.SpaceResponse
+import com.example.yourroom.ui.utils.formatPrice
 import com.example.yourroom.viewmodel.SpaceDetailViewModel
 
 @Composable
@@ -184,6 +185,8 @@ private fun SpaceDetailContent(
                     capacity = space.capacity,
                     sizeM2 = space.sizeM2
                 )
+                Spacer(modifier = Modifier.width(12.dp))
+
                 OwnerCard(
                     ownerName = ownerName,
                     ownerPhotoUrl = ownerPhotoUrl
@@ -438,17 +441,7 @@ private fun buildLocationText(space: SpaceResponse): String {
     ).joinToString(" · ").ifBlank { "Ubicación no disponible" }
 }
 
-private fun formatPrice(space: SpaceResponse): String {
-    val price = space.hourlyPrice ?: return "Precio no disponible"
 
-    val normalized = price.stripTrailingZeros()
-
-    return if (normalized.scale() <= 0) {
-        "${normalized.toInt()} € / hora"
-    } else {
-        "${normalized} € / hora"
-    }
-}
 @Preview(showBackground = true)
 @Composable
 private fun OwnerCardPreview() {

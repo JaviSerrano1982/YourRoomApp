@@ -32,6 +32,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.yourroom.ui.components.GradientTopBar
 import com.example.yourroom.ui.components.LocationAutocompleteField
 import com.example.yourroom.ui.components.transparentTextFieldColors
 import com.example.yourroom.viewmodel.EditRoomViewModel
@@ -139,41 +140,38 @@ fun EditRoomScreen(
     Box(Modifier.fillMaxSize()) {
 
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .height(topBarHeight)
-                .background(
-                    brush = Brush.horizontalGradient(
-                        listOf(Color(0xFF7F00FF), Color(0xFF00BFFF))
-                    )
-                )
-                .padding(horizontal = 16.dp, vertical = 6.dp)
-                .align(Alignment.TopStart)
-        ) {
-            IconButton(
-                onClick = {
-                    if (hasUnsavedChanges) {
-                        showExitConfirm = true
-                    } else {
-                        navController.popBackStack()
-                    }
+        GradientTopBar(
+            title = "Editar información de la sala",
+            onBackClick = {
+                if (hasUnsavedChanges) {
+                    showExitConfirm = true
+                } else {
+                    navController.popBackStack()
+                }
+            },
+            modifier = Modifier.align(Alignment.TopStart)
+        )
+        // Diálogo de confirmación al salir con cambios
+        if (showExitConfirm) {
+            AlertDialog(
+                onDismissRequest = { showExitConfirm = false },
+                title = { Text("Salir sin guardar") },
+                text = { Text("Tienes cambios sin guardar. Si vuelves atrás, se perderán. ¿Quieres salir igualmente?") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showExitConfirm = false
+                            navController.popBackStack()
+                        }
+                    ) { Text("Salir") }
                 },
-                modifier = Modifier.align(Alignment.CenterStart)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Atrás",
-                    tint = Color.White
-                )
-            }
-            Text(
-                text = "Editar información de la sala",
-                color = Color.White,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.align(Alignment.Center)
+                dismissButton = {
+                    TextButton(onClick = { showExitConfirm = false }) {
+                        Text("Cancelar")
+                    }
+                }
             )
+        }
         }
 
 
@@ -402,28 +400,9 @@ fun EditRoomScreen(
             }
         }
 
-        // Diálogo de confirmación al salir con cambios
-        if (showExitConfirm) {
-            AlertDialog(
-                onDismissRequest = { showExitConfirm = false },
-                title = { Text("Salir sin guardar") },
-                text = { Text("Tienes cambios sin guardar. Si vuelves atrás, se perderán. ¿Quieres salir igualmente?") },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            showExitConfirm = false
-                            navController.popBackStack()
-                        }
-                    ) { Text("Salir") }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showExitConfirm = false }) {
-                        Text("Cancelar")
-                    }
-                }
-            )
-        }
-    }
+
+
+
 
 @Composable
 private fun PhotoManagementSection(

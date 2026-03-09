@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.yourroom.model.SpaceResponse
+import com.example.yourroom.ui.utils.formatPrice
 
 @Composable
 fun SpaceCard(
@@ -77,7 +78,7 @@ fun SpaceCard(
                     )
 
                     Text(
-                        text = "${space.hourlyPrice} €/h",
+                        text = formatPrice(space),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
