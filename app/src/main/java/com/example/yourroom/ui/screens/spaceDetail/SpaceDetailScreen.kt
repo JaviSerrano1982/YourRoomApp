@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -27,7 +26,7 @@ import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -43,6 +42,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -93,7 +93,9 @@ fun SpaceDetailScreen(
                 navController = navController,
                 space = state.space!!,
                 photos = state.photos,
-                ownerEmail = state.ownerEmail
+                ownerEmail = state.ownerEmail,
+                ownerName = state.ownerName,
+                ownerPhotoUrl = state.ownerPhotoUrl
             )
         }
     }
@@ -104,7 +106,9 @@ private fun SpaceDetailContent(
     navController: NavController,
     space: SpaceResponse,
     photos: List<PhotoResponse>,
-    ownerEmail: String?
+    ownerEmail: String?,
+    ownerName: String?,
+    ownerPhotoUrl: String?
 ) {
     LazyColumn(
         modifier = Modifier
@@ -159,7 +163,7 @@ private fun SpaceDetailContent(
                     fontWeight = FontWeight.Bold
                 )
 
-                Divider()
+                HorizontalDivider()
 
                 DetailSection(
                     title = "Descripción",
@@ -178,8 +182,11 @@ private fun SpaceDetailContent(
 
                 InfoGrid(
                     capacity = space.capacity,
-                    sizeM2 = space.sizeM2,
-                    status = space.status
+                    sizeM2 = space.sizeM2
+                )
+                OwnerCard(
+                    ownerName = ownerName,
+                    ownerPhotoUrl = ownerPhotoUrl
                 )
 
                 ContactCard(ownerEmail = ownerEmail)
@@ -278,8 +285,7 @@ private fun DetailSection(
 @Composable
 private fun InfoGrid(
     capacity: Int?,
-    sizeM2: Int?,
-    status: String
+    sizeM2: Int?
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -297,13 +303,9 @@ private fun InfoGrid(
         )
     }
 
-    Spacer(modifier = Modifier.height(12.dp))
 
-    InfoChip(
-        label = "Estado",
-        value = status,
-        modifier = Modifier.fillMaxWidth()
-    )
+
+
 }
 
 @Composable
@@ -334,6 +336,57 @@ private fun InfoChip(
         }
     }
 }
+@Composable
+private fun OwnerCard(
+    ownerName: String?,
+    ownerPhotoUrl: String?
+) {
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Box(
+                modifier = Modifier.width(60.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                AsyncImage(
+                    model = ownerPhotoUrl,
+                    contentDescription = "Foto del propietario",
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column {
+                Text(
+                    text = "Propietario",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color.Gray
+                )
+
+                Text(
+                    text = ownerName ?: "Nombre no disponible",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+
+    }
+}
 
 @Composable
 private fun ContactCard(ownerEmail: String?) {
@@ -347,22 +400,31 @@ private fun ContactCard(ownerEmail: String?) {
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Outlined.Email,
-                contentDescription = null
-            )
+
+            Box(
+                modifier = Modifier.width(60.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Email,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(35.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.width(12.dp))
 
             Column {
                 Text(
-                    text = "Contacto del propietario",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    text = "Contacto",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color.Gray
                 )
                 Text(
                     text = ownerEmail ?: "Email no disponible",
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }
@@ -377,6 +439,28 @@ private fun buildLocationText(space: SpaceResponse): String {
 }
 
 private fun formatPrice(space: SpaceResponse): String {
-    return space.hourlyPrice?.let { "$it €/hora" } ?: "Precio no disponible"
-}
+    val price = space.hourlyPrice ?: return "Precio no disponible"
 
+    val normalized = price.stripTrailingZeros()
+
+    return if (normalized.scale() <= 0) {
+        "${normalized.toInt()} € / hora"
+    } else {
+        "${normalized} € / hora"
+    }
+}
+@Preview(showBackground = true)
+@Composable
+private fun OwnerCardPreview() {
+    OwnerCard(
+        ownerName = "Carlos Martínez",
+        ownerPhotoUrl = null
+    )
+}
+@Preview(showBackground = true)
+@Composable
+private fun ContactCardPreview() {
+    ContactCard(
+        ownerEmail = "propietario@yourroom.com"
+    )
+}

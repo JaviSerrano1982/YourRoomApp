@@ -78,7 +78,7 @@ class EditRoomViewModel @Inject constructor(
                     location = sp.location.orEmpty(),
                     addressLine = sp.addressLine.orEmpty(),
                     capacity = sp.capacity?.toString().orEmpty(),
-                    hourlyPrice = sp.hourlyPrice?.toPlainString().orEmpty(),
+                    hourlyPrice = sp.hourlyPrice?.let { "%.2f".format(it) }.orEmpty(),
                     sizeM2 = sp.sizeM2?.toString().orEmpty(),
                     availability = sp.availability.orEmpty(),
                     services = sp.services.orEmpty(),
@@ -144,7 +144,7 @@ class EditRoomViewModel @Inject constructor(
                 location != sp.location.orEmpty() ||
                 addressLine != sp.addressLine.orEmpty() ||
                 capacity != sp.capacity?.toString().orEmpty() ||
-                hourlyPrice != sp.hourlyPrice?.toPlainString().orEmpty() ||
+                hourlyPrice != sp.hourlyPrice?.let { "%.2f".format(it) }.orEmpty() ||
                 sizeM2 != sp.sizeM2?.toString().orEmpty() ||
                 availability != sp.availability.orEmpty() ||
                 services != sp.services.orEmpty() ||

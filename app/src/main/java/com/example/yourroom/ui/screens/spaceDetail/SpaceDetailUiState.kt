@@ -8,5 +8,7 @@ data class SpaceDetailUiState(
     val space: SpaceResponse? = null,
     val photos: List<PhotoResponse> = emptyList(),
     val ownerEmail: String? = null,
+    val ownerName: String? = null,
+    val ownerPhotoUrl: String? = null,
     val errorMessage: String? = null
 )

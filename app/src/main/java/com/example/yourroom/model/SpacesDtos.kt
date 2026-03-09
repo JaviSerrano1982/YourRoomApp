@@ -66,7 +66,7 @@ data class SpaceResponse(
     val location: String?,
     val addressLine: String?,
     val capacity: Int?,
-    val hourlyPrice: BigDecimal?,
+    val hourlyPrice: BigDecimal,
     val sizeM2: Int?,
     val availability: String?,
     val services: String?,

@@ -35,21 +35,25 @@ class SpaceDetailViewModel @Inject constructor(
 
                 val photosDeferred = async { photoRepo.list(spaceId) }
 
-                val ownerEmailDeferred = async {
+                val ownerProfileDeferred = async {
                     runCatching {
-                        userRepo.getProfile(space.ownerId).email
+                        userRepo.getProfile(space.ownerId)
                     }.getOrNull()
                 }
 
                 val photos = photosDeferred.await()
-                val ownerEmail = ownerEmailDeferred.await()
+                val ownerProfile = ownerProfileDeferred.await()
 
                 _ui.value = SpaceDetailUiState(
                     isLoading = false,
                     space = space,
                     photos = photos,
-                    ownerEmail = ownerEmail,
-                    errorMessage = null
+                    ownerEmail = ownerProfile?.email,
+                    ownerName = listOfNotNull(
+                        ownerProfile?.firstName,
+                        ownerProfile?.lastName
+                    ).joinToString(" ").ifBlank { null },
+                    ownerPhotoUrl = ownerProfile?.photoUrl
                 )
             } catch (e: Exception) {
                 _ui.value = SpaceDetailUiState(

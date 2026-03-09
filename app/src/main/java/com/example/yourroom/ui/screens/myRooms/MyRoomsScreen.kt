@@ -139,7 +139,7 @@ fun MyRoomsScreen(
                         MyRoomCard(
                             title = item.space.title ?: "(Sin título)",
                             location = item.space.location ?: "",
-                            price = item.space.hourlyPrice?.toPlainString(),
+                            price = item.space.hourlyPrice?.let { "%.2f".format(it) }.orEmpty(),
                             capacity = item.space.capacity,
                             photoUrl = item.primaryPhotoUrl,
                             onEditClick = { navController.navigate(EditRoomRoutes.edit(item.space.id)) },
