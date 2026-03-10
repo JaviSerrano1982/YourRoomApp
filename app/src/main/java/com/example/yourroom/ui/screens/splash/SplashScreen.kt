@@ -46,12 +46,16 @@ fun SplashScreen(navController: NavHostController) {
     // Corrutina que espera 2.5s y decide la navegación
     LaunchedEffect(Unit) {
         delay(2500)
-        val isLoggedIn = UserPreferences(context).isUserLoggedIn()
-        if (isLoggedIn) {
+
+        val userPrefs = UserPreferences(context)
+        val hasValidSession = userPrefs.hasValidLocalSession()
+
+        if (hasValidSession) {
             navController.navigate("home") {
                 popUpTo("splash") { inclusive = true }
             }
         } else {
+            userPrefs.clearSession()
             navController.navigate("login") {
                 popUpTo("splash") { inclusive = true }
             }

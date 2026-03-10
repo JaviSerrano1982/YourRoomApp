@@ -112,4 +112,15 @@ class UserPreferences(private val context: Context) {
             preferences[USER_ID_KEY] = userId
         }
     }
+    suspend fun getUserId(): Long {
+        val prefs = context.dataStore.data.first()
+        return prefs[USER_ID_KEY] ?: 0L
+    }
+    suspend fun hasValidLocalSession(): Boolean {
+        val token = getAuthToken()
+        val userId = getUserId()
+        val loggedIn = isUserLoggedIn()
+
+        return loggedIn && !token.isNullOrBlank() && userId > 0L
+    }
 }
