@@ -30,8 +30,6 @@ fun GradientTopBar(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .statusBarsPadding()
-            .height(60.dp)
             .background(
                 brush = Brush.horizontalGradient(
                     listOf(Color(0xFF7F00FF), Color(0xFF00BFFF))

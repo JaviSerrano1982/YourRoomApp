@@ -62,6 +62,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import androidx.compose.runtime.rememberCoroutineScope
+import com.example.yourroom.ui.components.GradientTopBar
 
 
 /**
@@ -174,6 +175,7 @@ fun UserProfileScreen(
     // --- Scaffold con Snackbar personalizado ---
     //Aparece en la en la parte inferior de la pantalla cuando se guardan los datos con éxito
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState) { data ->
                 Snackbar(
@@ -234,7 +236,7 @@ fun UserProfileScreen(
             isEditingLocation = isEditingLocation,
             isUploadingPhoto = isUploadingPhoto,
             onRemoveImage = { viewModel.removeSelectedImage() },
-            modifier = Modifier.padding(padding) // evita que se solape con snackbar
+            modifier = Modifier.padding(bottom = padding.calculateBottomPadding())
         )
     }
 }
@@ -291,6 +293,7 @@ fun UserProfileContent(
     val scope = rememberCoroutineScope()
 
 
+
     // Flags de edición por campo (persisten en recomposiciones)
     val isEditingFirstName = rememberSaveable { mutableStateOf(false) }
     val isEditingLastName = rememberSaveable { mutableStateOf(false) }
@@ -324,49 +327,25 @@ fun UserProfileContent(
     Box(modifier = Modifier.fillMaxSize().then(modifier)) {
 
         // --- TopBar fija con degradado y botón "atrás" ---
-        Box(
+        GradientTopBar(
+            title = "Mi perfil",
+            onBackClick = {
+                if (hasChanges && !isSaving) onRequestLeave() else navController.popBackStack()
+            },
             modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .height(60.dp)
-                .background(
-                    brush = Brush.horizontalGradient(
-                        listOf(Color(0xFF7F00FF), Color(0xFF00BFFF))
-                    )
-                )
-                .padding(horizontal = 16.dp, vertical = 6.dp)
                 .align(Alignment.TopStart)
                 .zIndex(2f)
-        ) {
-            IconButton(
-                onClick = {
-                    if (hasChanges && !isSaving) onRequestLeave() else navController.popBackStack()
-                },
-                modifier = Modifier.align(Alignment.CenterStart)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Volver",
-                    tint = Color.White
-                )
-            }
-            Text(
-                text = "Mi perfil",
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp,
-                modifier = Modifier.align(Alignment.Center)
-            )
-        }
+        )
 
         // --- Contenido scrollable ---
+        val topBarHeight = 60.dp
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .imePadding()
                 .background(Color.White)
-                .padding(top = 50.dp),
+                .padding(top = topBarHeight),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Cabecera con avatar + botón cámara + overlay de progreso

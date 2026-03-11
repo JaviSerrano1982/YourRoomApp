@@ -80,10 +80,7 @@ fun BottomNavigationBar(
 
     NavigationBar(
         containerColor = Color(0xFF0A1D37),
-        modifier = Modifier
-            .height(65.dp)
-            .navigationBarsPadding()
-            .padding(top = 6.dp)
+        modifier = Modifier.fillMaxWidth()
     ) {
         items.forEach { item ->
             val isSelected = currentRoute == item.route
@@ -131,7 +128,7 @@ fun BottomNavigationBar(
                     } else {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                            modifier = Modifier.padding(vertical = 1.dp)
                         ) {
                             if (item.iconResId != null) {
                                 Icon(
@@ -144,7 +141,7 @@ fun BottomNavigationBar(
                                 Icon(
                                     imageVector = item.imageVector!!,
                                     contentDescription = item.label,
-                                    modifier = Modifier.size(28.dp),
+                                    modifier = Modifier.size(25.dp),
                                     tint = if (isSelected) Color(0xFF2FE2EC) else Color.White
                                 )
                             }
