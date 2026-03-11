@@ -75,7 +75,7 @@ fun EditRoomScreen(
                             ui.location != ui.space?.location.orEmpty() ||
                             ui.addressLine != ui.space?.addressLine.orEmpty() ||
                             ui.capacity != ui.space?.capacity?.toString().orEmpty() ||
-                            ui.hourlyPrice != ui.space?.hourlyPrice?.let { "%.2f".format(it) }.orEmpty() ||
+                            ui.hourlyPrice != ui.space?.hourlyPrice?.let { String.format(java.util.Locale.US, "%.2f", it) }.orEmpty() ||
                             ui.sizeM2 != ui.space?.sizeM2?.toString().orEmpty() ||
                             ui.availability != ui.space?.availability.orEmpty() ||
                             ui.services != ui.space?.services.orEmpty() ||
