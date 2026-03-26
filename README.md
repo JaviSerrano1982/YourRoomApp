@@ -16,12 +16,17 @@ Este frontend consume la API del backend (Spring Boot + MySQL + JWT) y está con
 
 ### 🏠 Pantalla de Inicio
 <p align="center">
-  <img src="docs/images/home.png" alt="Home" width="250"/>
+  <img src="docs/images/Home.png" alt="Home" width="250"/>
 </p>
 
 ### 👤 Pantalla de Perfil
 <p align="center">
   <img src="docs/images/profile.png" alt="Profile" width="250"/>
+</p>
+
+### 🏠 Pantalla de Detalles
+<p align="center">
+  <img src="docs/images/roomdetail.png" alt="Detalles" width="250"/>
 </p>
 
 
@@ -39,7 +44,7 @@ Este frontend consume la API del backend (Spring Boot + MySQL + JWT) y está con
 
 ### 🧾 Pantalla Mis Salas
 <p align="center">
-  <img src="docs/images/my_rooms.png" alt="My rooms" width="250"/>
+  <img src="docs/images/myrooms.png" alt="My rooms" width="250"/>
 </p>
 
 
