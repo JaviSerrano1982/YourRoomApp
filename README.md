@@ -16,7 +16,7 @@ Este frontend consume la API del backend (Spring Boot + MySQL + JWT) y está con
 
 ### 🏠 Pantalla de Inicio
 <p align="center">
-  <img src="docs/images/Home.png" alt="Home" width="250"/>
+  <img src="docs/images/home.png" alt="Home" width="250"/>
 </p>
 
 ### 👤 Pantalla de Perfil
